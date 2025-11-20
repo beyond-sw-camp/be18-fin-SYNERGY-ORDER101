@@ -3,16 +3,25 @@
     <h2 class="page-title">입/출고 목록 조회</h2>
 
     <div class="tab-row">
-      <button class="tab active">입고</button>
-      <button class="tab">출고</button>
+      <button
+        class="tab"
+        :class="{ active: activeTab === 'INBOUND' }"
+        @click="switchTab('INBOUND')"
+      >
+        입고
+      </button>
+
+      <button
+        class="tab"
+        :class="{ active: activeTab === 'OUTBOUND' }"
+        @click="switchTab('OUTBOUND')"
+      >
+        출고
+      </button>
     </div>
 
     <div class="filter-card">
       <div class="filter-row">
-        <div class="filter-item">
-          <label>제품명</label>
-          <input placeholder="제품명 검색" />
-        </div>
         <div class="filter-item">
           <label>날짜 범위</label>
           <input placeholder="날짜 범위 선택" />
@@ -24,48 +33,84 @@
       </div>
     </div>
 
-    <div class="table-card">
-      <table class="movements-table">
-        <thead>
-          <tr>
-            <th>입고 번호</th>
-            <th>제품명</th>
-            <th>수량</th>
-            <th>입고일</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.id">
-            <td>{{ row.code }}</td>
-            <td>{{ row.product }}</td>
-            <td class="numeric">{{ row.qty }}</td>
-            <td>{{ row.date }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <inbound-table 
+      v-if="activeTab === 'INBOUND'"
+      :items="inboundStore.items"
+      @open-modal="(data) => openDetailModal('INBOUND', data)"
+    />
+    <outbound-table 
+      v-else
+      :items="outboundStore.items"
+      @open-modal="(data) => openDetailModal('OUTBOUND', data)"
+    />
 
-      <div class="pagination">
-        <button class="page-btn">‹ Previous</button>
-        <div class="page-numbers">
-          <button class="page current">1</button>
-          <button class="page">2</button>
-        </div>
-        <button class="page-btn">Next ›</button>
-      </div>
-    </div>
+    <InboundItemModal
+      v-if="showModal && currentType === 'INBOUND'"
+      :inbound-no="selectedNo"
+      :details="inboundStore.details"
+      @close="closeModal"
+    />
+
+    <OutboundItemModal
+      v-if="showModal && currentType === 'OUTBOUND'"
+      :outbound-no="selectedNo"
+      :details="outboundStore.details"
+      @close="closeModal"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useInboundStore } from '@/stores/inventory/inbound'
+import { useOutboundStore } from '@/stores/inventory/outbound'
+import InboundTable from './tables/InboundTable.vue'
+import OutboundTable from './tables/OutboundTable.vue'
+import InboundItemModal from './modal/InboundItemModal.vue'
+import OutboundItemModal from './modal/OutboundItemModal.vue'
 
-const rows = ref([
-  { id: 1, code: 'INB-20230110-010', product: '냉동 베이커리 믹스', qty: 90, date: '2023-01-14' },
-  { id: 2, code: 'INB-20230109-009', product: '수제 잼 세트', qty: 60, date: '2023-01-13' },
-  { id: 3, code: 'INB-20230108-008', product: '건강 음료 500ml', qty: 200, date: '2023-01-12' },
-  { id: 4, code: 'INB-20230106-006', product: '프리미엄 건과류', qty: 70, date: '2023-01-10' },
-  { id: 5, code: 'INB-20230106-006', product: '특제 소스 1L', qty: 120, date: '2023-01-10' },
-])
+const inboundStore = useInboundStore()
+const outboundStore = useOutboundStore()
+
+const activeTab = ref('INBOUND')
+
+const showModal = ref(false)
+const currentType = ref('')
+const selectedNo = ref('')
+
+// 기본 파라미터 (추후 pagination 구현 시 ref 로 변경 가능)
+const page = 1
+const numOfRows = 20
+const totalCount = 0
+
+onMounted(() => {
+  inboundStore.fetchInbound({page, numOfRows, totalCount})
+})
+
+function switchTab(tab) {
+  activeTab.value = tab
+
+  if (tab === 'OUTBOUND' && outboundStore.items.length === 0) {
+    outboundStore.fetchOutbound({ page, numOfRows, totalCount })
+  }
+}
+
+async function openDetailModal(type, { id, no }) {
+  currentType.value = type
+  selectedNo.value = no
+
+  if (type === 'INBOUND') {
+    await inboundStore.fetchInboundDetail(id)
+  } else {
+    await outboundStore.fetchOutboundDetail(id)
+  }
+
+  showModal.value = true
+}
+
+function closeModal() {
+  showModal.value = false
+}
 </script>
 
 <style scoped>
@@ -148,6 +193,7 @@ const rows = ref([
 .movements-table tbody td {
   padding: 18px 16px;
   border-top: 1px solid #f3f4f6;
+  text-align: left;
 }
 .numeric {
   text-align: right;

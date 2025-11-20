@@ -20,13 +20,13 @@ public class InboundController {
 
     // 전체 입고 조회
     @GetMapping
-    public ResponseEntity<ItemsResponseDto<InboundResponseDto>> getInbounds(@RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<ItemsResponseDto<InboundResponseDto>> getInbounds(@RequestParam(defaultValue = "1") int page,
+                                                                            @RequestParam(defaultValue = "5") int size) {
 
         List<InboundResponseDto> inboundList = inboundService.getInboundList(page, size);
         int totalCount = inboundList.size();
 
-        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inboundList, totalCount, page));
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inboundList, page, totalCount));
     }
 
     // 입고 상세 조회

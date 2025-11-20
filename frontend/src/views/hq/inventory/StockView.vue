@@ -5,13 +5,14 @@
     <div class="filter-card">
       <div class="filter-row">
         <select class="select">
-          <option>중앙 창고</option>
-          <option>지점 A</option>
+          <option>카테고리 분류</option>
+          <option>대분류</option>
+          <option>중분류</option>
+          <option>소분류</option>
         </select>
         <select class="select">
-          <option>카테고리</option>
-          <option>생활가전</option>
-          <option>주방가전</option>
+          <option>카테고리 명</option>
+          <option>분류에 따라 달라짐</option>
         </select>
       </div>
     </div>
@@ -25,42 +26,53 @@
             <th>카테고리</th>
             <th>상품명</th>
             <th>현 재고량</th>
-            <th>이동중 수량</th>
             <th>안전재고량</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in rows" :key="r.code">
-            <td>{{ r.code }}</td>
-            <td>{{ r.category }}</td>
-            <td>{{ r.name }}</td>
-            <td class="numeric">{{ r.qty }}</td>
-            <td class="numeric">{{ r.intransit }}</td>
-            <td class="numeric">{{ r.safety }}</td>
+          <tr v-for="r in inventoryStore.items" :key="r.warehouseInventoryId">
+            <td>{{ r.productCode }}</td>
+            <td>{{ r.productCategory }}</td>
+            <td>{{ r.productName }}</td>
+            <td class="numeric">{{ r.onHandQty }}</td>
+            <td class="numeric">{{ r.safetyQty }}</td>
           </tr>
         </tbody>
       </table>
+            <div class="pagination">
+        <button class="page-btn">‹ Previous</button>
+        <div class="page-numbers">
+          <button class="page current">1</button>
+          <button class="page">2</button>
+        </div>
+        <button class="page-btn">Next ›</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useInventoryStore } from '@/stores/inventory/inventory'
 
-const rows = ref([
-  { code: '97205', category: '영상가전', name: 'TV', qty: 500, intransit: 2, safety: 99 },
-  { code: '73102', category: '영상가전', name: '스탠바이미', qty: 120, intransit: 67, safety: 96 },
-  { code: '78746', category: '주방가전', name: '식기세척기', qty: 30, intransit: 81, safety: 93 },
-  { code: '32202', category: '생활가전', name: '세탁기', qty: 280, intransit: 34, safety: 62 },
-  { code: '67202', category: '생활가전', name: '청소기', qty: 700, intransit: 45, safety: 56 },
-  { code: '94103', category: '생활가전', name: '드럼세탁기', qty: 150, intransit: 16, safety: 3 },
-  { code: '19123', category: '주방가전', name: '식기세척기', qty: 90, intransit: 97, safety: 89 },
-  { code: '02119', category: '주방가전', name: '전자레인지', qty: 200, intransit: 96, safety: 45 },
-  { code: '95814', category: '웨어러블', name: '애플워치', qty: 350, intransit: 37, safety: 21 },
-])
+const inventoryStore = useInventoryStore()
 
-function onImageError(event) {
-  event.target.src = 'https://via.placeholder.com/800x400?text=Stock+Diagram+Placeholder'
+// const page = ref(1)
+// const numOfRows = ref(20)
+// const totalCount = ref(0)
+// const parentId = ref(1)
+const page = 1
+const numOfRows = 20
+const totalCount = 0
+const parentId = 1
+
+onMounted(() => {
+  inventoryStore.fetchInventory({ page, numOfRows, totalCount })
+  // inventoryStore.loadCategories({ parentId })
+})
+
+function refreshData() {
+  inventoryStore.fetchInventory({ page, numOfRows, totalCount })
 }
 </script>
 
@@ -136,5 +148,27 @@ function onImageError(event) {
 }
 .numeric {
   text-align: left;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+}
+.page {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff;
+}
+.page.current {
+  background: #f3f4f6;
+}
+.page-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
 }
 </style>
