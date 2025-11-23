@@ -1,5 +1,5 @@
 """
-02c_make_hq_weekly.py
+03_make_hq_weekly.py
 - domain_sales_sku.csv (store별 SKU 수요)를 본사(HQ) 기준으로 합산
 - 출력: hq_weekly.csv
 """
