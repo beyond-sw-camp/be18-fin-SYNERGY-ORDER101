@@ -94,24 +94,33 @@ def trigger_forecasts(
     )
 
 
+
 @app.post(
     "/internal/ai/model/retrain",
     response_model=RetrainResponse,
     status_code=202,
 )
 def trigger_retrain():
-    """
-    Java to Python: 모델 재학습 요청
-    """
-    try:
-        retrain_model()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Retrain failed: {e}")
+    result = retrain_model()
+
+
+    if result.get("status") != "success":
+        logs = "\n".join(result.get("logs", []))
+        msg = f"Retrain failed: {result.get('error')}\n\nLOGS:\n{logs}"
+        raise HTTPException(status_code=500, detail=msg)
+
+    logs = "\n".join(result.get("logs", []))
+    msg = "Model retrain completed.\n\n" + logs[:1000]
 
     return RetrainResponse(
         jobType="RETRAIN",
         status="ACCEPTED",
-        message="Model retrain job completed (or queued).",
+        mae=result.get("mae"),
+        mape=result.get("mape"),
+        smape=result.get("smape"),
+        bestIteration=result.get("bestIteration"),
+        forecastGenerated=result.get("forecastGenerated", False),
+        message=msg,
     )
 
 
