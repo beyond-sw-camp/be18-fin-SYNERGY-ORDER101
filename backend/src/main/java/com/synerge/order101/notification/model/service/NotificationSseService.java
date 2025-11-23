@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class NotificationSseService {
@@ -20,17 +21,21 @@ public class NotificationSseService {
 
     private final Map<String, Map<String, Object>> eventCache = new ConcurrentHashMap<>();
 
-    public SseEmitter subscribe(String userID, String lastEventId) {
-        SseEmitter emitter = new SseEmitter(TIMEOUT);
-        emitters.computeIfAbsent(userID, k -> new CopyOnWriteArrayList<>()).add(emitter);
+    private final ConcurrentHashMap<String, AtomicLong> seqMap = new ConcurrentHashMap<>();
 
-        Runnable cleanup = () -> removeEmitter(userID, emitter);
+    public SseEmitter subscribe(String userId, String lastEventId) {
+        SseEmitter emitter = new SseEmitter(TIMEOUT);
+        CopyOnWriteArrayList<SseEmitter> list = emitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>());
+        list.clear();               // 기존 연결 제거
+        list.add(emitter);
+
+        Runnable cleanup = () -> removeEmitter(userId, emitter);
         emitter.onCompletion(cleanup);
         emitter.onTimeout(cleanup);
         emitter.onError(e -> cleanup.run());
 
         if(lastEventId != null && !lastEventId.isBlank()) {
-            Map<String, Object> cached = eventCache.getOrDefault(userID, Collections.emptyMap());
+            Map<String, Object> cached = eventCache.getOrDefault(userId, Collections.emptyMap());
 
             cached.entrySet().stream()
                     .filter(e -> e.getKey().compareTo(lastEventId) > 0)
@@ -52,12 +57,12 @@ public class NotificationSseService {
         return emitter;
     }
 
-    public void send(String userID, Object payload) {
-        String evenId = createEventId();
+    public void send(String userId, Object payload) {
+        String evenId = createEventId(userId);
 
-        eventCache.computeIfAbsent(userID, k -> new ConcurrentHashMap<>()).put(evenId, payload);
+        eventCache.computeIfAbsent(userId, k -> new ConcurrentHashMap<>()).put(evenId, payload);
 
-        CopyOnWriteArrayList<SseEmitter> list = emitters.getOrDefault(userID, new CopyOnWriteArrayList<>());
+        CopyOnWriteArrayList<SseEmitter> list = emitters.getOrDefault(userId, new CopyOnWriteArrayList<>());
 
         List<SseEmitter> dead = new ArrayList<>();
 
@@ -76,7 +81,7 @@ public class NotificationSseService {
             list.removeAll(dead);
         }
 
-        Map<String, Object> cache = eventCache.get(userID);
+        Map<String, Object> cache = eventCache.get(userId);
         if (cache != null && cache.size() > 500) {
             cache.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
@@ -85,8 +90,10 @@ public class NotificationSseService {
         }
     }
 
-    private String createEventId() {
-        return String.valueOf(System.currentTimeMillis());
+    private String createEventId(String userId) {
+        long now = System.currentTimeMillis();
+        long seq = seqMap.computeIfAbsent(userId, k -> new AtomicLong()).incrementAndGet();
+        return now + "-" + seq;
     }
 
     private void removeEmitter(String loginId, SseEmitter emitter) {

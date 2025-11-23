@@ -10,5 +10,5 @@ import java.util.List;
 public interface SupplierService {
     ItemsResponseDto<SupplierListRes> getSuppliers(int page, int numOfRows, String address);
 
-    SupplierDetailRes getSupplierDetail(Long supplierId, int numOfRows, int page);
+    SupplierDetailRes getSupplierDetail(Long supplierId, int numOfRows, int page, String keyword);
 }

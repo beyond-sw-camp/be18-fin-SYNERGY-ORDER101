@@ -57,7 +57,7 @@ public class Product {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<ProductSupplier> productSupplier = new ArrayList<>();
 
     public void update(String productCode, String productName, String description, BigDecimal price,

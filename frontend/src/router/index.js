@@ -98,7 +98,7 @@ const hqRoutes = [
     meta: { title: '상품 등록' },
   },
   {
-    path: '/hq/product/:code',
+    path: '/hq/product/:id',
     name: 'hq-product-detail',
     component: ProductDetailView,
     meta: { title: '상품 상세' },
