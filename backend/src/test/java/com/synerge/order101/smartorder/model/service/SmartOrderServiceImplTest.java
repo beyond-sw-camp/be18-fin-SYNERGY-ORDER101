@@ -105,7 +105,7 @@ public class SmartOrderServiceImplTest {
         given(supplier.getSupplierId()).willReturn(100L);
 
 
-        // 상품-공급사 매핑  
+        // 상품-공급사 매핑
         ProductSupplier mapping = mock(ProductSupplier.class);
         given(mapping.getLeadTimeDays()).willReturn(7);
         given(mapping.getSupplier()).willReturn(supplier);
