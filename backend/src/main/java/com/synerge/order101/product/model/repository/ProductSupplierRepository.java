@@ -24,4 +24,7 @@ WHERE ps.supplier.supplierId = :supplierId
             Pageable pageable
     );
 
-    Optional<ProductSupplier> findByProductAndSupplier(Product product, Supplier supplier);}
+    Optional<ProductSupplier> findByProductAndSupplier(Product product, Supplier supplier);
+
+    Optional<ProductSupplier> findByProduct(Product product);
+}

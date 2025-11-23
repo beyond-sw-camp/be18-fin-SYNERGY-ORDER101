@@ -1,8 +1,6 @@
 package com.synerge.order101.ai.controller;
 
-import com.synerge.order101.ai.model.dto.response.AiJobTriggerResponseDto;
-import com.synerge.order101.ai.model.dto.response.AiMetricResponseDto;
-import com.synerge.order101.ai.model.dto.response.DemandForecastResponseDto;
+import com.synerge.order101.ai.model.dto.response.*;
 import com.synerge.order101.ai.service.DemandForecastService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,7 +18,7 @@ public class DemandForecastController {
 
     private final DemandForecastService demandForecastService;
 
-    // 수요 옟측 실행 트리거
+    // 수요 예측 실행 트리거
     @PostMapping("/internal/ai/forecasts")
     public ResponseEntity<AiJobTriggerResponseDto> triggerForecast(
             @RequestParam("targetWeek")
@@ -32,19 +30,45 @@ public class DemandForecastController {
 
     // 수요 예측 목록 조회
     @GetMapping("/forecasts")
-    public ResponseEntity<List<DemandForecastResponseDto>> getForecasts(
-            @RequestParam(value = "targetWeek", required = false)
+    public ResponseEntity<List<DemandForecastListResponseDto>> getForecasts(
+            @RequestParam("targetWeek")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate targetWeek
-    ){
+    ) {
         return ResponseEntity.ok(demandForecastService.getForecasts(targetWeek));
+    }
+
+    //특정 기간 수요 예측 목록 조회
+    @GetMapping("/forecasts/range")
+    public ResponseEntity<List<DemandForecastListResponseDto>> getForecastsRange(
+            @RequestParam("from")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam("to")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to
+    ) {
+        return ResponseEntity.ok(demandForecastService.getForecastsRange(from, to));
+    }
+
+    // 차트용 시계열
+    @GetMapping("/forecasts/series")
+    public ResponseEntity<List<ForecastSeriesResponseDto>> getForecastSeries(
+            @RequestParam("from")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam("to")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate to
+    ) {
+        return ResponseEntity.ok(demandForecastService.getForecastSeries(from, to));
     }
 
     // 수요 예측 상세 조회
     @GetMapping("/forecasts/{demandForecastId}")
     public ResponseEntity<DemandForecastResponseDto> getForecast(
             @PathVariable Long demandForecastId
-    ){
+    ) {
         return ResponseEntity.ok(demandForecastService.getForecast(demandForecastId));
     }
 
@@ -65,9 +89,11 @@ public class DemandForecastController {
 
     // 모델 재학습 트리거
     @PostMapping("/internal/ai/model/retrain")
-    public ResponseEntity<AiJobTriggerResponseDto> triggerRtrain(){
+    public ResponseEntity<AiJobTriggerResponseDto> triggerRetrain(){
         return ResponseEntity.ok(demandForecastService.triggerRetrain());
     }
+
+
 
 
 }
