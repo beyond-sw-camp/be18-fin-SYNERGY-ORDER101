@@ -1,10 +1,7 @@
 package com.synerge.order101.ai.service;
 
 import com.synerge.order101.ai.exception.AiErrorCode;
-import com.synerge.order101.ai.model.dto.request.ForecastTriggerRequest;
-import com.synerge.order101.ai.model.dto.response.AiJobTriggerResponseDto;
-import com.synerge.order101.ai.model.dto.response.AiMetricResponseDto;
-import com.synerge.order101.ai.model.dto.response.DemandForecastResponseDto;
+import com.synerge.order101.ai.model.dto.response.*;
 import com.synerge.order101.ai.model.entity.DemandForecast;
 import com.synerge.order101.ai.repository.DemandForecastRepository;
 import com.synerge.order101.common.exception.CustomException;
@@ -24,15 +21,16 @@ import java.util.List;
 public class DemandForecastService {
     private final DemandForecastRepository demandForecastRepository;
     private final WebClient webClient;
+
     @Transactional
-    public AiJobTriggerResponseDto triggerForecast(LocalDate targetWeek){
-        ForecastTriggerRequest request =
-                new ForecastTriggerRequest(targetWeek.toString());
+    public AiJobTriggerResponseDto triggerForecast(LocalDate targetWeek) {
 
         try {
             webClient.post()
-                    .uri("/internal/ai/forecasts") //파이썬 엔드포인트
-                    .bodyValue(request)
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/internal/ai/forecasts")         //파이썬
+                            .queryParam("target_week", targetWeek.toString())
+                            .build())
                     .retrieve()
                     .toBodilessEntity()
                     .block();
@@ -73,6 +71,7 @@ public class DemandForecastService {
     }
 
 
+    // 스냅샷 리스트
     public List<LocalDateTime> getSnapshotList() {
         return demandForecastRepository
                 .findDistinctBySnapshotAtIsNotNullOrderBySnapshotAtDesc()
@@ -82,44 +81,60 @@ public class DemandForecastService {
                 .toList();
     }
 
-    public List<DemandForecastResponseDto> getForecasts(LocalDate targetWeek) {
-        List<DemandForecast> list = (targetWeek == null)
-                ? demandForecastRepository.findAll()
-                : demandForecastRepository.findByTargetWeek(targetWeek);
+
+    //특정 주차 수요 예측 목록
+    public List<DemandForecastListResponseDto> getForecasts(LocalDate targetWeek) {
+        List<DemandForecast> list = demandForecastRepository.findByTargetWeek(targetWeek);
+
+        if (list.isEmpty()) {
+            throw new CustomException(AiErrorCode.FORECAST_NOT_FOUND);
+        }
 
         return list.stream()
-                .map(this::toResponse)
+                .map(this::toListDto)
                 .toList();
     }
 
+    // 특정 기간 수요예측 목록
+    public List<DemandForecastListResponseDto> getForecastsRange(LocalDate from, LocalDate to) {
+        List<DemandForecast> list =
+                demandForecastRepository.findByTargetWeekBetween(from, to);
+
+        if (list.isEmpty()) {
+            throw new CustomException(AiErrorCode.FORECAST_NOT_FOUND);
+        }
+
+        return list.stream()
+                .map(this::toListDto)
+                .toList();
+    }
+
+    //차트용 시계열 -  판매 내역 + 예측
+    public List<ForecastSeriesResponseDto> getForecastSeries(LocalDate from, LocalDate to) {
+        List<DemandForecast> list =
+                demandForecastRepository.findByTargetWeekBetween(from, to);
+
+        return list.stream()
+                .map(df -> ForecastSeriesResponseDto.builder()
+                        .week(df.getTargetWeek())
+                        .actualQty(df.getActualOrderQty() != null
+                                ? df.getActualOrderQty().doubleValue()
+                                : null)
+                        .forecastQty(df.getYPred() != null
+                                ? df.getYPred().doubleValue()
+                                : null)
+                        .build())
+                .toList();
+    }
+
+    // 단건 상세 조회
     public DemandForecastResponseDto getForecast(Long id) {
         DemandForecast entity = demandForecastRepository.findById(id)
                 .orElseThrow(() -> new CustomException(AiErrorCode.FORECAST_NOT_FOUND));
-        return toResponse(entity);
+        return toDetailDto(entity);
     }
 
-
-
-
-
-    private DemandForecastResponseDto toResponse(DemandForecast df) {
-        return DemandForecastResponseDto.builder()
-                .id(df.getDemandForecastId())
-                .warehouseId(df.getWarehouse().getWarehouseId())
-                .storeId(df.getStore().getStoreId())
-                .productId(df.getProduct().getProductId())
-                .targetWeek(df.getTargetWeek())
-                .predictedQty(df.getYPred())
-                .actualOrderQty(df.getActualOrderQty())
-                .mape(df.getMape())
-                .externalFactorsJson(df.getExternalFactors())
-                .snapshotAt(df.getSnapshotAt())
-                .updatedAt(df.getUpdatedAt())
-                .build();
-    }
-
-
-
+    // 모델 매트릭 조회
     public AiMetricResponseDto getMetrics() {
         List<DemandForecast> all = demandForecastRepository.findAll();
 
@@ -143,7 +158,9 @@ public class DemandForecastService {
         }
 
         if (n == 0) {
-            return AiMetricResponseDto.builder().mae(0.0).mape(0.0).smape(0.0).build();
+            return AiMetricResponseDto.builder()
+                    .mae(0.0).mape(0.0).smape(0.0)
+                    .build();
         }
 
         mae /= n;
@@ -157,8 +174,46 @@ public class DemandForecastService {
                 .build();
     }
 
+    private DemandForecastListResponseDto toListDto(DemandForecast df) {
+        var product = df.getProduct();
 
+        return DemandForecastListResponseDto.builder()
+                .demandForecastId(df.getDemandForecastId())
+                .productId(product != null ? product.getProductId() : null)
+                .productCode(product != null ? product.getProductCode() : null)
+                .productName(product != null ? product.getProductName() : null)
+                .targetWeek(df.getTargetWeek())
+                .yPred(df.getYPred())
+                .snapshotAt(df.getSnapshotAt())
+                .updatedAt(df.getUpdatedAt())
+                .build();
+    }
 
+    private DemandForecastResponseDto toDetailDto(DemandForecast df) {
+        Long warehouseId = (df.getWarehouse() != null)
+                ? df.getWarehouse().getWarehouseId()
+                : null;
 
+        Long storeId = (df.getStore() != null)
+                ? df.getStore().getStoreId()
+                : null;
 
+        Long productId = (df.getProduct() != null)
+                ? df.getProduct().getProductId()
+                : null;
+
+        return DemandForecastResponseDto.builder()
+                .id(df.getDemandForecastId())
+                .warehouseId(warehouseId)
+                .storeId(storeId)
+                .productId(productId)
+                .targetWeek(df.getTargetWeek())
+                .predictedQty(df.getYPred())
+                .snapshotAt(df.getSnapshotAt())
+                .updatedAt(df.getUpdatedAt())
+                .build();
+    }
 }
+
+
+

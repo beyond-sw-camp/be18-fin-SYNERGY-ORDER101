@@ -1,6 +1,7 @@
 package com.synerge.order101.ai.model.dto.response;
 
 import com.synerge.order101.ai.model.entity.SmartOrder;
+import com.synerge.order101.common.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,13 +15,13 @@ import java.util.Date;
 @Builder
 public class SmartOrderResponseDto {
     private Long id;
-    private Long storeId;
+    private Long supplierId;
     private Long productId;
     private Long demandForecastId;
     private LocalDate targetWeek;
     private Integer recommendedOrderQty;
     private Integer forecastQty;
-    private SmartOrder.SmartOrderStatus smartOrderStatus;
+    private OrderStatus smartOrderStatus;
     private LocalDateTime snapshotAt;
     private LocalDateTime updatedAt;
 }
