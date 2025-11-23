@@ -105,6 +105,14 @@ def main():
     else:
         dfw["promo_flag"] = 0
 
+    #직전 주 프로모션 여부
+    dfw["promo_flag_prev"] = (
+        dfw.groupby(keys)["promo_flag"]
+           .shift(1)
+           .fillna(0)
+           .astype(int)
+    )
+
     dfw = add_time_features(dfw)
 
     if EXT.exists():
