@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.synerge.order101.ai.model.dto.response.RetrainResultResponseDto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,27 +49,32 @@ public class DemandForecastServiceImpl implements DemandForecastService {
     }
 
 
-    //모델 재학습
+    // 모델 재학습
     @Transactional
-    public AiJobTriggerResponseDto triggerRetrain(){
+    public RetrainResultResponseDto triggerRetrain() {
         try {
-            webClient.post()
-                    .uri("/internal/ai/model/retrain") //파이썬 엔드포인트
+            RetrainResultResponseDto res = webClient.post()
+                    .uri("/internal/ai/model/retrain") // 파이썬 엔드포인트
                     .retrieve()
-                    .toBodilessEntity()
+                    .bodyToMono(RetrainResultResponseDto.class)
                     .block();
+
+            if (res == null) {
+                throw new CustomException(AiErrorCode.AI_SERVER_ERROR);
+            }
+
+            // log.info("[AI] retrain result: mae={}, mape={}, smape={}",
+            //         res.getMae(), res.getMape(), res.getSmape());
+
+            return res;
+
         } catch (WebClientResponseException ex) {
             throw new CustomException(AiErrorCode.AI_SERVER_ERROR);
         } catch (Exception ex) {
             throw new CustomException(AiErrorCode.AI_SERVER_ERROR);
         }
-
-        return AiJobTriggerResponseDto.builder()
-                .jobType("RETRAIN")
-                .status("ACCEPTED")
-                .message("Python AI 서버에 재학습 요청 전송 완료.")
-                .build();
     }
+
 
 
     // 스냅샷 리스트

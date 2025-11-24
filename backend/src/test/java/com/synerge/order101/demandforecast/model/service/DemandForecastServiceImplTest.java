@@ -109,30 +109,42 @@ class DemandForecastServiceImplTest {
     // 재학습 트리거
     @Test
     @Order(3)
-    @DisplayName("triggerRetrain")
-    // Python AI 서버 재학습 요청 성공
+    @DisplayName("triggerRetrain - Python AI 서버 재학습 요청 성공")
     void triggerRetrain_success() {
         // given
+        RetrainResultResponseDto dummy = RetrainResultResponseDto.builder()
+                .jobType("RETRAIN")
+                .status("ACCEPTED")
+                .mae(10.0)
+                .mape(20.0)
+                .smape(15.0)
+                .bestIteration(800)
+                .forecastGenerated(true)
+                .message("Model retrain completed.")
+                .build();
+
         given(webClient.post()).willReturn(requestBodyUriSpec);
         given(requestBodyUriSpec.uri("/internal/ai/model/retrain"))
                 .willReturn(requestBodySpec);
         given(requestBodySpec.retrieve()).willReturn(responseSpec);
-        given(responseSpec.toBodilessEntity())
-                .willReturn(Mono.just(ResponseEntity.ok().build()));
+        given(responseSpec.bodyToMono(RetrainResultResponseDto.class))
+                .willReturn(Mono.just(dummy));
 
         // when
-        AiJobTriggerResponseDto result = demandForecastService.triggerRetrain();
+        RetrainResultResponseDto result = demandForecastService.triggerRetrain();
 
         // then
         assertThat(result.getJobType()).isEqualTo("RETRAIN");
         assertThat(result.getStatus()).isEqualTo("ACCEPTED");
-        assertThat(result.getMessage()).contains("재학습 요청");
+        // 파이썬 쪽 메시지 형태에 맞게 assert
+        assertThat(result.getMessage()).contains("Model retrain completed");
 
         verify(webClient).post();
         verify(requestBodyUriSpec).uri("/internal/ai/model/retrain");
         verify(requestBodySpec).retrieve();
-        verify(responseSpec).toBodilessEntity();
+        verify(responseSpec).bodyToMono(RetrainResultResponseDto.class);
     }
+
 
     @Test
     @Order(4)

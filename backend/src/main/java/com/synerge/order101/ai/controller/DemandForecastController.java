@@ -89,11 +89,9 @@ public class DemandForecastController {
 
     // 모델 재학습 트리거
     @PostMapping("/internal/ai/model/retrain")
-    public ResponseEntity<AiJobTriggerResponseDto> triggerRetrain(){
+    public ResponseEntity<RetrainResultResponseDto> triggerRetrain() {
         return ResponseEntity.ok(demandForecastService.triggerRetrain());
     }
-
-
 
 
 }

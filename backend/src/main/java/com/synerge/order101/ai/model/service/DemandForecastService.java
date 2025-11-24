@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface DemandForecastService {
     AiJobTriggerResponseDto triggerForecast(LocalDate targetWeek);
-    AiJobTriggerResponseDto triggerRetrain();
+    RetrainResultResponseDto triggerRetrain();
     List<LocalDateTime> getSnapshotList();
     List<DemandForecastListResponseDto> getForecasts(LocalDate targetWeek);
     List<DemandForecastListResponseDto> getForecastsRange(LocalDate from, LocalDate to);
