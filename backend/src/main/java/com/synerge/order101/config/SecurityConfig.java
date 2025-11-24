@@ -34,7 +34,7 @@ public class SecurityConfig {
                         customizer.configurationSource(getCorsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // 1) 로그인 관련
-                        .requestMatchers("/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/login", "/product-images/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
 
                         // 나머지 요청은 일단 모두 허용.

@@ -20,6 +20,8 @@ public class LoginResponse {
 
     private final String name;
 
+    private final String phone;
+
     private final Role role;
 
     private final String type;

@@ -36,9 +36,10 @@ public class SupplierController {
     @GetMapping("/{supplierId}")
     public ResponseEntity<BaseResponseDto<SupplierDetailRes>> getSupplierDetail(@PathVariable Long supplierId,
                                                                                 @RequestParam(defaultValue = "1") int page,
-                                                                                @RequestParam(defaultValue = "10") int numOfRows) {
+                                                                                @RequestParam(defaultValue = "10") int numOfRows,
+                                                                                @RequestParam(required = false) String keyword) {
 
-        SupplierDetailRes res = supplierService.getSupplierDetail(supplierId, numOfRows, page);
+        SupplierDetailRes res = supplierService.getSupplierDetail(supplierId, numOfRows, page, keyword);
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, res));
     }
 }

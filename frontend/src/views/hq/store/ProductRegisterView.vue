@@ -8,56 +8,56 @@
 
         <div class="form-row">
           <label>제품명</label>
-          <input v-model="form.name" placeholder="제품명을 입력하세요" class="input" />
+          <input v-model="form.productName" placeholder="제품명을 입력하세요" class="input" />
         </div>
 
         <div class="form-row">
           <label>상품 코드</label>
-          <input v-model="form.code" placeholder="상품 코드를 입력하세요" class="input" />
+          <input v-model="form.productCode" placeholder="상품 코드를 입력하세요" class="input" />
         </div>
 
         <div class="form-row">
           <label>대분류</label>
-          <select v-model="form.large" class="input">
-            <option value="">선택</option>
-            <option>생활가전</option>
-            <option>전자제품</option>
-            <option>식품</option>
+          <select v-model.number="selectedLargeId" class="input" @change="onLargeChange">
+            <option :value="null">선택</option>
+            <option v-for="c in largeCategories" :key="c.id" :value="c.id">
+              {{ c.name }}
+            </option>
           </select>
         </div>
 
         <div class="form-row">
           <label>중분류</label>
-          <select v-model="form.medium" class="input">
-            <option value="">선택</option>
-            <option>세탁기</option>
-            <option>냉장고</option>
+          <select
+            v-model.number="selectedMediumId"
+            class="input"
+            :disabled="!selectedLargeId"
+            @change="onMediumChange"
+          >
+            <option :value="null">선택</option>
+            <option v-for="c in mediumCategories" :key="c.id" :value="c.id">
+              {{ c.name }}
+            </option>
           </select>
         </div>
 
         <div class="form-row">
           <label>소분류</label>
-          <select v-model="form.small" class="input">
-            <option value="">선택</option>
-            <option>드럼세탁기</option>
-            <option>통돌이</option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <label>단위</label>
-          <select v-model="form.unit" class="input">
-            <option value="개">개</option>
-            <option value="박스">박스</option>
+          <select v-model.number="selectedSmallId" class="input" :disabled="!selectedMediumId">
+            <option :value="null">선택</option>
+            <option v-for="c in smallCategories" :key="c.id" :value="c.id">
+              {{ c.name }}
+            </option>
           </select>
         </div>
 
         <div class="form-row">
           <label>공급사</label>
-          <select v-model="form.supplier" class="input">
-            <option value="">공급사 선택</option>
-            <option value="supplier-a">공급사 A</option>
-            <option value="supplier-b">공급사 B</option>
+          <select v-model="selectedSupplierId" class="input">
+            <option :value="null">공급사 선택</option>
+            <option v-for="s in suppliers" :key="s.supplierId" :value="s.supplierId">
+              {{ s.supplierName }}
+            </option>
           </select>
         </div>
 
@@ -68,7 +68,7 @@
 
         <div class="form-row toggle-row">
           <label>활성 상태</label>
-          <input type="checkbox" v-model="form.active" />
+          <input type="checkbox" v-model="form.status" />
         </div>
 
         <div class="form-row">
@@ -86,38 +86,22 @@
 
         <div class="image-drop">
           <div class="image-placeholder">
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 16V8"
-                stroke="#9CA3AF"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M8 12L12 8L16 12"
-                stroke="#9CA3AF"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke="#E5E7EB" stroke-width="1.5" />
-            </svg>
             <div class="hint">이미지 파일을 여기에 끌어다 놓거나 클릭하여 업로드하세요.</div>
           </div>
-          <input type="file" accept="image/*" @change="onFileChange" class="file-input" />
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            @change="onFileChange"
+            class="file-input"
+          />
         </div>
 
         <div class="image-actions">
           <button class="btn-upload" @click="triggerFile">이미지 업로드</button>
           <div v-if="preview" class="preview-box">
             <img :src="preview" alt="preview" />
+            <button class="btn-remove" @click="clearImage" type="button">삭제</button>
           </div>
         </div>
       </section>
@@ -125,70 +109,142 @@
 
     <div class="actions">
       <button class="btn-cancel" @click="onCancel">취소</button>
-      <button class="btn-save" @click="onSave">저장</button>
+      <button class="btn-save" :disabled="saving" @click="onSave">
+        {{ saving ? '저장 중...' : '저장' }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { createProduct } from '@/components/api/product/productService'
+
+const router = useRouter()
+const saving = ref(false)
 
 const form = reactive({
-  name: '',
-  code: '',
-  large: '',
-  medium: '',
-  small: '',
-  unit: '개',
-  supplier: '',
+  productName: '',
+  productCode: '',
   price: 0,
-  active: true,
+  status: true,
   description: '',
 })
 
 const fileInput = ref(null)
+const imageFile = ref(null)
 const preview = ref(null)
 
-function triggerFile() {
-  // click the hidden file input
-  const el = document.querySelector('.file-input')
-  if (el) el.click()
-}
+const triggerFile = () => fileInput.value?.click()
 
-function onFileChange(e) {
-  const f = e.target.files && e.target.files[0]
+const onFileChange = (e) => {
+  const f = e.target.files?.[0]
   if (!f) return
+  imageFile.value = f
+
   const reader = new FileReader()
-  reader.onload = (ev) => {
-    preview.value = ev.target.result
-  }
+  reader.onload = (ev) => (preview.value = ev.target.result)
   reader.readAsDataURL(f)
 }
 
-function onSave() {
-  if (!form.name || !form.code) {
+const clearImage = () => {
+  imageFile.value = null
+  preview.value = null
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+const largeCategories = ref([])
+const mediumCategories = ref([])
+const smallCategories = ref([])
+
+const selectedLargeId = ref(null)
+const selectedMediumId = ref(null)
+const selectedSmallId = ref(null)
+
+const fetchLarge = async () => {
+  const res = await axios.get('/api/v1/categories/top')
+  largeCategories.value = res.data
+}
+
+const fetchChildren = async (parentId) => {
+  if (!parentId) return []
+  const res = await axios.get(`/api/v1/categories/${parentId}/children`)
+  return res.data
+}
+
+const onLargeChange = async () => {
+  selectedMediumId.value = null
+  selectedSmallId.value = null
+  mediumCategories.value = await fetchChildren(selectedLargeId.value)
+  smallCategories.value = []
+}
+
+const onMediumChange = async () => {
+  selectedSmallId.value = null
+  smallCategories.value = await fetchChildren(selectedMediumId.value)
+}
+
+const suppliers = ref([])
+const selectedSupplierId = ref(null)
+
+const fetchSuppliers = async () => {
+  const res = await axios.get('/api/v1/suppliers', {
+    params: { page: 1, numOfRows: 1000 },
+  })
+  suppliers.value = res.data.items
+}
+
+const onSave = async () => {
+  if (!form.productName || !form.productCode) {
     alert('제품명과 상품 코드는 필수입니다.')
     return
   }
-  // TODO: call API to save product
-  console.log('saving product', { ...form })
-  alert('저장되었습니다 (샘플).')
+  if (!selectedSmallId.value) {
+    alert('소분류를 선택해주세요.')
+    return
+  }
+  const req = {
+    productName: form.productName,
+    productCode: form.productCode,
+    price: form.price,
+    status: form.status,
+    description: form.description,
+    imageUrl: null, // 파일 올리면 백단이 덮어씀
+    categoryLargeId: selectedLargeId.value,
+    categoryMediumId: selectedMediumId.value,
+    categorySmallId: selectedSmallId.value,
+    supplierId: selectedSupplierId.value,
+  }
+  saving.value = true
+  try {
+    const created = await createProduct(req, imageFile.value)
+    alert('상품이 등록되었습니다.')
+
+    const newId = created?.productId
+    console.log(newId)
+    if (newId) {
+      router.push({ name: 'hq-product-detail', params: { id: newId } })
+    } else {
+      router.push({ name: 'hq-products-list' })
+    }
+  } catch (e) {
+    console.error(e)
+    alert(e?.response?.data?.message || '상품 등록에 실패했습니다.')
+  } finally {
+    saving.value = false
+  }
 }
 
-function onCancel() {
-  // reset form
-  form.name = ''
-  form.code = ''
-  form.large = ''
-  form.medium = ''
-  form.small = ''
-  form.unit = '개'
-  form.supplier = ''
-  form.price = 0
-  form.active = true
-  form.description = ''
-  preview.value = null
+const onCancel = () => {
+  router.back()
 }
+
+onMounted(() => {
+  fetchLarge()
+  fetchSuppliers()
+})
 </script>
 
 <style scoped>
@@ -297,6 +353,15 @@ select {
   border: 1px solid #e5e7eb;
   padding: 10px 14px;
   border-radius: 8px;
+}
+
+.btn-remove {
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 @media (max-width: 1024px) {

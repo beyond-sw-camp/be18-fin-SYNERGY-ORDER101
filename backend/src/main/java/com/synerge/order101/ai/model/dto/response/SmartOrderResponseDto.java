@@ -1,6 +1,5 @@
 package com.synerge.order101.ai.model.dto.response;
 
-import com.synerge.order101.ai.model.entity.SmartOrder;
 import com.synerge.order101.common.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +7,6 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Getter
 @AllArgsConstructor

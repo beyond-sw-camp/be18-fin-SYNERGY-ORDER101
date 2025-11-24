@@ -2,6 +2,7 @@ package com.synerge.order101.notification.model.service;
 
 
 import com.sun.security.auth.UserPrincipal;
+import com.synerge.order101.ai.model.entity.SmartOrder;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
@@ -12,6 +13,7 @@ import com.synerge.order101.notification.model.entity.Notification;
 import com.synerge.order101.notification.model.repository.NotificationRepository;
 import com.synerge.order101.order.model.entity.StoreOrder;
 import com.synerge.order101.purchase.model.entity.Purchase;
+import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -232,6 +234,52 @@ public class NotificationService {
             notificationRepository.save(notification);
 
             notificationSseService.send(String.valueOf(hq.getUserId()), notification);
+        }
+    }
+
+    @Transactional
+    public void notifySmartOrderCreatedToHq(List<User> hqList, Supplier supplier, List<SmartOrder> smartOrderList) {
+        String title = "자동 생성된 스마트 발주";
+        String body = String.format(
+                "%s 공급사에 대한 스마트발주가 생성되었습니다.\n- 스마트발주 건수: %d\n",
+                supplier.getSupplierName(),
+                smartOrderList.size()
+        );
+
+        for (User hq : hqList) {
+            Notification notification = Notification.builder()
+                    .userId(hq.getUserId())
+                    .supplierId(supplier.getSupplierId())
+                    .smartOrderId(smartOrderList.get(0).getSmartOrderId())
+                    .title(title)
+                    .body(body)
+                    .type(NotificationType.AUTO_SMART_ORDER_CREATED)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            notificationRepository.save(notification);
+
+            notificationSseService.send(String.valueOf(hq.getUserId()), notification);
+        }
+    }
+
+    @Transactional
+    public void notifySmartOrderApprovalToAdmins(SmartOrder smartOrder, List<User> admins) {
+        for (User admin : admins) {
+            Notification notification = Notification.builder()
+                    .userId(admin.getUserId())
+                    .smartOrderId(smartOrder.getSmartOrderId())
+                    .title("발주 승인 요청!")
+                    .body(
+                            "승인 요청이 필요한 스마트발주서가 있습니다.\n"
+                    )
+                    .type(NotificationType.PURCHASE_APPROVAL_REQUEST)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            notificationRepository.save(notification);
+
+            notificationSseService.send(String.valueOf(admin.getUserId()), notification);
         }
     }
 
