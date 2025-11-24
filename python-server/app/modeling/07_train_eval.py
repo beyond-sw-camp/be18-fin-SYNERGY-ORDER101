@@ -17,7 +17,7 @@ FEATURE_IMPORTANCE_CSV = BASE / "feature_importance.csv"
 
 ID_KEYS = ["warehouse_id","store_id","sku_id","region","target_date","split"]
 TARGET = "y"
-VAL_WEEKS = 12
+VAL_WEEKS = 26
 LEAKY = {"actual_order_qty", "share_norm", "promo_flag"}
 
 def smape(y_true, y_pred):
@@ -89,19 +89,19 @@ def main():
 
     model = LGBMRegressor(
         objective="poisson",
-        n_estimators=4000,
-        learning_rate=0.015,
-        num_leaves=63,
-        max_depth=-1,              
-        min_child_samples=64,
-        min_gain_to_split=0.02,
+        n_estimators=3000,
+        learning_rate=0.02,
+        num_leaves=31,    
+        max_depth=-1,
+        min_child_samples=128,  
+        min_gain_to_split=0.05,  
         subsample=0.7,
         subsample_freq=1,
-        colsample_bytree=0.7,
-        reg_alpha=3.0,
-        reg_lambda=3.0,
+        colsample_bytree=0.6, 
+        reg_alpha=5.0,         
+        reg_lambda=5.0,   
         random_state=42,
-        verbosity=-1
+        verbosity=-1,
     )
     model.fit(
         X_tr, y_tr,

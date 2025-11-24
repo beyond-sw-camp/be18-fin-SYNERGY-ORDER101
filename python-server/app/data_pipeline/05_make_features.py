@@ -22,6 +22,9 @@ MAS  = [4,8,12]
 TEST_WEEKS = 52
 MIN_HISTORY_WEEKS = 16
 
+
+MIN_DATE = pd.Timestamp("2020-01-02")
+
 def add_time_features(df):
     dt = pd.to_datetime(df["target_date"])
     df["year"] = dt.dt.year
@@ -150,6 +153,8 @@ def main():
             dfw[c] = dfw[c].fillna(0)
 
     dfw["y"] = dfw["actual_order_qty"].astype(float)
+
+    dfw = dfw[dfw["target_date"] >= MIN_DATE].copy()
 
     cnt = dfw.groupby(keys)["y"].transform("count")
     dfw = dfw[cnt >= MIN_HISTORY_WEEKS].copy()

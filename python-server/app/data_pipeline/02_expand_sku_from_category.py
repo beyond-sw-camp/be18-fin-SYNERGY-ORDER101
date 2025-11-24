@@ -109,29 +109,43 @@ def _time_varying_shares(one_cat_week_df, sku_meta, rng):
     promos = rng.random((len(g), n)) < PROMO_RATE
 
     rows = []
+
+
     for t_idx, dt in enumerate(g["target_date"]):
         # 랜덤워크(모멘텀+가우시안)
-        logits = RHO*logits + (1-RHO)*np.log(base) + rng.normal(0, RW_SIGMA, size=n)
-        s = np.exp(logits - np.max(logits)); s /= s.sum()
-
-        # 미세 잡음 + 프로모션
-        s = s * (1 + (rng.random(n)-0.5)*2*NOISE_SCALE)
-        if promos[t_idx].any():
-            s = s * (1 + promos[t_idx]*PROMO_STRENGTH)
-
-        # 출시/수명 곱 → 재정규화
-        life = np.array([_life_multiplier(sku_rows.loc[i,"launch_date"], dt) for i in range(n)])
-        s = s * life
-        if s.sum() <= 0:
-            s = base.copy()
+        logits = RHO*logits + (1 - RHO)*np.log(base) + rng.normal(0, RW_SIGMA, size=n)
+        s = np.exp(logits - np.max(logits))
         s /= s.sum()
 
-        # 행 누적
+        # 미세 잡음 + 프로모션
+        s = s * (1 + (rng.random(n) - 0.5) * 2 * NOISE_SCALE)
+        if promos[t_idx].any():
+            s = s * (1 + promos[t_idx] * PROMO_STRENGTH)
+
+        # 출시/수명 곱 → 재정규화
+        life = np.array([_life_multiplier(sku_rows.loc[i, "launch_date"], dt) for i in range(n)])
+
+        # 아직 한 개도 출시되지 않은 주 → 이 주는 "우리 카탈로그 기준" 수요 0으로 본다
+        if life.sum() <= 0:
+            rows.append(pd.DataFrame({
+                "target_date": dt,
+                "sku_id": sku_rows["sku_id"].tolist(),
+                "share_norm": np.zeros(n, dtype=float),
+            }))
+            continue
+
+        # 출시된 SKU만 비중 부여
+        s = s * life
+        s /= s.sum()
+
         rows.append(pd.DataFrame({
             "target_date": dt,
             "sku_id": sku_rows["sku_id"].tolist(),
             "share_norm": s
         }))
+
+
+        
     rep = pd.concat(rows, ignore_index=True)
     rep = rep.merge(g[["target_date","actual_order_qty"]], on="target_date", how="left")
     rep["sku_qty"] = (rep["actual_order_qty"] * rep["share_norm"]).round(0).astype(int)
