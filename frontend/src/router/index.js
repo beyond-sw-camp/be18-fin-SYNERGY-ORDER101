@@ -20,6 +20,7 @@ const FranchiseRegistrationView = () =>
 const SupplierListView = () => import('../views/hq/suppliers/SupplierListView.vue')
 const SupplierDetailView = () => import('../views/hq/suppliers/SupplierDetailView.vue')
 const SettlementListView = () => import('../views/hq/settlement/SettlementListView.vue')
+const SettlementReportView = () => import('../views/hq/settlement/SettlementReportView.vue')
 const DailySettlementView = () => import('../views/hq/settlement/DailySettlementView.vue')
 const FranchiseOrderApprovalView = () =>
   import('../views/hq/franchise/FranchiseOrderApprovalView.vue')
@@ -120,6 +121,12 @@ const hqRoutes = [
     name: 'hq-settlement-list',
     component: SettlementListView,
     meta: { title: '정산 목록' },
+  },
+  {
+    path: '/hq/settlement/report',
+    name: 'hq-settlement-report',
+    component: SettlementReportView,
+    meta: { title: '정산 리포트' },
   },
   {
     path: '/hq/users/',

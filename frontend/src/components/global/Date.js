@@ -55,3 +55,11 @@ export const getFutureDateString = (days) => {
 
     return formatDateToString(date);
 };
+
+export const getPastDateString = (days) => {
+    const date = new Date();
+    // setDate()를 사용하여 자동으로 월과 연도가 조정되도록 계산
+    date.setDate(date.getDate() - days);
+
+    return formatDateToString(date);
+};

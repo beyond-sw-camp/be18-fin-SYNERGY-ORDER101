@@ -80,26 +80,25 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import qs from 'qs'
 import Money from '@/components/global/Money.vue' // Money 컴포넌트 추가 (템플릿에 사용됨)
 
 /**
  * 날짜 계산 헬퍼 함수
  */
-import { formatDateTimeMinute, getTodayString, getFutureDateString } from '@/components/global/Date.js';
+import { formatDateTimeMinute, getTodayString, getPastDateString } from '@/components/global/Date.js';
 
 // 기본값 설정 (오늘 및 오늘 + 30일)
 const todayString = getTodayString();
-const future30DaysString = getFutureDateString(30);
+const past30DaysString = getPastDateString(30);
 
 
 const searchConditions = ref({
   types: ['AR', 'AP'],
   statuses: ['DRAFT', 'ISSUED', 'VOID'],
   // 수정된 기본값: 오늘 날짜
-  fromDate: todayString,
-  // 수정된 기본값: 오늘 날짜 + 30일
-  toDate: future30DaysString,
+  fromDate: past30DaysString,
+  // 수정된 기본값: 오늘 날짜 - 30일
+  toDate: todayString,
   searchText: '',
 })
 
@@ -119,7 +118,7 @@ const fetchSettlements = async () => {
     const response = await axios.get(url, {
       params: params,
       paramsSerializer: params => {
-        return qs.stringify(params, { arrayFormat: 'repeat' })
+        return new URLSearchParams(params).toString();
       }
     });
 

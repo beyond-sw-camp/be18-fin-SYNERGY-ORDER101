@@ -35,7 +35,9 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
                     statusIn(cond.getStatuses()),
                     typeIn(cond.getTypes()),
                     searchTextContains(cond.getSearchText()),
-                    DateBetween(cond.getFromDate(), cond.getToDate())
+                    DateBetween(cond.getFromDate(), cond.getToDate()),
+                    supplierIdEq(cond.getVendorId()),
+                    storeIdEq(cond.getVendorId())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -90,7 +92,20 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         return settlement.settlementType.in(enumTypes);
     }
 
-    // SettlementNumber 필드명 불일치 수정 (searchText로 통합 가정)
+    private BooleanExpression supplierIdEq(Long supplierId) {
+        if (supplierId == null) {
+            return null;
+        }
+        return settlement.supplier.supplierId.eq(supplierId);
+    }
+
+    private BooleanExpression storeIdEq(Long storeId) {
+        if (storeId == null) {
+            return null;
+        }
+        return settlement.store.storeId.eq(storeId);
+    }
+
     private BooleanExpression searchTextContains(String searchText) {
         if (!StringUtils.hasText(searchText)) {
             return null;
@@ -99,7 +114,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         // settlement_no (DB), supplier_id/store_id (DB)를 사용해야 함
         return settlement.settlementNo.contains(searchText)
                 .or(settlement.supplier.supplierName.contains(searchText));
-        // 관계 엔티티 조회는 복잡할 수 있으므로, 실제 DB 스키마에 따라 JOIN 필요
+        // 관계 엔티티 조회는 복잡할 수 있으므로, 실+제 DB 스키마에 따라 JOIN 필요
     }
 
 

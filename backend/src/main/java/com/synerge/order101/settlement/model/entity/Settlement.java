@@ -81,6 +81,11 @@ public class Settlement {
         this.settlementStatus = SettlementStatus.DRAFT;
     }
 
+    public enum VendorType {
+        STORE,
+        SUPPLIER
+    }
+
     public String generateSettlementNo() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String datePart = LocalDateTime.now().format(formatter);
