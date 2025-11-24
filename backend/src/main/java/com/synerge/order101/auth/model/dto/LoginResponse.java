@@ -26,6 +26,8 @@ public class LoginResponse {
 
     private final String type;
 
+    private final Long storeId;
+
     private final long issuedAt;
 
     private final long expiresAt;
