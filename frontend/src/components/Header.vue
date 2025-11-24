@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { logout } from '../stores/auth'
+import { useAuthStore } from '../stores/authStore'
 
 // use the provided flaticon image URL
 const notificationIcon = 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
@@ -34,7 +34,8 @@ const goToMyPage = () => {
 
 const handleLogoutClick = () => {
   showProfileMenu.value = false
-  logout()
+  const authStore = useAuthStore()
+  authStore.logout()
   router.push('/login')
 }
 

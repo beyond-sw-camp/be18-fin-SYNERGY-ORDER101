@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { logout } from '../stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 // SVG icon components available in the project
 import IconEcosystem from './icons/IconEcosystem.vue'
 import IconDocumentation from './icons/IconDocumentation.vue'
@@ -21,7 +21,8 @@ const toggleSection = (id) => emit('toggle', id)
 const isSectionExpanded = (id) => !!props.expanded[id]
 
 const handleLogout = () => {
-  logout()
+  const authStore = useAuthStore()
+  authStore.logout()
   router.push('/login')
 }
 

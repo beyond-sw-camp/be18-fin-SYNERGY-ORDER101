@@ -1,11 +1,11 @@
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME:order101}
+    name: order101
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATABASE_PASSWORD}
+    url: jdbc:mariadb://121.170.161.72:31203/order101
+    username: pjw1480
+    password: anigeunde01
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,13 +15,16 @@ spring:
       hibernate.format_sql: true
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT:30701}
-      password: ${SPRING_DATA_REDIS_PASSWORD}
+      host: localhost
+      port: 6379
+      password: sh
 server:
   port: 8080
 jwt:
-  secret: ${JWT_SECRET}
+  secret: "eW91ci1zdHJvbmctcmFuZG9tLXNlY3JldC1rZXktaGVyZQ=="
+ai:
+  python:
+    base-url: http://localhost:8000/
 
 logging:
   level:
@@ -29,7 +32,10 @@ logging:
     org.hibernate: DEBUG
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.resource.transaction: INFO
+    org.hibernate.orm.query: INFO
+
 
     # kakao:
     #   client-id: ${KAKAO_CLIENT_ID}

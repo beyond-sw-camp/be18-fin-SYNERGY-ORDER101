@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import { useAuthStore } from '@/stores/authStore'
 const DashboardView = () => import('../views/DashboardView.vue')
 const PagePlaceholder = () => import('../views/PagePlaceholder.vue')
 const OrderCreateView = () => import('../views/hq/orders/OrderCreateView.vue')
@@ -214,7 +214,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'dashboard', component: DashboardView, meta: { title: '대시보드' } },
-    { path: '/login', name: 'login', component: LoginView, meta: { title: '로그인' } },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+      meta: { title: '로그인', public: true },
+    },
     { path: '/mypage', name: 'mypage', component: MyView, meta: { title: '내 정보' } },
     ...hqRoutes,
     ...storeRoutes,
@@ -222,4 +227,71 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+
+  // derive token and expiry values
+  const token = authStore.userInfo && authStore.userInfo.accessToken
+  const expiresAtRaw = authStore.userInfo && authStore.userInfo.expiresAt
+  const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : 0
+
+  let loggedIn = !!(token && expiresAt > Date.now())
+
+  // try silent refresh when we have a token but it's expired
+  if (token && !loggedIn && typeof authStore.refreshAccessToken === 'function') {
+    try {
+      const refreshed = await authStore.refreshAccessToken()
+      if (refreshed) {
+        const newExpires = authStore.userInfo && Number(authStore.userInfo.expiresAt)
+        loggedIn = !!(authStore.userInfo.accessToken && newExpires > Date.now())
+      }
+    } catch (err) {
+      console.debug('refresh failed', err)
+    }
+  }
+
+  // allow explicit public route (login)
+  if (to.meta && to.meta.public) {
+    if (loggedIn) {
+      // already logged in -> redirect to role dashboard
+      const role =
+        authStore.userInfo &&
+        (authStore.userInfo.role ||
+          authStore.userInfo.type ||
+          (authStore.userInfo.roles && authStore.userInfo.roles[0]))
+      return role === 'STORE_ADMIN'
+        ? next({ name: 'store-dashboard' })
+        : next({ name: 'hq-dashboard' })
+    }
+    return next()
+  }
+
+  // require auth for non-public pages
+  if (!loggedIn) {
+    return next({ name: 'login' })
+  }
+
+  const role =
+    authStore.userInfo &&
+    (authStore.userInfo.role ||
+      authStore.userInfo.type ||
+      (authStore.userInfo.roles && authStore.userInfo.roles[0]))
+
+  // redirect root/dashboard to role-specific dashboard
+  if (to.path === '/' || to.name === 'dashboard') {
+    if (role === 'STORE_ADMIN') return next({ name: 'store-dashboard' })
+    return next({ name: 'hq-dashboard' })
+  }
+
+  // enforce broad route namespace separation
+  if (role === 'STORE_ADMIN' && to.path.startsWith('/hq')) {
+    return next({ name: 'store-dashboard' })
+  }
+
+  if (role !== 'STORE_ADMIN' && to.path.startsWith('/store')) {
+    return next({ name: 'hq-dashboard' })
+  }
+
+  return next()
+})
 export default router
