@@ -63,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
                 .type("Bearer")
                 .name(user.getName())
                 .phone(user.getPhone())
+                .storeId(user.getStore().getStoreId())
                 .issuedAt(jwtUtil.getIssuedAt(accessToken))
                 .expiresAt(jwtUtil.getExpiration(accessToken))
                 .role(user.getRole())

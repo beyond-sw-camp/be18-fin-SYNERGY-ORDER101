@@ -8,13 +8,9 @@ export const useAuthStore = defineStore('auth', () => {
     userId: localStorage.getItem('userId') || 0,
     phone: localStorage.getItem('phone') || '',
     name: localStorage.getItem('name') || '',
-    userName: localStorage.getItem('userName') || localStorage.getItem('name') || '',
     role: localStorage.getItem('role') || '',
-    roles: localStorage.getItem('role') ? [localStorage.getItem('role')] : [],
+    storeId: localStorage.getItem('storeId') || '',
     type: '',
-    tierCode: localStorage.getItem('tierCode') || 'BRONZE',
-    imageURL: localStorage.getItem('imageURL') || '',
-    statusMessage: localStorage.getItem('statusMessage') || '',
     issuedAt: 0,
     expiresAt: Number(localStorage.getItem('expiresAt')) || 0,
   })
@@ -36,14 +32,10 @@ export const useAuthStore = defineStore('auth', () => {
         accessToken: data.accessToken || '',
         userId: data.userId || data.id || 0,
         name: data.name || userName,
-        userName: userName,
         phone: data.phone || '',
-        role: role,
-        roles: role ? [role] : data.roles || [],
+        role: data.role,
+        storeId: data.storeId || userInfo.storeId,
         type: data.type || role || '',
-        tierCode: data.tierCode || userInfo.tierCode,
-        imageURL: data.imageURL || userInfo.imageURL,
-        statusMessage: data.statusMessage || userInfo.statusMessage,
         issuedAt: Number(data.issuedAt) || userInfo.issuedAt,
         expiresAt: Number(expires) || 0,
       })
@@ -53,12 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
       storage.setItem('authToken', userInfo.accessToken)
       storage.setItem('userId', String(userInfo.userId))
       storage.setItem('name', userInfo.name)
-      storage.setItem('userName', userInfo.userName)
       storage.setItem('phone', userInfo.phone || '')
       storage.setItem('role', userInfo.role || '')
-      storage.setItem('tierCode', userInfo.tierCode || '')
-      storage.setItem('imageURL', userInfo.imageURL || '')
-      storage.setItem('statusMessage', userInfo.statusMessage || '')
+      storage.setItem('storeId', userInfo.storeId || '')
+      storage.setItem('type', userInfo.type || '')
       storage.setItem('expiresAt', String(userInfo.expiresAt))
 
       return { success: true }
@@ -79,11 +69,8 @@ export const useAuthStore = defineStore('auth', () => {
       userName: '',
       phone: '',
       role: '',
-      roles: [],
+      storeId: '',
       type: '',
-      tierCode: '',
-      imageURL: '',
-      statusMessage: '',
       expiresAt: 0,
     })
 
@@ -91,23 +78,17 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('authToken')
     localStorage.removeItem('userId')
     localStorage.removeItem('name')
-    localStorage.removeItem('userName')
     localStorage.removeItem('phone')
     localStorage.removeItem('role')
-    localStorage.removeItem('tierCode')
-    localStorage.removeItem('imageURL')
-    localStorage.removeItem('statusMessage')
+    localStorage.removeItem('storeId')
     localStorage.removeItem('expiresAt')
 
     sessionStorage.removeItem('authToken')
     sessionStorage.removeItem('userId')
     sessionStorage.removeItem('name')
-    sessionStorage.removeItem('userName')
     sessionStorage.removeItem('phone')
     sessionStorage.removeItem('role')
-    sessionStorage.removeItem('tierCode')
-    sessionStorage.removeItem('imageURL')
-    sessionStorage.removeItem('statusMessage')
+    sessionStorage.removeItem('storeId')
     sessionStorage.removeItem('expiresAt')
   }
 

@@ -1,28 +1,59 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import apiClient from '@/components/api'
+import { useAuthStore } from '@/stores/authStore'
 
 const categories = ref(['대분류', '중분류', '소분류', '상품별'])
+const selectedCategory = ref('대분류')
+const search = ref('')
 
-const items = ref([
-  { code: 'P-1001', name: '블루투스 이어폰', stock: 500, incoming: 100 },
-  { code: 'P-1002', name: '스마트 워치', stock: 120, incoming: 20 },
-  { code: 'P-1003', name: '노트북', stock: 30, incoming: 0 },
-  { code: 'P-1004', name: '블루투스 이어폰', stock: 280, incoming: 50 },
-  { code: 'C-2001', name: '블루투스 이어폰', stock: 700, incoming: 200 },
-  { code: 'C-2002', name: '블루투스 이어폰', stock: 150, incoming: 30 },
-  { code: 'F-3001', name: '블루투스 이어폰', stock: 90, incoming: 10 },
-  { code: 'F-3002', name: '블루투스 이어폰', stock: 200, incoming: 40 },
-  { code: 'H-4001', name: '블루투스 이어폰', stock: 350, incoming: 70 },
-])
+// backend items will be normalized into this shape: { id, code, name, stock, incoming, safetyQty, updatedAt }
+const items = ref([])
+const loading = ref(false)
+const error = ref('')
+
+const fetchInventory = async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    // determine storeId from auth store (or fallback to localStorage)
+    const auth = useAuthStore()
+    const storeId =
+      auth.userInfo && auth.userInfo.storeId
+        ? auth.userInfo.storeId
+        : localStorage.getItem('storeId')
+    if (!storeId) {
+      throw new Error('storeId not available')
+    }
+    // user-provided endpoint; apiClient has baseURL configured
+    const res = await apiClient.get(`/api/v1/stores/${storeId}/inventory`)
+    const arr = (res && res.data && res.data.items) || []
+    items.value = arr.map((it) => ({
+      id: it.storeInventoryId,
+      code: it.productCode,
+      name: it.productName,
+      stock: it.onHandQty ?? 0,
+      incoming: it.inTransitQty ?? 0,
+      safetyQty: it.safetyQty ?? null,
+      updatedAt: it.updatedAt || '',
+    }))
+  } catch (e) {
+    console.error('fetch inventory failed', e)
+    error.value = (e && e.message) || '데이터를 불러오지 못했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchInventory()
+})
 </script>
 
 <template>
   <div class="store-inventory">
     <header class="page-header">
       <h1>창고 재고 상태</h1>
-      <div class="filters">
-        <button v-for="cat in categories" :key="cat" class="filter-btn">{{ cat }}</button>
-      </div>
     </header>
 
     <section class="overview-card">
@@ -38,11 +69,20 @@ const items = ref([
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in items" :key="item.code">
+            <tr v-if="loading">
+              <td colspan="4">불러오는 중...</td>
+            </tr>
+            <tr v-else-if="error">
+              <td colspan="4">{{ error }}</td>
+            </tr>
+            <tr v-else v-for="item in items" :key="item.id">
               <td>{{ item.code }}</td>
               <td>{{ item.name }}</td>
               <td>{{ item.stock }}</td>
               <td>{{ item.incoming }}</td>
+            </tr>
+            <tr v-if="!loading && !error && items.length === 0">
+              <td colspan="4">데이터가 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -65,17 +105,6 @@ const items = ref([
 .page-header h1 {
   font-size: 20px;
   margin: 0;
-}
-.filters {
-  display: flex;
-  gap: 8px;
-}
-.filter-btn {
-  background: #fff;
-  border: 1px solid #eef0f3;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
 }
 .overview-card {
   background: #fff;
