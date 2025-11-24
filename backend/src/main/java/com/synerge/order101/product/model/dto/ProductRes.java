@@ -18,6 +18,7 @@ public class ProductRes {
     private String categoryMediumName;
     private String categoryLargeName;
     private String imageUrl;
+    private Boolean status;
     private BigDecimal price;
     private String description;
 }

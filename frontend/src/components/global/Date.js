@@ -24,3 +24,42 @@ export function formatDateTimeMinute(dateString) {
         return dateString; // 오류 발생 시 원본 문자열 반환
     }
 }
+
+// 날짜 객체를 'YYYY-MM-DD' 형식의 문자열로 포맷하는 내부 헬퍼 함수
+const formatDateToString = (date) => {
+    const year = date.getFullYear();
+    // 월은 0부터 시작하므로 +1, 두 자리로 맞춤
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    // 일자를 두 자리로 맞춤
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+/**
+ * 오늘 날짜를 'YYYY-MM-DD' 형식의 문자열로 반환합니다.
+ * @returns {string} 예: '2025-11-19'
+ */
+export const getTodayString = () => {
+    return formatDateToString(new Date());
+};
+
+/**
+ * 현재 날짜로부터 지정된 일수(days) 후의 날짜를 'YYYY-MM-DD' 형식의 문자열로 반환합니다.
+ * @param {number} days - 현재 날짜에 더하거나(양수) 뺄(음수) 일수
+ * @returns {string} 예: '2025-12-19' (30일 후)
+ */
+export const getFutureDateString = (days) => {
+    const date = new Date();
+    // setDate()를 사용하여 자동으로 월과 연도가 조정되도록 계산
+    date.setDate(date.getDate() + days);
+
+    return formatDateToString(date);
+};
+
+export const getPastDateString = (days) => {
+    const date = new Date();
+    // setDate()를 사용하여 자동으로 월과 연도가 조정되도록 계산
+    date.setDate(date.getDate() - days);
+
+    return formatDateToString(date);
+};

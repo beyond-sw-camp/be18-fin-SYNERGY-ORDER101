@@ -12,8 +12,13 @@ import com.synerge.order101.ai.model.repository.DemandForecastRepository;
 import com.synerge.order101.ai.model.repository.SmartOrderRepository;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
+import com.synerge.order101.notification.model.service.NotificationService;
+import com.synerge.order101.product.model.entity.Product;
+import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.product.model.repository.ProductSupplierRepository;
 import com.synerge.order101.purchase.model.repository.PurchaseDetailRepository;
+import com.synerge.order101.supplier.exception.SupplierErrorCode;
+import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
@@ -27,7 +32,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +47,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     private final UserRepository userRepository;
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final PurchaseDetailRepository purchaseDetailRepository;
+    private final NotificationService notificationService;
 
     //AI가 스마트 발주 초안 작성
     @Transactional
@@ -116,6 +125,31 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 })
                 .map(smartOrderRepository::save)
                 .toList();
+
+        List<User> hqList = userRepository.findByRole(Role.HQ);
+
+        // smartorder -> supplier 공급사별 매핑
+        Map<Long, List<SmartOrder>> bySupplier = new HashMap<>();
+
+        for (SmartOrder smartOrder : saved) {
+            Product product = smartOrder.getProduct();
+
+            ProductSupplier ps = productSupplierRepository.findTop1ByProduct(product).orElseThrow(() ->
+                    new CustomException(SupplierErrorCode.SUPPLIER_NOT_FOUND));
+
+            Supplier supplier = ps.getSupplier();
+
+            bySupplier.computeIfAbsent(supplier.getSupplierId(), k -> new ArrayList<>()).add(smartOrder);
+        }
+
+        // 공급사별로 알림 1개씩 전송
+        for (Map.Entry<Long, List<SmartOrder>> entry : bySupplier.entrySet()) {
+            List<SmartOrder> smartOrders = entry.getValue();
+            Supplier supplier = productSupplierRepository.findTop1ByProduct(smartOrders.get(0).getProduct())
+                    .get().getSupplier();
+
+            notificationService.notifySmartOrderCreatedToHq(hqList, supplier, smartOrders);
+        }
 
         return saved.stream()
                 .map(this::toResponse)
@@ -208,6 +242,12 @@ public class SmartOrderServiceImpl implements SmartOrderService{
 
         User currentUser = getCurrentUser();
         entity.submit(currentUser);
+
+        List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
+
+        if (!admins.isEmpty()){
+            notificationService.notifySmartOrderApprovalToAdmins(entity, admins);
+        }
 
         return toResponse(entity);
     }

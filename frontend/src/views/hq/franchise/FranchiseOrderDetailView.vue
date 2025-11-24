@@ -18,7 +18,7 @@
         <div class="value">{{ order.createdAt }}</div>
       </div>
       <div class="card info">
-        <label>상태</label>
+        <div><label>상태</label></div>
         <div class="value status-chip">{{ statusLabel(order.status) }}</div>
       </div>
     </section>
@@ -56,9 +56,31 @@
     <section class="card progress">
       <h3 class="card-title">주문 진행 상황</h3>
       <div class="timeline">
-        <div class="steps">
-          <div v-for="s in orderProgress" :key="s.key" class="step" :class="{ active: s.done }">
-            <div class="icon">●</div>
+        <!-- icons row -->
+        <div class="steps-icons" role="list">
+          <div
+            v-for="(s, idx) in orderProgress"
+            :key="s.key + '-icon'"
+            class="step-icon"
+            :class="{
+              active: s.done,
+              current: !s.done && orderProgress[idx - 1] && orderProgress[idx - 1].done,
+            }"
+          >
+            <div class="icon" aria-hidden>
+              <i :class="s.done ? 'pi pi-check' : 'pi pi-circle'" />
+            </div>
+          </div>
+        </div>
+
+        <!-- track sits under icons -->
+        <div class="track" aria-hidden>
+          <div class="track-fill" :style="{ width: filledPercent + '%' }"></div>
+        </div>
+
+        <!-- labels row (aligned under icons) -->
+        <div class="steps-labels" role="list">
+          <div v-for="(s, idx) in orderProgress" :key="s.key + '-label'" class="step-label">
             <div class="label">
               {{ s.label }}
               <div class="sub">{{ s.time }}</div>
@@ -140,6 +162,18 @@ const orderProgress = [
   },
   { key: 'delivered', label: 'DELIVERED', time: '', done: false },
 ]
+
+const completedCount = computed(() => orderProgress.filter((s) => s.done).length)
+
+const filledPercent = computed(() => {
+  const steps = orderProgress.length
+  if (!steps || completedCount.value === 0) return 0
+  // When first step is completed, fill to its position (0%).
+  // Fill to the last completed step's position across the track (0..100).
+  const lastIndex = completedCount.value - 1
+  const percent = (lastIndex / (steps - 1)) * 100
+  return Math.max(0, Math.min(100, percent))
+})
 </script>
 
 <style scoped>
@@ -153,19 +187,26 @@ const orderProgress = [
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  /* allow cards to share available width evenly */
+  align-items: stretch;
 }
 .card.info {
   padding: 16px;
   border-radius: 8px;
   border: 1px solid #eef2f7;
   background: #fff;
-  min-width: 180px;
+  /* make each info card take equal portion of the row */
+  flex: 1 1 0;
+  min-width: 0;
 }
 .card.info label {
-  font-size: 12px;
+  font-size: 1rem;
   color: #6b7280;
 }
 .card.info .value {
+  font-size: 1.4rem;
   font-weight: 700;
   margin-top: 8px;
 }
@@ -199,33 +240,94 @@ const orderProgress = [
   font-weight: 600;
 }
 .timeline {
-  padding: 12px 0;
+  position: relative;
+  padding: 28px 0 12px;
 }
-.steps {
+
+.timeline::before {
+  /* horizontal track */
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 32px; /* center of icon row */
+  height: 6px;
+  background: linear-gradient(90deg, #eef2f7 0%, #eef2f7 100%);
+  border-radius: 6px;
+  z-index: 1;
+}
+.steps-icons {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+}
+
+.track {
+  position: relative;
+  margin-top: 8px;
+  height: 6px;
+  background: #eef2f7;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.track-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6b63f6, #6b46ff);
+  width: 0%;
+  transition: width 360ms ease;
+}
+
+.step-icon {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: center;
   align-items: center;
 }
-.step {
-  display: flex;
-  flex-direction: column;
+.step-icon .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid #e6e9ee;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  font-size: 16px;
   color: #9ca3af;
 }
-.step.active {
-  color: #6b46ff;
+.step-icon.active .icon {
+  background: linear-gradient(180deg, #6b63f6, #6b46ff);
+  color: #fff;
+  border-color: transparent;
 }
-.step .icon {
-  font-size: 18px;
+.step-icon.current .icon {
+  background: #fff;
+  border-color: #6b63f6;
+  color: #6b63f6;
 }
-.step .label {
+
+.steps-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+.step-label {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: center;
+}
+.step-label .label {
   font-size: 12px;
-  margin-top: 6px;
   text-align: center;
 }
-.step .sub {
+.step-label .sub {
   font-size: 11px;
   color: #9ca3af;
+  margin-top: 4px;
 }
 .statuses {
   margin-top: 12px;

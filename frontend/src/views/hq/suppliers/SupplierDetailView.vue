@@ -2,23 +2,23 @@
   <div class="supplier-detail">
     <h2 class="page-title">공급사 상세 정보</h2>
 
-    <div class="card info-card">
+    <div class="card info-card" v-if="supplier">
       <div class="info-row">
         <div>
           <div class="label">코드</div>
-          <div class="value">{{ supplier.code }}</div>
+          <div class="value">{{ supplier.supplierCode }}</div>
         </div>
         <div>
           <div class="label">이름</div>
-          <div class="value">{{ supplier.name }}</div>
+          <div class="value">{{ supplier.supplierName }}</div>
         </div>
         <div>
           <div class="label">주소</div>
           <div class="value">{{ supplier.address }}</div>
         </div>
         <div>
-          <div class="label">계약일</div>
-          <div class="value">{{ supplier.contract }}</div>
+          <div class="label">등록일</div>
+          <div class="value">{{ formatDate(supplier.createdAt) }}</div>
         </div>
       </div>
 
@@ -27,72 +27,189 @@
       <div class="contact-row">
         <div>
           <div class="label">담당자</div>
-          <div class="value">{{ supplier.manager }}</div>
+          <div class="value">{{ supplier.contactName }}</div>
         </div>
         <div>
           <div class="label">전화번호</div>
-          <div class="value">{{ supplier.phone }}</div>
+          <div class="value">{{ supplier.contactNumber }}</div>
         </div>
       </div>
     </div>
 
     <div class="card products-card">
       <h3 class="card-title">제품 목록</h3>
-      <input class="search" placeholder="제품명/코드 검색..." />
 
-      <table class="products-table">
-        <thead>
-          <tr>
-            <th>제품 ID</th>
-            <th>공급사 제품 코드</th>
-            <th>제품명</th>
-            <th>구매 가격</th>
-            <th>리드 타임 (일)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in supplier.products" :key="p.id">
-            <td>{{ p.id }}</td>
-            <td>{{ p.vendorCode }}</td>
-            <td>{{ p.name }}</td>
-            <td class="numeric">{{ p.price }}원</td>
-            <td class="numeric">{{ p.lead }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <input
+        v-model="search"
+        class="search"
+        placeholder="제품명/코드 검색..."
+        @keyup.enter="handleSearch"
+      />
+      <button @click="handleSearch">검색</button>
+
+      <div class="table-wrap">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>제품 ID</th>
+              <th>공급사 제품 코드</th>
+              <th>제품명</th>
+              <th>구매 가격</th>
+              <th>리드 타임 (일)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="isLoading">
+              <td colspan="5" class="empty-data">목록을 불러오는 중...</td>
+            </tr>
+
+            <tr v-else-if="filteredProducts.length === 0">
+              <td colspan="5" class="empty-data">등록된 제품이 없습니다.</td>
+            </tr>
+
+            <tr v-else v-for="p in filteredProducts" :key="p.productId">
+              <td>{{ p.productId }}</td>
+              <td>{{ p.supplierProductCode }}</td>
+              <td>{{ p.productName }}</td>
+              <td class="numeric"><Money :value="p.price" /></td>
+              <td class="numeric">{{ p.leadTimeDays }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 제품 목록 페이징 -->
+      <div class="pagination" v-if="totalPages > 1">
+        <button
+          class="pager"
+          :disabled="currentPage === 1 || isLoading"
+          @click="changePage(currentPage - 1)"
+        >
+          ‹ Previous
+        </button>
+
+        <button
+          v-for="page in pageNumbers"
+          :key="page"
+          class="page"
+          :class="{ active: page === currentPage }"
+          :disabled="isLoading"
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+
+        <button
+          class="pager"
+          :disabled="currentPage === totalPages || isLoading"
+          @click="changePage(currentPage + 1)"
+        >
+          Next ›
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import Money from '@/components/global/Money.vue'
+import { getSupplierDetail } from '@/components/api/supplier/supplierService'
 
 const route = useRoute()
-const id = route.params.id || 'SUP001'
+const supplierId = Number(route.params.id) // SupplierListView에서 넘겨준 id
 
-// In a real app, fetch supplier details by id. Here we use a static sample.
-const supplier = ref({
-  code: id,
-  name: '혁신 기술 주식회사',
-  address: '서울특별시 강남구 테헤란로 123, 10층',
-  contract: '2023-01-15',
-  manager: '김현아',
-  phone: '010-1234-5678',
-  products: [
-    { id: 'PROD001', vendorCode: 'STX-A001', name: '초고속 USB-C 허브', price: '45,000', lead: 3 },
-    { id: 'PROD002', vendorCode: 'ELX-B005', name: '무선 충전 마우패드', price: '28,000', lead: 5 },
-    { id: 'PROD003', vendorCode: 'MNT-C010', name: '인체공학 키보드', price: '72,000', lead: 7 },
-    { id: 'PROD004', vendorCode: 'ACC-D022', name: '고급형 월캠', price: '59,000', lead: 4 },
-    {
-      id: 'PROD005',
-      vendorCode: 'PWR-E003',
-      name: '휴대용 보조 배터리 10000mAh',
-      price: '35,000',
-      lead: 2,
-    },
-  ],
+const supplier = ref(null)
+const products = ref([])
+
+const isLoading = ref(false)
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalCount = ref(0)
+
+const search = ref('')
+
+const MAX_VISIBLE_PAGES = 5
+
+const totalPages = computed(() =>
+  totalCount.value > 0 ? Math.ceil(totalCount.value / pageSize.value) : 1,
+)
+
+const pageNumbers = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  const half = Math.floor(MAX_VISIBLE_PAGES / 2)
+
+  let start = Math.max(1, current - half)
+  let end = Math.min(total, start + MAX_VISIBLE_PAGES - 1)
+
+  if (end - start + 1 < MAX_VISIBLE_PAGES) {
+    start = Math.max(1, end - MAX_VISIBLE_PAGES + 1)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
 })
+
+// 검색어로 현재 페이지의 products만 필터링
+const filteredProducts = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return products.value
+
+  return products.value.filter((p) => {
+    return (
+      p.productName.toLowerCase().includes(q) ||
+      p.productCode.toLowerCase().includes(q) ||
+      (p.supplierProductCode && p.supplierProductCode.toLowerCase().includes(q))
+    )
+  })
+})
+
+const formatDate = (iso) => {
+  if (!iso) return ''
+  return iso.toString().slice(0, 10)
+}
+
+const fetchSupplierDetail = async (page = 1) => {
+  if (!supplierId) return
+
+  isLoading.value = true
+  try {
+    const data = await getSupplierDetail(supplierId, page, pageSize.value, search.value)
+
+    supplier.value = data.supplier
+    products.value = data.products
+    currentPage.value = data.page
+    totalCount.value = data.totalCount
+    // pageSize는 서버에서 바뀌어 올 수도 있음
+    if (data.pageSize) {
+      pageSize.value = data.pageSize
+    }
+  } catch (e) {
+    console.error(e)
+    alert('공급사 상세 조회에 실패했습니다.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value || page === currentPage.value) return
+  fetchSupplierDetail(page)
+}
+
+onMounted(() => {
+  fetchSupplierDetail(1)
+})
+
+const handleSearch = () => {
+  fetchSupplierDetail(1) // ✅ 항상 1페이지부터 다시
+}
 </script>
 
 <style scoped>
@@ -138,12 +255,42 @@ const supplier = ref({
   border-top: 1px solid #f7f7f9;
 }
 .numeric {
-  text-align: right;
+  text-align: left;
 }
 .search {
   padding: 8px 10px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-bottom: 12px;
+}
+.empty-data {
+  text-align: center;
+  padding: 20px 8px;
+  color: #9ca3af;
+}
+.pagination {
+  margin-top: 18px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+.pager {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+}
+.page {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  background: #fff;
+  cursor: pointer;
+}
+.page.active {
+  background: #6b46ff;
+  color: #fff;
+  border-color: #6b46ff;
 }
 </style>
