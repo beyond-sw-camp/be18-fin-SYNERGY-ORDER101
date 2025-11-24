@@ -1,4 +1,4 @@
-package com.synerge.order101.ai.repository;
+package com.synerge.order101.ai.model.repository;
 
 import com.synerge.order101.ai.model.entity.SmartOrder;
 import com.synerge.order101.common.enums.OrderStatus;

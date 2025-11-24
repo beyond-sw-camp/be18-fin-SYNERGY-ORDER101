@@ -1,7 +1,7 @@
 package com.synerge.order101.ai.controller;
 
 import com.synerge.order101.ai.model.dto.response.*;
-import com.synerge.order101.ai.service.DemandForecastService;
+import com.synerge.order101.ai.model.service.DemandForecastService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -89,11 +89,9 @@ public class DemandForecastController {
 
     // 모델 재학습 트리거
     @PostMapping("/internal/ai/model/retrain")
-    public ResponseEntity<AiJobTriggerResponseDto> triggerRetrain(){
+    public ResponseEntity<RetrainResultResponseDto> triggerRetrain() {
         return ResponseEntity.ok(demandForecastService.triggerRetrain());
     }
-
-
 
 
 }
