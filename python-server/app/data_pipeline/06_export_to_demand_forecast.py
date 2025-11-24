@@ -19,7 +19,7 @@ def main():
     # y, y_pred는 필수
     if "y_pred" not in pred.columns:
         raise ValueError("predictions.csv에 y_pred 컬럼이 없습니다.")
-    if "target_date" not in pred.columns and "target_date" not in pred.columns:
+    if "target_date" not in pred.columns:
         # 뒤에서 features_test로 보충하므로 통과
 
         pass

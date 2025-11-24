@@ -93,6 +93,28 @@ def main():
                .transform(lambda x: x.shift(1).rolling(ma, min_periods=1).mean())
         )
 
+    # 판매량 변동성(rolling std) 피처
+    for win in [4, 12]:
+        dfw[f"std_{win}"] = (
+            dfw.groupby(keys)["actual_order_qty"]
+               .transform(lambda x: x.rolling(win, min_periods=1).std())
+               .fillna(0.0)
+        )
+
+    # 최근 추세(증감량) 피처
+    #    - trend_1 : 직전주 대비 증감
+    #    - trend_4 : 4주 전 대비 증감
+    dfw["trend_1"] = (
+        dfw.groupby(keys)["actual_order_qty"]
+           .transform(lambda x: x - x.shift(1))
+    )
+    dfw["trend_4"] = (
+        dfw.groupby(keys)["actual_order_qty"]
+           .transform(lambda x: x - x.shift(4))
+    )
+
+    dfw[["trend_1", "trend_4"]] = dfw[["trend_1", "trend_4"]].fillna(0.0)
+
     if "share_norm" in df.columns:
         tmp = (
             df[["target_date", *keys, "share_norm"]]
