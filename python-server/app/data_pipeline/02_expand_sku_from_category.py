@@ -42,39 +42,86 @@ def _norm_cat(x: str) -> str:
     return x.lower()
 
 def _load_domain():
-    dtypes = {
-        "warehouse_id": "Int64","store_id": "Int64",
-        "product_id": "Int64","product_name": "string",
-        "cat_top": "string","cat_mid": "string","cat_low": "string",
-        "region": "string",
-    }
+    """
+    cleaned_domain_sales.csv / domain_sales.csv 를 안전하게 로드하는 함수.
+    - CSV가 약간 깨져 있어도 engine="python", on_bad_lines="skip" 으로 최대한 살려 읽음
+    - 이후에 필요한 컬럼만 타입 캐스팅
+    """
     path = DOMAIN_CLEAN if DOMAIN_CLEAN.exists() else DOMAIN_RAW
-    df = pd.read_csv(path, parse_dates=["target_date"], dtype=dtypes, low_memory=False)
-    print(f"Loaded {path.name}: {len(df):,} rows")
+    print(f"[LOAD] reading {path} ...")
+
+    # 1) 우선 타입 강제하지 말고, 유연하게 읽기
+    df = pd.read_csv(
+        path,
+        parse_dates=["target_date"],
+        engine="python",          # C 엔진 대신 파이썬 엔진 (조금 느리지만 튼튼)
+        on_bad_lines="skip"       # 이상한 줄은 그냥 건너뜀 (pandas>=1.3)
+    )
+
+    # 2) 날짜 상한 (원래 네가 넣어둔 2025-12-31 필터 유지)
+    df = df[df["target_date"] <= "2025-12-31"].copy()
+
+    # 3) 컬럼별 타입 정리
+    #    - 숫자: to_numeric + Int64
+    #    - 문자열: astype("string")
+    if "warehouse_id" in df.columns:
+        df["warehouse_id"] = pd.to_numeric(df["warehouse_id"], errors="coerce").astype("Int64")
+    else:
+        df["warehouse_id"] = pd.NA
+
+    if "store_id" in df.columns:
+        df["store_id"] = pd.to_numeric(df["store_id"], errors="coerce").astype("Int64")
+    else:
+        df["store_id"] = pd.NA
+
+    # product_id는 sku랑 맞춰볼 때 문자열인 게 안전
+    if "product_id" in df.columns:
+        df["product_id"] = df["product_id"].astype("string")
+
+    for col in ["product_name", "cat_top", "cat_mid", "cat_low", "region"]:
+        if col in df.columns:
+            df[col] = df[col].astype("string")
+
+    # 실제 판매량 컬럼도 숫자로 한 번 정리 (나중에 groupby sum 할 때 필요)
+    if "actual_order_qty" in df.columns:
+        df["actual_order_qty"] = (
+            pd.to_numeric(df["actual_order_qty"], errors="coerce")
+              .fillna(0)
+              .astype(int)
+        )
+
+    print(f"Loaded {path.name}: {len(df):,} rows (after cleaning)")
     return df
+
 
 def _load_catalog():
     sku = pd.read_csv(SKU_CAT, dtype=str, low_memory=False)
-    sku.columns = (sku.columns.astype(str).str.replace("\ufeff","",regex=False).str.strip())
+    sku.columns = (sku.columns.astype(str)
+                   .str.replace("\ufeff","",regex=False)
+                   .str.strip())
     for col in ["sku_id","sku_name_en","sku_name_ko","cat_low","brand","series","model_code",
                 "size_inch","volume_l","capacity_text","energy_grade","price_tier",
                 "msrp_krw","launch_date","warranty_months","case_pack","min_order_qty","eol_flag","base_share"]:
         if col not in sku.columns:
             sku[col] = pd.NA
+
     # numeric/date cast
     for col in ["msrp_krw","warranty_months","case_pack","min_order_qty","eol_flag"]:
         sku[col] = pd.to_numeric(sku[col], errors="coerce")
     sku["launch_date"] = pd.to_datetime(sku["launch_date"], errors="coerce")
     sku["base_share"]  = pd.to_numeric(sku["base_share"], errors="coerce").fillna(0.0)
-    for col in ["sku_id","sku_name_en","sku_name_ko","cat_low","brand","series","model_code",
-                "size_inch","volume_l","capacity_text","energy_grade","price_tier"]:
+
+    for col in ["sku_id","sku_name_en","sku_name_ko","cat_low",
+                "brand","series","model_code","size_inch","volume_l",
+                "capacity_text","energy_grade","price_tier"]:
         sku[col] = sku[col].astype("string").str.strip()
     return sku
 
 def _load_promo():
     if PROMO.exists():
         p = pd.read_csv(PROMO, parse_dates=["target_date"])
-        if "boost" not in p.columns: p["boost"] = DEFAULT_PROMO_BOOST
+        if "boost" not in p.columns:
+            p["boost"] = DEFAULT_PROMO_BOOST
         return p
     return pd.DataFrame(columns=["sku_id","target_date","boost"])
 
@@ -82,9 +129,6 @@ def _validate_sku_ids(sku):
     bad = sku[~sku["sku_id"].astype(str).str.match(ID_PATTERN, na=False)]
     if len(bad) > 0:
         raise ValueError(f"sku_id 형식 오류: 예시 {bad.head(5)['sku_id'].tolist()} ... 전체 {len(bad)}건")
-
-def _weeks_between(a, b):
-    return int((b - b.normalize() if isinstance(b, pd.Timestamp) else b - a).days // 7) if pd.notna(a) and pd.notna(b) else 0
 
 def _life_multiplier(launch_date, t):
     """출시 전 0, 이후 RAMP로 상승, 장기적으로 지수감쇠"""
@@ -109,33 +153,21 @@ def _time_varying_shares(one_cat_week_df, sku_meta, rng):
     promos = rng.random((len(g), n)) < PROMO_RATE
 
     rows = []
-
-
     for t_idx, dt in enumerate(g["target_date"]):
         # 랜덤워크(모멘텀+가우시안)
-        logits = RHO*logits + (1 - RHO)*np.log(base) + rng.normal(0, RW_SIGMA, size=n)
-        s = np.exp(logits - np.max(logits))
-        s /= s.sum()
+        logits = RHO*logits + (1-RHO)*np.log(base) + rng.normal(0, RW_SIGMA, size=n)
+        s = np.exp(logits - np.max(logits)); s /= s.sum()
 
         # 미세 잡음 + 프로모션
-        s = s * (1 + (rng.random(n) - 0.5) * 2 * NOISE_SCALE)
+        s = s * (1 + (rng.random(n)-0.5)*2*NOISE_SCALE)
         if promos[t_idx].any():
-            s = s * (1 + promos[t_idx] * PROMO_STRENGTH)
+            s = s * (1 + promos[t_idx]*PROMO_STRENGTH)
 
         # 출시/수명 곱 → 재정규화
-        life = np.array([_life_multiplier(sku_rows.loc[i, "launch_date"], dt) for i in range(n)])
-
-        # 아직 한 개도 출시되지 않은 주 → 이 주는 "우리 카탈로그 기준" 수요 0으로 본다
-        if life.sum() <= 0:
-            rows.append(pd.DataFrame({
-                "target_date": dt,
-                "sku_id": sku_rows["sku_id"].tolist(),
-                "share_norm": np.zeros(n, dtype=float),
-            }))
-            continue
-
-        # 출시된 SKU만 비중 부여
+        life = np.array([_life_multiplier(sku_rows.loc[i,"launch_date"], dt) for i in range(n)])
         s = s * life
+        if s.sum() <= 0:
+            s = base.copy()
         s /= s.sum()
 
         rows.append(pd.DataFrame({
@@ -144,8 +176,6 @@ def _time_varying_shares(one_cat_week_df, sku_meta, rng):
             "share_norm": s
         }))
 
-
-        
     rep = pd.concat(rows, ignore_index=True)
     rep = rep.merge(g[["target_date","actual_order_qty"]], on="target_date", how="left")
     rep["sku_qty"] = (rep["actual_order_qty"] * rep["share_norm"]).round(0).astype(int)
@@ -159,9 +189,10 @@ def main():
     # 1) 카테고리 표준화 + 기타 제거
     sku["cat_low_norm"] = sku["cat_low"].apply(_norm_cat)
     df["cat_low_norm"]  = df["cat_low"].apply(_norm_cat)
+
     allowed = set(sku["cat_low_norm"].dropna().tolist())
     keep = df["cat_low_norm"].isin(allowed) & (~df["cat_low_norm"].isin(MISC_KEYS))
-    if (len(df) - keep.sum())>0:
+    if (len(df) - keep.sum()) > 0:
         print(f"Dropped by whitelist: {len(df)-keep.sum():,}/{len(df):,}")
     df = df[keep].copy()
 
@@ -171,9 +202,10 @@ def main():
     sku.loc[mask_pos, "base_share"] = sku.loc[mask_pos, "base_share"] / pos_sum[mask_pos]
     zero_keys = sku.loc[~mask_pos, "cat_low_norm"].dropna().unique().tolist()
     for key in zero_keys:
-        idx = sku.index[sku["cat_low_norm"]==key]
+        idx = sku.index[sku["cat_low_norm"] == key]
         n = len(idx)
-        if n>0: sku.loc[idx,"base_share"] = 1.0/n
+        if n > 0:
+            sku.loc[idx, "base_share"] = 1.0 / n
     if zero_keys:
         print(f"base_share 합 0 → 균등분배: {sorted(zero_keys)}")
 
@@ -194,7 +226,9 @@ def main():
     # 5) 그룹별 시간가변 점유율 생성
     rng = np.random.default_rng(42)
     out_list = []
-    for (wh, region, store, cat), g_cat in cat_map.groupby(["warehouse_id","region","store_id","cat_low_norm"]):
+    for (wh, region, store, cat), g_cat in cat_map.groupby(
+        ["warehouse_id","region","store_id","cat_low_norm"]
+    ):
         sku_meta = (g_cat[["sku_id","base_share","launch_date","sku_name_en","sku_name_ko","brand",
                            "series","model_code","size_inch","volume_l","capacity_text","energy_grade","price_tier",
                            "msrp_krw","warranty_months","case_pack","min_order_qty","eol_flag"]]

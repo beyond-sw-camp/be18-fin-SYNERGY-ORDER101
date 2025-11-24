@@ -169,7 +169,7 @@ def main():
     print(f"- Shuffled SMAPE= {smp_s:,.2f}%")
     print()
 
-    print("=== [완료] 08_overfit_check.py ===")
+    print("=== [완료] 09_overfit_check.py ===")
 
 
 if __name__ == "__main__":

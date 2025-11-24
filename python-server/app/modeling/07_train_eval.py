@@ -13,11 +13,10 @@ OUT_PRED    = BASE / "predictions.csv"
 MODEL_PATH  = BASE / "lightgbm_model.pkl"
 FEATS_JSON  = BASE / "lightgbm_features.json"
 METRICS_CSV = BASE / "metrics_eval.csv"
-FEATURE_IMPORTANCE_CSV = BASE / "feature_importance.csv" 
 
 ID_KEYS = ["warehouse_id","store_id","sku_id","region","target_date","split"]
 TARGET = "y"
-VAL_WEEKS = 26
+VAL_WEEKS = 12
 LEAKY = {"actual_order_qty", "share_norm", "promo_flag"}
 
 def smape(y_true, y_pred):
@@ -89,19 +88,12 @@ def main():
 
     model = LGBMRegressor(
         objective="poisson",
-        n_estimators=3000,
-        learning_rate=0.02,
-        num_leaves=31,    
-        max_depth=-1,
-        min_child_samples=128,  
-        min_gain_to_split=0.05,  
-        subsample=0.7,
-        subsample_freq=1,
-        colsample_bytree=0.6, 
-        reg_alpha=5.0,         
-        reg_lambda=5.0,   
-        random_state=42,
-        verbosity=-1,
+        n_estimators=3000, learning_rate=0.02,
+        num_leaves=31, max_depth=8,
+        min_child_samples=128, min_gain_to_split=0.02,
+        subsample=0.65, subsample_freq=1, colsample_bytree=0.65,
+        reg_alpha=2.0, reg_lambda=2.0,
+        random_state=42, verbosity=-1
     )
     model.fit(
         X_tr, y_tr,
@@ -116,15 +108,6 @@ def main():
     _mape = mape(te[TARGET].values, te_pred)
     _smape= smape(te[TARGET].values, te_pred)
     print(f"MAE={mae:,.3f} | MAPE={_mape:,.2f}% | SMAPE={_smape:,.2f}% (n={len(te)})")
-
-    # feature importance 저장
-    fi = pd.DataFrame({
-        "feature": features,
-        "importance": model.feature_importances_
-    }).sort_values("importance", ascending=False)
-    fi.to_csv(FEATURE_IMPORTANCE_CSV, index=False)
-    print(f"saved feature importance: {FEATURE_IMPORTANCE_CSV}")
-
 
     keep_ids = [c for c in ["warehouse_id","store_id","sku_id","region","target_date"] if c in te.columns]
     out = te[keep_ids + [TARGET]].copy()
