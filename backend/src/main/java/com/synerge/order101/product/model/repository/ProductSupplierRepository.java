@@ -49,4 +49,6 @@ public interface ProductSupplierRepository extends JpaRepository<ProductSupplier
 
     Optional<ProductSupplier> findTop1ByProduct(Product product);
 
+    Optional<ProductSupplier> findByProduct(Product product);
+
 }
