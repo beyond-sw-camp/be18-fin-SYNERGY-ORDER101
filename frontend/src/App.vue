@@ -48,6 +48,7 @@ const adminSidebar = [
     children: [
       { title: '정산 목록', path: '/hq/settlement/list' },
       { title: '일일 정산', path: '/hq/settlement/daily' },
+      { title: '정산 리포트', path: '/hq/settlement/report' },
     ],
   },
   {
@@ -214,12 +215,8 @@ watch(
 <template>
   <div>
     <!-- If route is an auth page (login), render only the view without header/sidebar -->
-    <Header
-      v-if="!isAuthRoute"
-      :currentRole="currentRole"
-      :roleOptions="roleOptions"
-      @update:currentRole="(val) => (currentRole.value = val)"
-    />
+    <Header v-if="!isAuthRoute" :currentRole="currentRole" :roleOptions="roleOptions"
+      @update:currentRole="(val) => (currentRole.value = val)" />
 
     <div v-if="!isAuthRoute" class="app-shell">
       <div class="app-body" :class="sidebarPlacementClass">
@@ -344,6 +341,7 @@ watch(
   padding: 24px;
   background-color: #fff;
 }
+
 /* Sidebar and header styles moved into their own components */
 
 @media (max-width: 1024px) {

@@ -243,16 +243,19 @@ const sortDirSymbol = computed(() => (sortDir.value === 'asc' ? '▲' : '▼'))
 .page-shell {
   padding: 24px 32px;
 }
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
 }
+
 .page-header h1 {
   margin: 0;
   font-size: 22px;
 }
+
 .pdf-btn {
   border: 1px solid #e6e6e9;
   background: white;
@@ -260,6 +263,7 @@ const sortDirSymbol = computed(() => (sortDir.value === 'asc' ? '▲' : '▼'))
   border-radius: 8px;
   cursor: pointer;
 }
+
 .card {
   background: #fff;
   border: 1px solid #f0f0f3;
@@ -267,28 +271,33 @@ const sortDirSymbol = computed(() => (sortDir.value === 'asc' ? '▲' : '▼'))
   padding: 18px;
   margin-bottom: 20px;
 }
+
 .filters .filter-row {
   display: flex;
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
 }
+
 .filters label {
   display: flex;
   flex-direction: column;
   font-size: 13px;
   color: #666;
 }
+
 .search-group {
   display: flex;
   gap: 8px;
   align-items: center;
 }
+
 .search-input {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #e6e6e9;
 }
+
 .search-btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -296,59 +305,73 @@ const sortDirSymbol = computed(() => (sortDir.value === 'asc' ? '▲' : '▼'))
   background: #6b7280;
   color: white;
 }
+
 .sort-group {
   display: flex;
   gap: 8px;
   align-items: center;
 }
+
 .sort-toggle {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #e6e6e9;
   background: white;
 }
+
 .table-wrap {
   margin-top: 12px;
 }
+
 .settlement-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .settlement-table th,
 .settlement-table td {
   padding: 18px 12px;
   text-align: left;
   border-bottom: 1px solid #f0f0f3;
 }
+
 .settlement-table th.sortable {
   cursor: pointer;
 }
+
 .settlement-table td.numeric {
   text-align: right;
 }
+
 .status {
   padding: 6px 10px;
   border-radius: 12px;
   font-size: 13px;
   color: #fff;
 }
+
 .s-complete {
   background: #2f855a;
 }
+
 .s-progress {
   background: #db2777;
 }
+
 .s-error {
   background: #ef4444;
 }
+
 .s-pending {
   background: #f97316;
 }
+
 .no-data {
   text-align: center;
   padding: 26px;
   color: #999;
 }
+
 .hint {
   color: #777;
   margin-top: 6px;

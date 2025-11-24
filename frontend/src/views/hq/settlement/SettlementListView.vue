@@ -23,11 +23,12 @@
 
         <div>
           <label>기간</label>
-          <input type="month" v-model="searchConditions.period" class="input" />
+          <input type="date" v-model="searchConditions.fromDate" class="input" />~
+          <input type="date" v-model="searchConditions.toDate" class="input" />
         </div>
 
         <div class="search-wrapper">
-          <label>검색</label>
+          <label>조회</label>
           <input placeholder="ID 또는 공급업체 검색..." v-model="searchConditions.searchText" class="input" />
         </div>
         <button @click="fetchSettlements" class="search-button">검색</button>
@@ -44,8 +45,7 @@
             <th>상점/공급사</th>
             <th>기간</th>
             <th>총 수량</th>
-            <th>총 금액</th>
-            <th>순 금액</th>
+            <th>정산 금액</th>
             <th>상태</th>
             <th>생성일</th>
           </tr>
@@ -69,7 +69,7 @@
                 r.status === '발행됨' ? 'published' : r.status === '무효' ? 'invalid' : 'draft',
               ]">{{ r.status }}</span>
             </td>
-            <td>{{ r.created }}</td>
+            <td>{{ formatDateTimeMinute(r.created) }}</td>
           </tr>
         </tbody>
       </table>
@@ -80,12 +80,25 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import qs from 'qs'
+import Money from '@/components/global/Money.vue' // Money 컴포넌트 추가 (템플릿에 사용됨)
+
+/**
+ * 날짜 계산 헬퍼 함수
+ */
+import { formatDateTimeMinute, getTodayString, getPastDateString } from '@/components/global/Date.js';
+
+// 기본값 설정 (오늘 및 오늘 + 30일)
+const todayString = getTodayString();
+const past30DaysString = getPastDateString(30);
+
 
 const searchConditions = ref({
   types: ['AR', 'AP'],
   statuses: ['DRAFT', 'ISSUED', 'VOID'],
-  period: '2025-06',
+  // 수정된 기본값: 오늘 날짜
+  fromDate: past30DaysString,
+  // 수정된 기본값: 오늘 날짜 - 30일
+  toDate: todayString,
   searchText: '',
 })
 
@@ -105,7 +118,7 @@ const fetchSettlements = async () => {
     const response = await axios.get(url, {
       params: params,
       paramsSerializer: params => {
-        return qs.stringify(params, { arrayFormat: 'repeat' })
+        return new URLSearchParams(params).toString();
       }
     });
 
@@ -113,10 +126,9 @@ const fetchSettlements = async () => {
       id: item.settlementNo, // 정산번호를 ID로 사용
       type: item.settlementType, //
       entity: item.supplierName === null ? item.storeName : item.supplierName, // 상점/공급사 이름
-      period: '2023-01', // 기간 (YYYY-MM 형식 가정)
+      period: item.createdAt,
       qty: item.settlementQty, // 총 수량
       total: item.settlementAmount, // 총 금액
-      net: item.settlementAmount, // 순 금액
       status: mapStatus(item.settlementStatus), // 상태 매핑 함수 사용
       created: item.createdAt
         ? String(item.createdAt).substring(0, 10)
