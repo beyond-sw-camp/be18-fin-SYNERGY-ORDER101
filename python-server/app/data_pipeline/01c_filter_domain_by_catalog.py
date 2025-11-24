@@ -34,16 +34,22 @@ def main():
         raise FileNotFoundError(f"{SKU_CAT} not found")
 
     domain_dtypes = {
-        "warehouse_id": "Int64",
-        "store_id": "Int64",
-        "product_id": "Int64",
-        "product_name": "string",
-        "cat_top": "string",
-        "cat_mid": "string",
-        "cat_low": "string",
-        "region": "string",
-    }
-    d = pd.read_csv(DOMAIN, parse_dates=["target_date"], dtype=domain_dtypes, low_memory=False)
+    "warehouse_id": "Int64",
+    "region": "string",
+    "store_id": "Int64",
+    # "product_id": "Int64",
+    "product_name": "string",
+    "cat_top": "string",
+    "cat_mid": "string",
+    "cat_low": "string",
+}
+    d = pd.read_csv(
+        DOMAIN,
+        parse_dates=["target_date"],
+        low_memory=False,   
+    )
+    d["product_id"] = d["product_id"].astype(str)
+    
     s = pd.read_csv(SKU_CAT, dtype={"cat_low": "string"}, low_memory=False)
 
     # 화이트리스트 준비

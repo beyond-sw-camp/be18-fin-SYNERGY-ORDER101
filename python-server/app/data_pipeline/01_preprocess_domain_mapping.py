@@ -13,7 +13,7 @@ TAXONOMY = BASE / "taxonomy_product_map.csv"
 OUT_FULL   = BASE / "domain_sales.csv"
 OUT_SAMPLE = BASE / "sample_domain_sales.csv"
 
-SHIFT_YEARS   = 7
+SHIFT_YEARS   = 0
 WAREHOUSE_ID  = 1
 REGION_NAME   = "본사창고"
 
@@ -133,7 +133,8 @@ def main():
     merged["region"]       = REGION_NAME
 
     # 5) 연도 시프트
-    merged["target_date"] = merged["target_date"].apply(lambda d: _shift_year_safe(d, SHIFT_YEARS))
+    merged["target_date"] = pd.to_datetime(merged["target_date"])
+
 
     # 6) 컬럼/저장
     cols = [
