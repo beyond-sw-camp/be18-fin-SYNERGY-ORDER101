@@ -98,7 +98,7 @@ def trigger_forecasts(
 @app.post(
     "/internal/ai/model/retrain",
     response_model=RetrainResponse,
-    status_code=202,
+    status_code=200,
 )
 def trigger_retrain():
     result = retrain_model()
