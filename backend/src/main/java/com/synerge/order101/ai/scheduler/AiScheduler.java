@@ -1,7 +1,7 @@
 package com.synerge.order101.ai.scheduler;
 
-import com.synerge.order101.ai.service.DemandForecastService;
-import com.synerge.order101.ai.service.SmartOrderService;
+import com.synerge.order101.ai.model.service.DemandForecastService;
+import com.synerge.order101.ai.model.service.SmartOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

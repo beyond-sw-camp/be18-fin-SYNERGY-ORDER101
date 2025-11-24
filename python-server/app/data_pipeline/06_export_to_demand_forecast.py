@@ -45,7 +45,7 @@ def main():
 
     # 스키마 맞추기 (운영 적재 형식 예시)
     out = pred.copy()
-    out["product_id"]        = out.get("sku_id")       # SKU=product로 사용하는 정책
+    out["product_id"]        = out.get("sku_id")
     out["warehouse_id"]      = out["warehouse_id"].fillna(0).astype(int)
     out["store_id"]          = out["store_id"].fillna(0).astype(int)
     out["target_date"]       = pd.to_datetime(out["target_date"]).dt.date.astype(str)

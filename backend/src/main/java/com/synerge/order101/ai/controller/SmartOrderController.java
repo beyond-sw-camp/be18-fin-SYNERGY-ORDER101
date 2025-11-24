@@ -5,7 +5,7 @@ import com.synerge.order101.ai.model.dto.request.SmartOrderUpdateRequestDto;
 import com.synerge.order101.ai.model.dto.response.SmartOrderDashboardResponseDto;
 import com.synerge.order101.ai.model.dto.response.SmartOrderDetailResponseDto;
 import com.synerge.order101.ai.model.dto.response.SmartOrderResponseDto;
-import com.synerge.order101.ai.service.SmartOrderService;
+import com.synerge.order101.ai.model.service.SmartOrderService;
 import com.synerge.order101.common.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
