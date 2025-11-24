@@ -1,4 +1,4 @@
-package com.synerge.order101.ai.repository;
+package com.synerge.order101.ai.model.repository;
 
 import com.synerge.order101.ai.model.entity.DemandForecast;
 import org.springframework.data.jpa.repository.JpaRepository;

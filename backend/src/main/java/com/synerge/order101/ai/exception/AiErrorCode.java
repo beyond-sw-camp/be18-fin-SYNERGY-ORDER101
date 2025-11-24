@@ -11,7 +11,15 @@ public enum AiErrorCode implements ErrorCode {
     AI_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "AI_SERVER_ERROR", "AI 서버 호출 중 오류가 발생했습니다."),
     SUPPLIER_NOT_FOUND(HttpStatus.NOT_FOUND, "SUPPLIER_NOT_FOUND", "공급사를 찾을 수 없습니다."),
     SUPPLIER_MAPPING_NOT_FOUND(HttpStatus.NOT_FOUND, "SUPPLIER_MAPPING_NOT_FOUND", "공급사 매핑을 찾을 수 없습니다."),
-    SMART_ORDER_ALREADY_EXISTS(HttpStatus.CONFLICT,"SMART_ORDER_ALREADY_EXISTS","해당 주차에 이미 스마트 발주가 존재합니다.");
+    SMART_ORDER_ALREADY_EXISTS(HttpStatus.CONFLICT,"SMART_ORDER_ALREADY_EXISTS","해당 주차에 이미 스마트 발주가 존재합니다."),
+    SYSTEM_USER_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "SYSTEM_USER_NOT_FOUND", "시스템 계정을 찾을 수 없습니다."),
+    AUTHENTICATION_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED", "로그인이 필요한 요청입니다."),
+    AUTHENTICATED_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTHENTICATED_USER_NOT_FOUND", "인증된 사용자 정보를 찾을 수 없습니다."),
+    UNSUPPORTED_PRINCIPAL_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "UNSUPPORTED_PRINCIPAL_TYPE", "지원하지 않는 인증 principal 타입입니다.");
+
+
+
+
 
 
     private final HttpStatus status;

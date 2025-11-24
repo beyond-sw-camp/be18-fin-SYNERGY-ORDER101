@@ -178,6 +178,7 @@ public class ProductServiceImpl implements ProductService {
                 .price(product.getPrice())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
+                .status(product.getStatus())
                 .build();
 
     }
@@ -229,7 +230,7 @@ public class ProductServiceImpl implements ProductService {
                                                         Long mediumCategoryId, Long smallCategoryId) {
         int pageIndex = Math.max(0, page - 1);
 
-        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.ASC, "createdAt"));
 
         Page<Product> productPage = productRepository.findAll((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -284,6 +285,7 @@ public class ProductServiceImpl implements ProductService {
                 .categoryLargeName(product.getProductCategory().getParent().getParent().getCategoryName())
                 .categoryMediumName(product.getProductCategory().getParent().getCategoryName())
                 .categorySmallName(product.getProductCategory().getCategoryName())
+                .status(product.getStatus())
                 .price(product.getPrice())
                 .imageUrl(product.getImageUrl())
                 .description(product.getDescription())

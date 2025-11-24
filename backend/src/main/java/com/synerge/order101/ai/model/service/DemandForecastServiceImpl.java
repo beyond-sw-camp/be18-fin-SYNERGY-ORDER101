@@ -1,9 +1,14 @@
-package com.synerge.order101.ai.service;
+package com.synerge.order101.ai.model.service;
 
 import com.synerge.order101.ai.exception.AiErrorCode;
-import com.synerge.order101.ai.model.dto.response.*;
+import com.synerge.order101.ai.model.dto.response.AiJobTriggerResponseDto;
+import com.synerge.order101.ai.model.dto.response.AiMetricResponseDto;
+import com.synerge.order101.ai.model.dto.response.DemandForecastListResponseDto;
+import com.synerge.order101.ai.model.dto.response.DemandForecastResponseDto;
+import com.synerge.order101.ai.model.dto.response.ForecastSeriesResponseDto;
+import com.synerge.order101.ai.model.dto.response.RetrainResultResponseDto;
 import com.synerge.order101.ai.model.entity.DemandForecast;
-import com.synerge.order101.ai.repository.DemandForecastRepository;
+import com.synerge.order101.ai.model.repository.DemandForecastRepository;
 import com.synerge.order101.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +23,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class DemandForecastService {
+public class DemandForecastServiceImpl implements DemandForecastService {
     private final DemandForecastRepository demandForecastRepository;
     private final WebClient webClient;
 
@@ -48,27 +53,32 @@ public class DemandForecastService {
     }
 
 
-    //모델 재학습
+    // 모델 재학습
     @Transactional
-    public AiJobTriggerResponseDto triggerRetrain(){
+    public RetrainResultResponseDto triggerRetrain() {
         try {
-            webClient.post()
-                    .uri("/internal/ai/model/retrain") //파이썬 엔드포인트
+            RetrainResultResponseDto res = webClient.post()
+                    .uri("/internal/ai/model/retrain") // 파이썬 엔드포인트
                     .retrieve()
-                    .toBodilessEntity()
+                    .bodyToMono(RetrainResultResponseDto.class)
                     .block();
+
+            if (res == null) {
+                throw new CustomException(AiErrorCode.AI_SERVER_ERROR);
+            }
+
+            // log.info("[AI] retrain result: mae={}, mape={}, smape={}",
+            //         res.getMae(), res.getMape(), res.getSmape());
+
+            return res;
+
         } catch (WebClientResponseException ex) {
             throw new CustomException(AiErrorCode.AI_SERVER_ERROR);
         } catch (Exception ex) {
             throw new CustomException(AiErrorCode.AI_SERVER_ERROR);
         }
-
-        return AiJobTriggerResponseDto.builder()
-                .jobType("RETRAIN")
-                .status("ACCEPTED")
-                .message("Python AI 서버에 재학습 요청 전송 완료.")
-                .build();
     }
+
 
 
     // 스냅샷 리스트
@@ -214,6 +224,3 @@ public class DemandForecastService {
                 .build();
     }
 }
-
-
-
