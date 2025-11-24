@@ -1,6 +1,7 @@
 package com.synerge.order101.warehouse.model.repository;
 
 
+import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,5 +40,8 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
     @Query("select coalesce(sum(w.safetyQuantity), 0) from WarehouseInventory w " +
             "where w.product.productId = :pid")
     long sumSafetyAll(@Param("pid") Long productId);
+
+
+    Optional<WarehouseInventory> findByProduct(Product product);
 
 }
