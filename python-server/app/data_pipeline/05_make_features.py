@@ -1,9 +1,3 @@
-"""
-05_make_features.py
-- 입력 : domain_sales_sku.csv (+ external_factors.csv)
-- 출력 : features_all.csv, features_train.csv, features_test.csv
-"""
-
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -20,7 +14,7 @@ FORECAST_FREQ = "W-MON"
 LAGS = [1,2,4,8,12]
 MAS  = [4,8,12]
 TEST_WEEKS = 52
-MIN_HISTORY_WEEKS = 16
+MIN_HISTORY_WEEKS = 1   
 
 def add_time_features(df):
     dt = pd.to_datetime(df["target_date"])
@@ -57,7 +51,6 @@ def main():
         errors="coerce"
     ).fillna(0).astype(int)
 
-
     keys = ["warehouse_id","store_id","sku_id","region"]
 
     use = df[["target_date", *keys, "cat_low", "actual_order_qty"]].copy()
@@ -65,7 +58,7 @@ def main():
 
     frames = []
     for grp, g in use.groupby(keys):
-        cat_val = g["cat_low"].iloc[0]             
+        cat_val = g["cat_low"].iloc[0]
 
         g_res = (
             g.set_index("target_date")
@@ -78,11 +71,11 @@ def main():
             g_res[k] = grp[i]
 
         g_res["cat_low"] = cat_val
-
         frames.append(g_res.reset_index())
 
     dfw = pd.concat(frames, ignore_index=True)
 
+    # ---------- lag / MA ----------
     dfw = dfw.sort_values(keys + ["target_date"])
     for lag in LAGS:
         dfw[f"lag_{lag}"] = dfw.groupby(keys)["actual_order_qty"].shift(lag)
@@ -93,6 +86,7 @@ def main():
                .transform(lambda x: x.shift(1).rolling(ma, min_periods=1).mean())
         )
 
+    # ---------- share_norm / promo ----------
     if "share_norm" in df.columns:
         tmp = (
             df[["target_date", *keys, "share_norm"]]
@@ -105,7 +99,6 @@ def main():
     else:
         dfw["promo_flag"] = 0
 
-    #직전 주 프로모션 여부
     dfw["promo_flag_prev"] = (
         dfw.groupby(keys)["promo_flag"]
            .shift(1)
@@ -115,6 +108,7 @@ def main():
 
     dfw = add_time_features(dfw)
 
+    # ---------- 외부 요인 ----------
     if EXT.exists():
         ext = pd.read_csv(EXT, parse_dates=["target_date"])
         if "region" not in ext.columns:
@@ -129,17 +123,19 @@ def main():
 
     dfw["y"] = dfw["actual_order_qty"].astype(float)
 
+    # ---------- 최소 히스토리 ----------
     cnt = dfw.groupby(keys)["y"].transform("count")
     dfw = dfw[cnt >= MIN_HISTORY_WEEKS].copy()
 
+    # ---------- Train / Test split ----------
     dfw = dfw.sort_values(keys + ["target_date"]).reset_index(drop=True)
 
     g = dfw.groupby(keys)
     pos = g.cumcount()
     size = g["target_date"].transform("size")
 
-    is_last52 = (size > TEST_WEEKS) & (pos >= (size - TEST_WEEKS))
-    dfw["split"] = np.where(is_last52, "test", "train")
+    is_last_test = (size > TEST_WEEKS) & (pos >= (size - TEST_WEEKS))
+    dfw["split"] = np.where(is_last_test, "test", "train")
 
     dfw.to_csv(OUT_ALL, index=False)
     dfw[dfw["split"]=="train"].to_csv(OUT_TR, index=False)

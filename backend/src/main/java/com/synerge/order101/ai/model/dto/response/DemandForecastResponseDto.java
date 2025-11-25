@@ -19,7 +19,6 @@ public class DemandForecastResponseDto {
     private Integer predictedQty;
     private Integer actualOrderQty;
     private Integer mape;
-    private String externalFactorsJson;
     private LocalDateTime snapshotAt;
     private LocalDateTime updatedAt;
 }
