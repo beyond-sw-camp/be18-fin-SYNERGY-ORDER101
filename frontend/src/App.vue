@@ -84,11 +84,6 @@ const storeSidebar = [
     title: '재고 관리',
     children: [{ title: '재고 조회', path: '/store/inventory/stock' }],
   },
-  {
-    id: 'store-settlement',
-    title: '정산 관리',
-    children: [{ title: '정산 관리', path: '/store/settlement/overview' }],
-  },
 ]
 
 const router = useRouter()
