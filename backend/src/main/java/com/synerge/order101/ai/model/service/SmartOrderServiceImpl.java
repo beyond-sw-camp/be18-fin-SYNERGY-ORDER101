@@ -240,14 +240,14 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         }
 
 
-        User currentUser = getCurrentUser();
-        entity.submit(currentUser);
+//        User currentUser = getCurrentUser();
+//        entity.submit(currentUser);
 
-        List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
+//        List<User> admins = userRepository.findByRole(Role.HQ);
 
-        if (!admins.isEmpty()){
-            notificationService.notifySmartOrderApprovalToAdmins(entity, admins);
-        }
+//        if (!admins.isEmpty()){
+//            notificationService.notifySmartOrderApprovalToAdmins(entity, admins);
+//        }
 
         return toResponse(entity);
     }
@@ -288,7 +288,10 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         return SmartOrderResponseDto.builder()
                 .id(so.getSmartOrderId())
                 .supplierId(so.getSupplier().getSupplierId())
+                .supplierName(so.getSupplier().getSupplierName())
                 .productId(so.getProduct().getProductId())
+                .productCode(so.getProduct().getProductCode())
+                .productName(so.getProduct().getProductName())
                 .demandForecastId(so.getDemandForecast().getDemandForecastId())
                 .targetWeek(so.getTargetWeek())
                 .recommendedOrderQty(so.getRecommendedOrderQty())
