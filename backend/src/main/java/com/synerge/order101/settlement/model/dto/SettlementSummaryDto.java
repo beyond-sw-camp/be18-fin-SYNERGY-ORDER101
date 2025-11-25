@@ -20,6 +20,7 @@ public class SettlementSummaryDto {
     String supplierName;
     String storeName;
     LocalDateTime createdAt;
+    LocalDateTime settledAt;
     BigDecimal settlementAmount;
     Integer settlementQty;
     String settlementStatus;
@@ -34,6 +35,7 @@ public class SettlementSummaryDto {
                 .settlementId(settlement.getSettlementId())
                 .settlementNo(settlement.getSettlementNo())
                 .settlementType(settlement.getSettlementType())
+                .settledAt(settlement.getSettledDate())
                 .supplierName(settlement.getSupplier() != null ? settlement.getSupplier().getSupplierName() : null)
                 .storeName(settlement.getStore() != null ? settlement.getStore().getStoreName() : null)
                 .createdAt(settlement.getCreatedAt())
