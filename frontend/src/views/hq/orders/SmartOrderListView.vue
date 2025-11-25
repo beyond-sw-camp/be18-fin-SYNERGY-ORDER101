@@ -224,7 +224,7 @@ function openDetail (row) {
 }
 
 function statusLabel (s) {
-  if (s === 'SUBMITTED') return '상신됨'
+  if (s === 'SUBMITTED') return '제출'
   if (s === 'DRAFT_AUTO') return '초안'
   return s || '-'
 }
