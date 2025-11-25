@@ -13,8 +13,8 @@ OUT_TE  = BASE / "features_test.csv"
 FORECAST_FREQ = "W-MON"
 LAGS = [1,2,4,8,12]
 MAS  = [4,8,12]
-TEST_WEEKS = 4          # 🔹임시: 짧게
-MIN_HISTORY_WEEKS = 1   # 🔹임시: 완전 완화
+TEST_WEEKS = 52
+MIN_HISTORY_WEEKS = 1   
 
 def add_time_features(df):
     dt = pd.to_datetime(df["target_date"])
