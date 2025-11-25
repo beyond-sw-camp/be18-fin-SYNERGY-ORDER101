@@ -62,7 +62,7 @@
 
 <script setup>
 import { ref, computed ,onMounted } from 'vue'
-import { useInventoryStore } from '@/stores/inventory/inventory'
+import { useInventoryStore } from '@/stores/inventory/inventoryStore'
 
 const inventoryStore = useInventoryStore()
 

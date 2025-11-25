@@ -31,8 +31,9 @@ public class WarehouseInventory {
     @Column(name = "on_hand_qty", nullable = false)
     private Integer onHandQuantity;
 
-    @Column(name = "safety_qty")
-    private Integer safetyQuantity;
+    @Builder.Default
+    @Column(name = "safety_qty", nullable = false)
+    private Integer safetyQuantity = 0;
 
     @Column(columnDefinition = "DATETIME(6)")
     @UpdateTimestamp

@@ -60,8 +60,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useInboundStore } from '@/stores/inventory/inbound'
-import { useOutboundStore } from '@/stores/inventory/outbound'
+import { useInboundStore } from '@/stores/inventory/inboundStore'
+import { useOutboundStore } from '@/stores/inventory/outboundStore'
 
 import InboundTable from './tables/InboundTable.vue'
 import OutboundTable from './tables/OutboundTable.vue'

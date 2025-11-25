@@ -4,6 +4,7 @@ const DashboardView = () => import('../views/DashboardView.vue')
 const PagePlaceholder = () => import('../views/PagePlaceholder.vue')
 const OrderCreateView = () => import('../views/hq/orders/OrderCreateView.vue')
 const OrderStatusView = () => import('../views/hq/orders/OrderStatusView.vue')
+const AutoOrderStatusView = () => import('../views/hq/orders/auto/AutoOrderStatusView.vue')
 const OrderApprovalView = () => import('../views/hq/orders/OrderApprovalView.vue')
 const OrderApprovalListView = () => import('../views/hq/orders/OrderApprovalListView.vue')
 const UserRegistrationView = () => import('../views/hq/user/UserRegistrationView.vue')
@@ -42,19 +43,31 @@ const hqRoutes = [
     path: '/hq/orders/create',
     name: 'hq-orders-create',
     component: OrderCreateView,
-    meta: { title: '구매 주문 생성' },
+    meta: { title: '발주서 생성' },
   },
   {
     path: '/hq/orders/status',
     name: 'hq-orders-status',
     component: OrderStatusView,
-    meta: { title: '주문 현황' },
+    meta: { title: '일반 발주 현황' },
+  },
+  {
+    path: '/hq/orders/smart/status',
+    name: 'hq-orders-smart-status',
+    component: OrderStatusView,
+    meta: { title: '스마트 발주 현황' },
+  },
+  {
+    path: '/hq/orders/auto/status',
+    name: 'hq-orders-auto-status',
+    component: AutoOrderStatusView,
+    meta: { title: '자동 발주 현황' },
   },
   {
     path: '/hq/orders/approval',
     name: 'hq-orders-approval',
     component: OrderApprovalListView,
-    meta: { title: '주문 승인' },
+    meta: { title: '발주 승인' },
   },
   {
     path: '/hq/orders/approval/:id',

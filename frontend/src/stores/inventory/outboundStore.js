@@ -28,7 +28,7 @@ export const useOutboundStore = defineStore('outbound', {
                 this.totalCount = res.data.totalCount
                 this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
             } catch (e) {
-                console.error("출고 목록 조회 실패" + e)
+                console.error("출고 목록 조회 실패", e)
             } finally {
                 this.loading = false
             }
@@ -40,7 +40,7 @@ export const useOutboundStore = defineStore('outbound', {
                 this.details = data.items[0].items
                 this.selectedOutboundNo = data.items[0].outboundNo
             } catch (e) {
-                console.error("출고 상세 조회 실패" + e)
+                console.error("출고 상세 조회 실패", e)
             }
 
         }

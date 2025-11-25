@@ -18,11 +18,13 @@ const roleOptions = [
 const adminSidebar = [
   {
     id: 'orders',
-    title: '주문 관리',
+    title: '발주 관리',
     children: [
-      { title: '구매 주문 생성', path: '/hq/orders/create' },
-      { title: '주문 현황', path: '/hq/orders/status' },
-      { title: '주문 승인', path: '/hq/orders/approval' },
+      { title: '발주서 생성', path: '/hq/orders/create' },
+      { title: '일반 발주 현황', path: '/hq/orders/status' },
+      { title: '스마트 발주 현황', path: '/hq/orders/smart/status' },
+      { title: '자동 발주 현황', path: '/hq/orders/auto/status' },
+      { title: '발주 승인', path: '/hq/orders/approval' },
       { title: '공급사 관리', path: '/hq/orders/vendors' },
     ],
   },

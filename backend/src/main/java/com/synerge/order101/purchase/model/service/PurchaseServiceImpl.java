@@ -242,6 +242,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                     LocalDate.now(),
                     items
             );
+            System.out.println("자동발주 생성완료" + request.getOrderType() + request.getOrderStatus());
 
             createPurchase(request);
         }
@@ -253,7 +254,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Transactional(readOnly = true)
     public List<AutoPurchaseListResponseDto> getAutoPurchases (OrderStatus status, Integer page, Integer size){
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page - 1, size);
         Page<AutoPurchaseListResponseDto> pageResult;
 
         if (status == null) {
@@ -261,7 +262,6 @@ public class PurchaseServiceImpl implements PurchaseService {
         } else {
             pageResult = purchaseRepository.findByAutoOrderStatus(status, pageable);
         }
-        System.out.println(pageResult.getContent());
 
         return pageResult.getContent();
     }
