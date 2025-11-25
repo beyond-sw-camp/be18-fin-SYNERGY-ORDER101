@@ -3,19 +3,11 @@
     <h2 class="page-title">입/출고 목록 조회</h2>
 
     <div class="tab-row">
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'INBOUND' }"
-        @click="switchTab('INBOUND')"
-      >
+      <button class="tab" :class="{ active: activeTab === 'INBOUND' }" @click="switchTab('INBOUND')">
         입고
       </button>
 
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'OUTBOUND' }"
-        @click="switchTab('OUTBOUND')"
-      >
+      <button class="tab" :class="{ active: activeTab === 'OUTBOUND' }" @click="switchTab('OUTBOUND')">
         출고
       </button>
     </div>
@@ -36,11 +28,17 @@
     <inbound-table 
       v-if="activeTab === 'INBOUND'"
       :items="inboundStore.items"
+      :page="inboundStore.page"
+      :totalPages="inboundStore.totalPages"
+      @change-page="(p) => inboundStore.fetchInbound({ page: p })"
       @open-modal="(data) => openDetailModal('INBOUND', data)"
     />
     <outbound-table 
       v-else
       :items="outboundStore.items"
+      :page="outboundStore.page"
+      :totalPages="outboundStore.totalPages"
+      @change-page="(p) => outboundStore.fetchOutbound({ page: p })"
       @open-modal="(data) => openDetailModal('OUTBOUND', data)"
     />
 
@@ -64,6 +62,7 @@
 import { ref, onMounted } from 'vue'
 import { useInboundStore } from '@/stores/inventory/inbound'
 import { useOutboundStore } from '@/stores/inventory/outbound'
+
 import InboundTable from './tables/InboundTable.vue'
 import OutboundTable from './tables/OutboundTable.vue'
 import InboundItemModal from './modal/InboundItemModal.vue'
@@ -78,20 +77,15 @@ const showModal = ref(false)
 const currentType = ref('')
 const selectedNo = ref('')
 
-// 기본 파라미터 (추후 pagination 구현 시 ref 로 변경 가능)
-const page = 1
-const numOfRows = 20
-const totalCount = 0
-
 onMounted(() => {
-  inboundStore.fetchInbound({page, numOfRows, totalCount})
+  inboundStore.fetchInbound({ page: 1 })
 })
 
 function switchTab(tab) {
   activeTab.value = tab
 
   if (tab === 'OUTBOUND' && outboundStore.items.length === 0) {
-    outboundStore.fetchOutbound({ page, numOfRows, totalCount })
+    outboundStore.fetchOutbound({ page: 1})
   }
 }
 

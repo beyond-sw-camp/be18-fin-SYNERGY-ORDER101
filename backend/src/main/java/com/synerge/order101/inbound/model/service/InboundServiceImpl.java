@@ -23,27 +23,25 @@ public class InboundServiceImpl implements InboundService {
 
     @Override
     @Transactional
-    public List<InboundResponseDto> getInboundList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<InboundResponseDto> getInboundList(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
 
         Page<Object[]> result = inboundRepository.findInboundWithCounts(pageable);
 
-        return result.getContent().stream()
-                .map(row -> {
-                    Inbound i = (Inbound) row[0];
-                    Integer itemCount = ((Number) row[1]).intValue();
-                    Integer totalQty = ((Number) row[2]).intValue();
+        return result.map(row -> {
+            Inbound i = (Inbound) row[0];
+            Integer itemCount = ((Number) row[1]).intValue();
+            Integer totalQty = ((Number) row[2]).intValue();
 
-                    return new InboundResponseDto(
-                            i.getInboundId(),
-                            i.getInboundNo(),
-                            i.getInboundDatetime(),
-                            i.getSupplier().getSupplierName(),
-                            itemCount,
-                            totalQty
-                    );
-                })
-                .toList();
+            return new InboundResponseDto(
+                    i.getInboundId(),
+                    i.getInboundNo(),
+                    i.getInboundDatetime(),
+                    i.getSupplier().getSupplierName(),
+                    itemCount,
+                    totalQty
+            );
+        });
     }
 
     @Override

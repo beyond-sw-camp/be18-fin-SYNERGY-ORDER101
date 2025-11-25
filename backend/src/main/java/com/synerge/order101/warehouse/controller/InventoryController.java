@@ -5,6 +5,7 @@ import com.synerge.order101.warehouse.model.dto.request.InventoryQuantityChangeR
 import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.service.InventoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +23,9 @@ public class InventoryController {
     public ResponseEntity<ItemsResponseDto<InventoryResponseDto>> getInventory(@RequestParam int page,
                                                                                @RequestParam int numOfRows) {
 
-        List<InventoryResponseDto> inventoryList = inventoryService.getInventoryList();
-        int totalCount = inventoryList.size();
+        Page<InventoryResponseDto> inventory = inventoryService.getInventoryList(page, numOfRows);
+        int totalCount = (int) inventory.getTotalElements();
 
-        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inventoryList, page, totalCount));
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inventory.getContent(), page, totalCount));
     }
 }

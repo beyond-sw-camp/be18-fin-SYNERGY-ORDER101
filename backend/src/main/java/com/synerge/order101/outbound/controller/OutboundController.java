@@ -6,6 +6,7 @@ import com.synerge.order101.outbound.model.dto.OutboundDetailResponseDto;
 import com.synerge.order101.outbound.model.dto.OutboundResponseDto;
 import com.synerge.order101.outbound.model.service.OutboundService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,13 +21,13 @@ public class OutboundController {
 
     // 전체 출고 조회
     @GetMapping
-    public ResponseEntity<ItemsResponseDto<OutboundResponseDto>> getOutbounds(@RequestParam(defaultValue = "0") int page,
-                                                                              @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<ItemsResponseDto<OutboundResponseDto>> getOutbounds(@RequestParam int page,
+                                                                              @RequestParam int numOfRows) {
 
-        List<OutboundResponseDto> outboundList = outboundService.getOutboundList(page, size);
-        int totalCount = outboundList.size();
+        Page<OutboundResponseDto> outbound = outboundService.getOutboundList(page, numOfRows);
+        int totalCount = (int) outbound.getTotalElements();
 
-        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, outboundList, page, totalCount));
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, outbound.getContent(), page, totalCount));
     }
 
     // 출고 상세 조회

@@ -31,27 +31,25 @@ public class OutboundServiceImpl implements OutboundService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OutboundResponseDto> getOutboundList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<OutboundResponseDto> getOutboundList(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
 
         Page<Object[]> result = outboundRepository.findOutboundWithCounts(pageable);
 
-        return result.getContent().stream()
-                .map(row -> {
-                    Outbound o = (Outbound) row[0];
-                    Integer itemCount = ((Number) row[1]).intValue();
-                    Integer totalQty = ((Number) row[2]).intValue();
+        return result.map(row -> {
+            Outbound o = (Outbound) row[0];
+            Integer itemCount = ((Number) row[1]).intValue();
+            Integer totalQty = ((Number) row[2]).intValue();
 
-                    return new OutboundResponseDto(
-                            o.getOutboundId(),
-                            o.getOutboundNo(),
-                            o.getOutboundDatetime(),
-                            o.getStore().getStoreName(),
-                            itemCount,
-                            totalQty
-                    );
-                })
-                .toList();
+            return new OutboundResponseDto(
+                    o.getOutboundId(),
+                    o.getOutboundNo(),
+                    o.getOutboundDatetime(),
+                    o.getStore().getStoreName(),
+                    itemCount,
+                    totalQty
+            );
+        });
     }
 
     @Override

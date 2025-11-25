@@ -5,23 +5,43 @@ export const useInboundStore = defineStore('inbound', {
 
     state: () => ({
         items: [],
+        details: [],
+        page: 1,
+        numOfRows: 10,
+        totalCount: 0,
+        totalPages: 1,
         loading: false,
         error: null,
     }),
 
     actions: {
-        async fetchInbound({ page = 1, numOfRows = 20, totalCount = 0 } = {}) {
-            const res = await axios.get(`/api/v1/inbounds`, {
-                params: { page, numOfRows, totalCount }
-            })
-            this.items = res.data.items
-            this.loading = false
+        async fetchInbound({ page = 1, numOfRows = 10 } = {}) {
+            try {
+                this.loading = true
+
+                const res = await axios.get(`/api/v1/inbounds`, {
+                    params: { page, numOfRows }
+                })
+
+                this.items = res.data.items
+                this.page = res.data.page
+                this.totalCount = res.data.totalCount
+                this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
+            } catch (e) {
+                console.error('입고 조회 실패: ', e)    
+            } finally {
+                this.loading = false
+            }
         },
 
         async fetchInboundDetail(inboundId) {
-            const { data } = await axios.get(`/api/v1/inbounds/${inboundId}`)
-            this.details = data.items[0].items
-            this.selectedInboundNo = data.items[0].InboundNo
+            try {
+                const { data } = await axios.get(`/api/v1/inbounds/${inboundId}`)
+                this.details = data.items[0].items
+                this.selectedInboundNo = data.items[0].InboundNo
+            } catch (e) {
+                console.error('입고 상세 조회 실패: ', e)
+            }
         }
     }
 })

@@ -12,12 +12,8 @@
       </thead>
 
       <tbody>
-        <tr 
-          v-for="row in items" 
-          :key="row.outboundId"
-          class="row-clickable"
-          @click="$emit('open-modal', { id: row.outboundId, no: row.outboundNo })"
-        >
+        <tr v-for="row in items" :key="row.outboundId" class="row-clickable"
+          @click="$emit('open-modal', { id: row.outboundId, no: row.outboundNo })">
           <td>{{ row.outboundNo }}</td>
           <td>{{ row.customerName }}</td>
           <td>{{ row.itemCount }}</td>
@@ -32,23 +28,46 @@
     </table>
 
     <div class="pagination">
-      <button class="page-btn">‹ Previous</button>
+      <button class="page-btn" @click="changePage(page - 1)" :disabled="page === 1">
+        ‹ Previous
+      </button>
+
       <div class="page-numbers">
-        <button class="page current">1</button>
-        <button class="page">2</button>
+        <button v-for="p in totalPages" :key="p" class="page"
+          :class="['page-button', { active: page === p }]" @click="changePage(p)">
+          {{ p }}
+        </button>
       </div>
-      <button class="page-btn">Next ›</button>
+
+      <button class="page-btn" @click="changePage(page + 1)" :disabled="page === totalPages">
+        Next ›
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   items: {
     type: Array,
     default: () => []
+  },
+  page: { 
+    type: Number, 
+    default: 1 
+  },
+  totalPages: { 
+    type: Number, 
+    default: 1 
   }
 })
+
+const emit = defineEmits(["change-page"])
+
+const changePage = (p) => {
+  if (p < 1 || p > props.totalPages) return
+  emit("change-page", p)
+}
 
 const formatDate = (dt) => {
   if (!dt) return '-'
@@ -96,6 +115,12 @@ const formatDate = (dt) => {
 }
 .page.current {
   background: #f3f4f6;
+}
+.page.active {
+  border-color: #2563eb;
+  color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
 }
 .page-btn {
   background: transparent;

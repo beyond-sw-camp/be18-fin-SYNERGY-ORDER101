@@ -39,40 +39,48 @@
           </tr>
         </tbody>
       </table>
-            <div class="pagination">
-        <button class="page-btn">‹ Previous</button>
+
+      <div class="pagination">
+        <button class="page-btn" @click="changePage(page - 1)" :disabled="page <= 1">
+          ‹ Previous
+        </button>
+
         <div class="page-numbers">
-          <button class="page current">1</button>
-          <button class="page">2</button>
+          <button v-for="p in pages" :key="p" class="page"
+            :class="['page-button', { active: page === p }]" @click="changePage(p)">
+            {{ p }}
+          </button>
         </div>
-        <button class="page-btn">Next ›</button>
+
+        <button class="page-btn" @click="changePage(page + 1)" :disabled="page >= totalPages">
+          Next ›
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed ,onMounted } from 'vue'
 import { useInventoryStore } from '@/stores/inventory/inventory'
 
 const inventoryStore = useInventoryStore()
 
-// const page = ref(1)
-// const numOfRows = ref(20)
-// const totalCount = ref(0)
-// const parentId = ref(1)
-const page = 1
-const numOfRows = 20
-const totalCount = 0
-const parentId = 1
-
 onMounted(() => {
-  inventoryStore.fetchInventory({ page, numOfRows, totalCount })
-  // inventoryStore.loadCategories({ parentId })
+  inventoryStore.fetchInventory({ page: 1 })
 })
 
-function refreshData() {
-  inventoryStore.fetchInventory({ page, numOfRows, totalCount })
+const page = computed(() => inventoryStore.page)
+const totalPages = computed(() => Math.ceil(inventoryStore.totalCount / inventoryStore.numOfRows))
+
+// 페이지 번호 배열 생성
+const pages = computed(() => {
+  return Array.from({ length: totalPages.value }, (_, i) => i + 1)
+})
+
+const changePage = (p) => {
+  if (p < 1 || p > totalPages.value) return
+  inventoryStore.fetchInventory({ page: p })
 }
 </script>
 
@@ -161,6 +169,12 @@ function refreshData() {
   padding: 6px 10px;
   border-radius: 6px;
   background: #fff;
+}
+.page.active {
+  border-color: #2563eb;
+  color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
 }
 .page.current {
   background: #f3f4f6;

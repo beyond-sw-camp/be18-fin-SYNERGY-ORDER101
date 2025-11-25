@@ -5,44 +5,32 @@ export const useInventoryStore = defineStore('inventory', {
 
     state: () => ({
         items: [],
+        page: 1,
+        numOfRows: 10,
+        totalCount: 0,
         loading: false,
         error: null,
         categories: []
     }),
 
     actions: {
-        async fetchInventory({ page = 1, numOfRows = 20, totalCount = 0 } = {}) {
+        async fetchInventory({ page = 1, numOfRows = 10 } = {}) {
             try {
                 this.loading = true
 
                 const res = await axios.get(`/api/v1/warehouses/inventory`, {
-                    params: { page, numOfRows, totalCount }
+                    params: { page, numOfRows }
                 })
 
                 this.items = res.data.items
+                this.page = res.data.page
+                this.totalCount = res.data.totalCount
             } catch (e) {
-                this.error = e
                 console.error('재고 조회 실패:', e)
             } finally {
                 this.loading = false
             }
         },
-
-        // async loadCategories({ parentId = 1 } = {}) {
-        //     try {
-        //         this.loading = true
-
-        //         const res = await axios.get('/api/v1/categories/${parentId}/children', {
-        //             params: { parentId }
-        //         })
-        //     this.categories = res.data
-        //     } catch (e) {
-        //         console.warn('카테고리 로드 실패:', e)
-        //         largeCategories.value = []
-        //     } finally {
-        //         this.loading = false
-        //     }
-        // },
 
         refresh() {
             this.fetchInventory({})
