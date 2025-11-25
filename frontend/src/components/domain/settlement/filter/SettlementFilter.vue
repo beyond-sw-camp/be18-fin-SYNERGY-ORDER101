@@ -8,11 +8,24 @@
 
             <FilterDateRange label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
 
-            <FilterSearchInput label="검색" placeholder="검색어 입력..." v-model="filters.keyword" />
-
-            <div class="button-actions">
-                <button class="btn-search" @click="applyFilters">검색</button>
-                <button class="btn-reset" @click="resetFilters">필터 초기화</button>
+            <div class="search-group">
+                <FilterSearchInput label="검색" placeholder="검색어 입력..." v-model="filters.keyword" />
+                <div class="button-actions">
+                    <button class="btn-search" @click="applyFilters">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8" stroke-width="2" />
+                            <path d="m21 21-4.35-4.35" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        검색
+                    </button>
+                    <button class="btn-reset" @click="resetFilters">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        초기화
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -147,10 +160,17 @@ watch(() => filters.value.scope, (newScope) => {
     gap: 20px;
 }
 
-.button-actions {
+.search-group {
     display: flex;
     align-items: flex-end;
-    gap: 10px;
+    gap: 12px;
+}
+
+.button-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 0;
 }
 
 :deep(select),
@@ -161,35 +181,53 @@ watch(() => filters.value.scope, (newScope) => {
     height: 38px;
 }
 
-.btn-search {
-    background-color: #6b72f9;
-    color: white;
-    border: none;
-    padding: 8px 20px;
+.btn-search,
+.btn-reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 18px;
     border-radius: 6px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-search svg,
+.btn-reset svg {
+    width: 14px;
+    height: 14px;
+}
+
+.btn-search {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
 }
 
 .btn-search:hover {
-    background-color: #5a61e0;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-search:active {
+    transform: translateY(0);
 }
 
 .btn-reset {
-    background-color: #f0f2f5;
-    color: #495057;
-    border: 1px solid #dcdfe6;
-    padding: 8px 20px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+    background-color: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
 }
 
 .btn-reset:hover {
-    background-color: #e9ecef;
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #475569;
 }
 </style>

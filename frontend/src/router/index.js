@@ -110,12 +110,12 @@ const hqRoutes = [
     component: PagePlaceholder,
     meta: { title: '상품 목록' },
   },
-  {
-    path: '/hq/settlement/daily',
-    name: 'hq-settlement-daily',
-    component: DailySettlementView,
-    meta: { title: '일일 정산' },
-  },
+  // {
+  //   path: '/hq/settlement/daily',
+  //   name: 'hq-settlement-daily',
+  //   component: DailySettlementView,
+  //   meta: { title: '일일 정산' },
+  // },
   {
     path: '/hq/settlement/list',
     name: 'hq-settlement-list',

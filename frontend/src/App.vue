@@ -47,7 +47,7 @@ const adminSidebar = [
     title: '정산 관리',
     children: [
       { title: '정산 목록', path: '/hq/settlement/list' },
-      { title: '일일 정산', path: '/hq/settlement/daily' },
+      //{ title: '일일 정산', path: '/hq/settlement/daily' },
       { title: '정산 리포트', path: '/hq/settlement/report' },
     ],
   },

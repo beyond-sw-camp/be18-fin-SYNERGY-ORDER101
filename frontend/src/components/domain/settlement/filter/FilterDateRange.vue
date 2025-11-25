@@ -1,9 +1,10 @@
 <template>
     <div class="filter-date-range">
         <label v-if="label">{{ label }}</label>
-        <div> <input class="input" type="date" :value="startDate"
+        <div class="date-inputs">
+            <input class="input" type="date" :value="startDate"
                 @change="$emit('update:startDate', $event.target.value)" />
-            <span>~</span>
+            <span class="separator">~</span>
             <input class="input" type="date" :value="endDate" @change="$emit('update:endDate', $event.target.value)" />
         </div>
     </div>
@@ -16,18 +17,46 @@ const emit = defineEmits(['update:startDate', 'update:endDate']);
 </script>
 
 <style scoped>
-/* Flexbox 배치 관련 스타일만 남기고 입력 필드/라벨/span 스타일은 부모에게 위임 */
-.filter-date-range>div {
-    /* 날짜 입력 필드를 묶은 div에 flex 적용 */
+.filter-date-range {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-date-range label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0;
+}
+
+.date-inputs {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+}
+
+.separator {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 14px;
 }
 
 .input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    height: 38px;
+}
 
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
+.input:hover,
+.input:focus {
+    border-color: #6b72f9;
 }
 </style>

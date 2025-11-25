@@ -13,12 +13,38 @@ const emit = defineEmits(['update:modelValue', 'search']);
 </script>
 
 <style scoped>
-/* 입력 필드/라벨 스타일은 부모에게 위임 */
-/* .filter-search-input은 부모에서 flex-direction: column으로 제어됨 */
-.input {
+.filter-search-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
+.filter-search-input label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0;
+}
+
+.input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    background-color: white;
+    transition: border-color 0.2s;
+    height: 38px;
+    min-width: 200px;
+}
+
+.input:hover,
+.input:focus {
+    border-color: #6b72f9;
+}
+
+.input::placeholder {
+    color: #9ca3af;
 }
 </style>

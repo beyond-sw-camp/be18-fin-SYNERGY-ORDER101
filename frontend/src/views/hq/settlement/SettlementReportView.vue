@@ -1,7 +1,12 @@
 <template>
     <div class="settlement-report-page">
+        <div class="page-header">
+            <h1 class="page-title">정산 리포트</h1>
+            <p class="page-subtitle">가맹점 및 공급사의 정산 데이터를 분석하고 시각화합니다</p>
+        </div>
+
         <!-- 필터 섹션 -->
-        <section class="filter-section card">
+        <section class="filter-section">
             <SettlementFilter @search="handleSearch" />
         </section>
 
@@ -161,7 +166,6 @@ const tableData = ref([]);
  * 필터 검색 핸들러
  */
 async function handleSearch(filters) {
-    console.log('🔍 정산 리포트 검색:', filters);
 
     currentFilterData.value = filters;
     loading.value = true;
@@ -178,17 +182,8 @@ async function handleSearch(filters) {
             searchText: filters.keyword || null
         };
 
-        console.log('📤 요청 파라미터:', params);
-
         // ✅ 단일 API 호출 (Spring Page 객체 반환)
         const pageData = await getSettlementReport(params);
-
-        console.log('📦 API 응답:', {
-            totalElements: pageData.totalElements,
-            totalPages: pageData.totalPages,
-            contentSize: pageData.content?.length,
-            content: pageData.content
-        });
 
         // ✅ 빈 데이터 체크
         if (!pageData.content || pageData.content.length === 0) {
@@ -198,7 +193,6 @@ async function handleSearch(filters) {
             distributionData.value = [];
             tableData.value = [];
 
-            console.warn('⚠️ 조회된 데이터가 없습니다.');
             return;
         }
 
@@ -210,14 +204,6 @@ async function handleSearch(filters) {
         ratioData.value = processor.getRatioData();
         distributionData.value = processor.getDistributionData();
         tableData.value = processor.getTableData();
-
-        console.log('✅ 데이터 가공 완료:', {
-            summary: summaryData.value,
-            monthly: monthlyData.value.length,
-            ratio: ratioData.value.length,
-            distribution: distributionData.value.length,
-            table: tableData.value.length
-        });
 
     } catch (error) {
         console.error('❌ 데이터 로드 실패:', error);
@@ -273,14 +259,38 @@ function getStatusClass(status) {
 
 <style scoped>
 .settlement-report-page {
-    padding: 30px;
-    background-color: #f7f9fc;
     min-height: 100vh;
+    background: #f8fafc;
+    padding: 24px;
 }
 
-/* 필터 섹션 */
+/* ============ Page Header ============ */
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* ============ Filter Section ============ */
 .filter-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
     margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
 }
 
 .card {
