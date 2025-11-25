@@ -116,7 +116,7 @@ def main():
             # 모델이 사용하는 피처만 정렬
             X = tmp.reindex(columns=features_used, fill_value=0.0)
 
-            yhat = float(model.predict(X.values)[0])
+            yhat = float(model.predict(X)[0])
             yhat = max(0.0, yhat)
 
             forecasts.append({**row, "y_pred": round(yhat)})
