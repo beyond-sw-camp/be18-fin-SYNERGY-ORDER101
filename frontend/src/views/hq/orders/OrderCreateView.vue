@@ -71,12 +71,12 @@
           <div class="summary-row">
             <span>소계:</span><span class="numeric">
               <Money :value="subtotal" />
-            </span>
+            </span>1
           </div>
           <div class="summary-row">
-            <span>배송:</span><span class="numeric">
+            <!-- <span>배송:</span><span class="numeric">
               <Money :value="shipping" />
-            </span>
+            </span> -->
           </div>
           <hr />
           <div class="summary-row total">

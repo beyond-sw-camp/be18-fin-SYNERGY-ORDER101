@@ -19,7 +19,7 @@ def main():
     # y, y_pred는 필수
     if "y_pred" not in pred.columns:
         raise ValueError("predictions.csv에 y_pred 컬럼이 없습니다.")
-    if "target_date" not in pred.columns and "target_date" not in pred.columns:
+    if "target_date" not in pred.columns:
         # 뒤에서 features_test로 보충하므로 통과
 
         pass
@@ -45,7 +45,7 @@ def main():
 
     # 스키마 맞추기 (운영 적재 형식 예시)
     out = pred.copy()
-    out["product_id"]        = out.get("sku_id")       # SKU=product로 사용하는 정책
+    out["product_id"]        = out.get("sku_id")
     out["warehouse_id"]      = out["warehouse_id"].fillna(0).astype(int)
     out["store_id"]          = out["store_id"].fillna(0).astype(int)
     out["target_date"]       = pd.to_datetime(out["target_date"]).dt.date.astype(str)

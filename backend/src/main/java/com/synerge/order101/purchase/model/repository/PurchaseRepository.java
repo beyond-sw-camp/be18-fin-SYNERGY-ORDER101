@@ -1,5 +1,7 @@
 package com.synerge.order101.purchase.model.repository;
 
+import aj.org.objectweb.asm.commons.Remapper;
+import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.AutoPurchaseListResponseDto;
 import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
@@ -8,46 +10,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
-    @Query(
-            value = """
-            select new com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto(
-                p.purchaseId,
-                su.supplierName,
-                u.name,
-                p.poNo,
-                0,
-                0,
-                p.orderStatus,
-                p.createdAt)
-            from Purchase p
-            left join p.supplier su
-            left join p.user u
-            where p.orderStatus = :status
-            """
-    )
-    Page<PurchaseSummaryResponseDto> findByOrderStatus(OrderStatus status, Pageable pageable);
-
-    @Query(
-            value = """
-            select new com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto(
-                p.purchaseId,
-                su.supplierName,
-                u.name,
-                p.poNo,
-                0,
-                0,
-                p.orderStatus,
-                p.createdAt)
-            from Purchase p
-            left join p.supplier su
-            left join p.user u
-            """
-    )
-    Page<PurchaseSummaryResponseDto> findOrderAllStatus(Pageable pageable);
+public interface PurchaseRepository extends JpaRepository<Purchase, Long>, QuerydslPredicateExecutor<Purchase> , PurchaseRepositoryCustom{
+    /**
+     * PO 번호 또는 Supplier의 이름 중 하나라도 키워드를 포함하는 Purchase 목록을 조회합니다.
+     * 대소문자 구분 없이 (IgnoreCase), 페이징 처리 (Pageable)를 적용합니다.
+     *
+     * @param poKeyword           PO 번호 검색 키워드
+     * @param supplierNameKeyword 공급업체 이름 검색 키워드
+     * @param pageable            페이징 정보
+     * @return Page<Purchase>
+     */
+    Page<Purchase> findByPoNoContainingIgnoreCaseOrSupplier_SupplierNameContainingIgnoreCaseOrUser_nameContainingIgnoreCase(
+            String poKeyword,
+            String supplierNameKeyword,
+            String userNameKeyword,
+            Pageable pageable);
 
     @Query("""
         SELECT new com.synerge.order101.purchase.model.dto.AutoPurchaseListResponseDto(
@@ -83,4 +64,6 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
           AND p.orderStatus = :status
     """)
     Page<AutoPurchaseListResponseDto> findByAutoOrderStatus(OrderStatus status, Pageable pageable);
+
 }
+

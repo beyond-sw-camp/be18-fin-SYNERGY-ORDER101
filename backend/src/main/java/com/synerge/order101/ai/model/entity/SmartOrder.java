@@ -1,17 +1,35 @@
 package com.synerge.order101.ai.model.entity;
 
 import com.synerge.order101.ai.exception.AiErrorCode;
+import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.product.model.entity.Product;
-import com.synerge.order101.store.model.entity.Store;
-import jakarta.persistence.*;
-import lombok.*;
+import com.synerge.order101.supplier.model.entity.Supplier;
+import com.synerge.order101.user.model.entity.User;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 @Table(
@@ -23,7 +41,7 @@ import java.util.Date;
                 )
         },
         indexes = {
-                @Index(name = "idx_so_store_product_week", columnList = "store_id, product_id, target_week")
+                @Index(name = "idx_so_product_week", columnList = "product_id, target_week")
         }
 )
 @Getter
@@ -33,19 +51,24 @@ import java.util.Date;
 public class SmartOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "smart_order_id")
     private Long smartOrderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id")
-    private Store store;
+    @JoinColumn(name = "supplier_id", nullable = false)
+    private Supplier supplier;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "demand_forecast_id")
+    @JoinColumn(name = "demand_forecast_id", nullable = false)
     private DemandForecast demandForecast;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Column(name = "target_week", nullable = false)
     private LocalDate targetWeek;
@@ -58,10 +81,10 @@ public class SmartOrder {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "smart_order_status", nullable = false)
-    private SmartOrderStatus smartOrderStatus = SmartOrderStatus.DRAFT;
+    private OrderStatus smartOrderStatus = OrderStatus.DRAFT_AUTO;
 
     @CreationTimestamp
-    @Column(name = "snapshot_at")
+    @Column(name = "snapshot_at", updatable = false)
     private LocalDateTime snapshotAt;
 
     @UpdateTimestamp
@@ -70,28 +93,26 @@ public class SmartOrder {
 
 
 
-
-    public enum SmartOrderStatus{
-        DRAFT,
-        SUBMITTED,
-        APPROVED,
-        REJECTED,
-        CANCELLED
-    }
-
-
-    public void updateDraft(Integer newRecommendedQty){
-        if(this.smartOrderStatus != SmartOrderStatus.DRAFT){
+    public void updateRecommendedQty(Integer newRecommendedQty){
+        if(this.smartOrderStatus != OrderStatus.DRAFT_AUTO){
             throw new CustomException(AiErrorCode.SMART_ORDER_UPDATE_FAILED);
         }
         this.recommendedOrderQty = newRecommendedQty;
     }
 
-    public void submit() {
-        if (this.smartOrderStatus != SmartOrderStatus.DRAFT) {
+    public void submit(User submitter) {
+        if (this.smartOrderStatus != OrderStatus.DRAFT_AUTO) {
             throw new CustomException(AiErrorCode.SMART_ORDER_SUBMIT_FAILED);
         }
-        this.smartOrderStatus = SmartOrderStatus.SUBMITTED;
+        this.user = submitter;
+        this.smartOrderStatus = OrderStatus.SUBMITTED;
+        this.snapshotAt = LocalDateTime.now();
+    }
+
+    public void setSystemUserIfNull(User systemUser) {
+        if (this.user == null) {
+            this.user = systemUser;
+        }
     }
 
 

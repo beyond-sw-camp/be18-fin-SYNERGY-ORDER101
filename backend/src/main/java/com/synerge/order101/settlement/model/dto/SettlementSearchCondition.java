@@ -17,6 +17,8 @@ public class SettlementSearchCondition extends BaseSearchCondition {
     // 상태: 체크된 값들(DRAFT, ISSUED, VOID)을 리스트로 받습니다.
     private List<String> statuses;
 
+    private Long vendorId; // 공급사 ID
+
     // 검색어
     private String searchText; // ID 또는 공급사 이름 검색
 

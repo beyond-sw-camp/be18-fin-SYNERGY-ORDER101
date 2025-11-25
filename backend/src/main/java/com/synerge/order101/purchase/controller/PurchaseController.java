@@ -7,6 +7,7 @@ import com.synerge.order101.purchase.model.dto.*;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.purchase.model.service.PurchaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,13 +26,13 @@ public class PurchaseController {
      * - 모든 발주 목록을 조회한다.
      */
     @GetMapping
-    public ResponseEntity<List<PurchaseSummaryResponseDto>> findPurchases(
-            @RequestParam(required = false) OrderStatus status,
+    public ResponseEntity<Page<PurchaseSummaryResponseDto>> findPurchases(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) OrderStatus status
     ) {
-
-        List<PurchaseSummaryResponseDto> response = purchaseService.findPurchases(status, page, size);
+        Page<PurchaseSummaryResponseDto> response = purchaseService.findPurchases(keyword, page, size, status);
         return ResponseEntity.ok(response);
     }
 

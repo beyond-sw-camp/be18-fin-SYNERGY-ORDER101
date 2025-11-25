@@ -1,7 +1,9 @@
 package com.synerge.order101.purchase.model.service;
 
+import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
+import com.synerge.order101.notification.model.service.NotificationService;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.product.model.repository.ProductRepository;
@@ -17,6 +19,7 @@ import com.synerge.order101.purchase.model.repository.PurchaseRepository;
 import com.synerge.order101.settlement.event.PurchaseSettlementReqEvent;
 import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.supplier.model.repository.SupplierRepository;
+import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
@@ -24,10 +27,7 @@ import com.synerge.order101.warehouse.model.repository.WarehouseRepository;
 import com.synerge.order101.warehouse.model.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,13 +41,12 @@ import java.util.stream.Collectors;
 
 
 /**
- *  TODO : 발주 목록 조회에 공급가 적용 필요.
+ * TODO : 발주 목록 조회에 공급가 적용 필요.
  *  TODO : 발주 목록 조회 페이지 동적 쿼리 변경
  *  TODO : 발주 생성 시 공급가 가져오는 로직 필요.
  *  TODO : 발주 목록 조회 최적화 필요
  *  TODO : 주 변경 로그 필요 유무 스펙 확인 필요.
  *  # 박진우
- *
  */
 @Service
 @RequiredArgsConstructor
@@ -66,10 +65,12 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     private final InventoryService inventoryService;
 
+    private final NotificationService notificationService;
+
     // 발주 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public List<PurchaseSummaryResponseDto> findPurchases(OrderStatus status, Integer page, Integer size) {
+    public Page<PurchaseSummaryResponseDto> findPurchases(String keyword, Integer page, Integer size, OrderStatus status) {
 
         int pageNumber = (page != null && page >= 0) ? page : 0;
         int pageSize = (size != null && size > 0) ? size : 10;
@@ -77,14 +78,11 @@ public class PurchaseServiceImpl implements PurchaseService {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<PurchaseSummaryResponseDto> pageResult;
 
-        if(status == null){
-            pageResult = purchaseRepository.findOrderAllStatus(pageable);
-        }
-        else{
-            pageResult = purchaseRepository.findByOrderStatus(status, pageable);
+        if (keyword.isBlank() && status == null) {
+            return purchaseRepository.findAll(pageable).map(PurchaseSummaryResponseDto::fromEntity);
         }
 
-        return pageResult.getContent();
+        return purchaseRepository.findByDynamicSearch(keyword, status, pageable).map(PurchaseSummaryResponseDto::fromEntity);
     }
 
     // 발주 상세 조회
@@ -93,8 +91,8 @@ public class PurchaseServiceImpl implements PurchaseService {
     public PurchaseDetailResponseDto findPurchaseDetailsById(Long purchaseId) {
 
         Purchase purchase = purchaseRepository.findById(purchaseId).orElseThrow(
-                ()-> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND
-        ));
+                () -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND
+                ));
 
         List<PurchaseDetail> details = purchaseDetailRepository.findByPurchase_PurchaseId(purchaseId);
 
@@ -108,6 +106,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
                 .requesterName(purchase.getUser().getName())
+                .requestedAt(purchase.getCreatedAt().toString())
                 .purchaseItems(List.of(items))
                 .build();
 
@@ -165,6 +164,23 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         purchaseDetailRepository.saveAll(detailsToSave);
 
+        if (request.getOrderType() == Purchase.OrderType.AUTO) {
+            // HQ 일반 사원 조회 (Role 이름/필드명은 실제 코드에 맞게 수정)
+            List<User> hqStaffList = userRepository.findByRole(Role.HQ);
+
+            if (!hqStaffList.isEmpty()) {
+                notificationService.notifyAutoPurchaseCreatedToHqStaff(purchase, hqStaffList);
+            }
+        }
+
+        if(request.getOrderType() == Purchase.OrderType.MANUAL){
+            // 일반 발주 관리자한테 알림 (테스트 X)
+            List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
+
+            notificationService.notifyPurchaseCreatedToAllAdmins(purchase, admins);
+        }
+
+
     }
 
     // 발주 상태 변경
@@ -181,7 +197,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         OrderStatus curOrderStatus = purchase.getOrderStatus();
 
-        if(curOrderStatus == OrderStatus.CONFIRMED) {
+        if (curOrderStatus == OrderStatus.CONFIRMED) {
             // 발주 완료 이벤트 발행
             eventPublisher.publishEvent(new PurchaseSettlementReqEvent(purchase));
             // 입고 반영
@@ -229,20 +245,20 @@ public class PurchaseServiceImpl implements PurchaseService {
 
             createPurchase(request);
         }
-    }
 
+
+    }
     // 자동발주 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public List<AutoPurchaseListResponseDto> getAutoPurchases(OrderStatus status, Integer page, Integer size) {
+    public List<AutoPurchaseListResponseDto> getAutoPurchases (OrderStatus status, Integer page, Integer size){
 
         Pageable pageable = PageRequest.of(page, size);
         Page<AutoPurchaseListResponseDto> pageResult;
 
-        if(status == null){
+        if (status == null) {
             pageResult = purchaseRepository.findAutoOrderAllStatus(pageable);
-        }
-        else{
+        } else {
             pageResult = purchaseRepository.findByAutoOrderStatus(status, pageable);
         }
         System.out.println(pageResult.getContent());
@@ -253,10 +269,10 @@ public class PurchaseServiceImpl implements PurchaseService {
     // 자동발주 상세 조회
     @Override
     @Transactional(readOnly = true)
-    public AutoPurchaseDetailResponseDto getAutoPurchaseDetail(Long purchaseId) {
+    public AutoPurchaseDetailResponseDto getAutoPurchaseDetail (Long purchaseId){
 
         Purchase purchase = purchaseRepository.findById(purchaseId).orElseThrow(
-                ()-> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
+                () -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
 
         // PurchaseDetail + safetyQty 조회
         List<Object[]> results = purchaseDetailRepository.findDetailsWithSafetyQty(purchaseId);
@@ -282,7 +298,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     @Transactional
-    public AutoPurchaseDetailResponseDto submitAutoPurchase(Long purchaseId, AutoPurchaseSubmitRequestDto request) {
+    public AutoPurchaseDetailResponseDto submitAutoPurchase (Long purchaseId, AutoPurchaseSubmitRequestDto request){
 
 
         Purchase purchase = purchaseRepository.findById(purchaseId)
@@ -292,7 +308,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         Map<Long, Integer> requestedMap = request.items().stream()
                 .collect(Collectors.toMap(AutoPurchaseSubmitRequestDto.Item::productId,
-                                          AutoPurchaseSubmitRequestDto.Item::orderQty));
+                        AutoPurchaseSubmitRequestDto.Item::orderQty));
 
         List<PurchaseDetailHistory> historyList = new ArrayList<>();
 
@@ -365,6 +381,11 @@ public class PurchaseServiceImpl implements PurchaseService {
         purchaseDetailHistoryRepository.saveAll(historyList);
 
         purchase.updateOrderStatus(OrderStatus.SUBMITTED);
+
+        // 자동 발주 알림 (테스트 완)
+        List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
+
+        notificationService.notifyPurchaseCreatedToAllAdmins(purchase, admins);
 
         return getAutoPurchaseDetail(purchaseId);
     }

@@ -1,5 +1,5 @@
 """
-preprocess_domain_mapping.py
+01_preprocess_domain_mapping.py
 - weekly_sales.csv  → domain_sales.csv (창고 1개 가정)
 - taxonomy 헤더 표준화 + merge 후 product_name_x/_y 충돌 정리
 """
@@ -13,7 +13,7 @@ TAXONOMY = BASE / "taxonomy_product_map.csv"
 OUT_FULL   = BASE / "domain_sales.csv"
 OUT_SAMPLE = BASE / "sample_domain_sales.csv"
 
-SHIFT_YEARS   = 7
+SHIFT_YEARS   = 0
 WAREHOUSE_ID  = 1
 REGION_NAME   = "본사창고"
 
@@ -26,10 +26,24 @@ STD_MAP = {
 }
 
 def _shift_year_safe(dt, years):
-    try:
-        return dt.replace(year=dt.year + years)
-    except Exception:
+    """
+    연도를 +years 만큼 이동.
+    2월 29일(윤년 날짜)은 에러가 나므로 2월 28일로 보정.
+    """
+    if pd.isna(dt):
         return dt
+    dt = pd.to_datetime(dt)
+
+    new_year = dt.year + years
+    try:
+        return dt.replace(year=new_year)
+    except ValueError:
+        # 2/29 -> 2/28 로 보정 (또는 3/1로 바꿔도 됨)
+        if dt.month == 2 and dt.day == 29:
+            return dt.replace(year=new_year, month=2, day=28)
+        # 혹시 다른 케이스가 있으면 그냥 원래 날짜에 years만 더한 채로 넘기거나 로그 찍어도 됨
+        return dt
+
 
 def _std_cols(df: pd.DataFrame) -> pd.DataFrame:
     # BOM/공백 제거 + 후보군을 표준 컬럼명으로 매핑
@@ -61,7 +75,7 @@ def _ensure_taxonomy(tax: pd.DataFrame) -> pd.DataFrame:
         if c not in tax.columns:
             tax[c] = ""
 
-    tax["product_id"] = pd.to_numeric(tax["product_id"], errors="coerce").astype("Int64")
+    tax["product_id"] = tax["product_id"].astype(str).str.strip()
     return tax
 
 def _fix_name_conflict(df: pd.DataFrame) -> pd.DataFrame:
@@ -90,7 +104,7 @@ def main():
 
     if "product_id" not in df.columns:
         raise ValueError(f"weekly_sales.csv에 product_id 컬럼이 없습니다. 현재 컬럼: {list(df.columns)}")
-    df["product_id"] = pd.to_numeric(df["product_id"], errors="coerce").astype("Int64")
+    df["product_id"] = df["product_id"].astype(str).str.strip()
 
     # 2) taxonomy 로드 + 표준화
     if not TAXONOMY.exists():
@@ -119,7 +133,8 @@ def main():
     merged["region"]       = REGION_NAME
 
     # 5) 연도 시프트
-    merged["target_date"] = merged["target_date"].apply(lambda d: _shift_year_safe(d, SHIFT_YEARS))
+    merged["target_date"] = pd.to_datetime(merged["target_date"])
+
 
     # 6) 컬럼/저장
     cols = [

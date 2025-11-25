@@ -22,17 +22,19 @@
           </thead>
           <tbody>
             <tr v-for="row in rows" :key="row.id" class="clickable-row" @click="openDetail(row)">
-              <td class="po">{{ row.id }}</td>
+              <td class="po">{{ row.No }}</td>
               <td>{{ row.vendor }}</td>
               <td class="numeric">{{ row.items }}</td>
-              <td class="numeric"><Money :value="row.amount" /></td>
-              <td>{{ row.requestedAt }}</td>
+              <td class="numeric">
+                <Money :value="row.amount" />
+              </td>
+              <td>{{ formatDateTimeMinute(row.requestedAt) }}</td>
               <td>
                 <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
               </td>
-              <td class="actions">
-                <button class="btn-accept" @click.stop="approve(row)">승인</button>
-                <button class="btn-reject" @click.stop="reject(row)">반려</button>
+
+              <td @click.stop>
+                <PurchaseApprovalActions :po-id="row.id" @success="handleProcessSuccess" />
               </td>
             </tr>
             <tr v-if="rows.length === 0">
@@ -46,59 +48,60 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
+import { getPurchases, updatePurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { formatDateTimeMinute } from '@/components/global/Date';
+import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
+
+const perPage = ref(10)
+const page = ref(1)
+
+onMounted(() => {
+  // 초기 데이터 로드 등 필요한 작업 수행
+  searchPurchases()
+})
+
+function handleProcessSuccess() {
+  // 목록을 다시 불러와서 상태 변경 반영
+  searchPurchases()
+}
+
+const searchPurchases = async () => {
+  // // 발주 목록을 다시 불러오는 함수
+  const data = await getPurchases(
+    (page.value - 1) * perPage.value,
+    perPage.value,
+    '',
+    'SUBMITTED'
+  );
+
+  rows.value = (data.content || []).map(item => ({
+    id: item.purchaseId,
+    No: item.poNo,
+    vendor: item.supplierName,
+    items: item.totalQty,
+    amount: item.totalAmount,
+    requestedAt: item.requestedAt,
+    status: item.status,
+  }));
+}
 
 const router = useRouter()
 
-const rows = ref([
-  {
-    id: 'PO001',
-    vendor: '글로벌 테크',
-    items: 15,
-    amount: 1500000,
-    requestedAt: '2023-10-26',
-    status: '대기 중',
-  },
-  {
-    id: 'PO003',
-    vendor: '퓨쳐 트레이드',
-    items: 22,
-    amount: 2300000,
-    requestedAt: '2023-10-24',
-    status: '대기 중',
-  },
-  {
-    id: 'PO005',
-    vendor: '하이엔드 파트너스',
-    items: 12,
-    amount: 1100000,
-    requestedAt: '2023-10-22',
-    status: '대기 중',
-  },
-])
+const rows = ref([])
 
 function openDetail(row) {
   // navigate to approval detail page for this PO
   router.push({ name: 'hq-orders-approval-detail', params: { id: row.id } })
 }
 
-function approve(row) {
-  // placeholder: implement API call
-  alert(`${row.id} 승인 처리됨`)
-}
-
-function reject(row) {
-  // placeholder: implement API call
-  alert(`${row.id} 반려 처리됨`)
-}
-
 function statusClass(s) {
   if (!s) return ''
-  if (s.includes('승인')) return 's-accepted'
-  if (s.includes('대기')) return 's-waiting'
-  if (s.includes('거부')) return 's-rejected'
+  if (s.includes('CON')) return 's-accepted'
+  if (s.includes('SU')) return 's-waiting'
+  if (s.includes('RE')) return 's-rejected'
   return ''
 }
 </script>
@@ -107,58 +110,72 @@ function statusClass(s) {
 .page-shell {
   padding: 24px 32px;
 }
+
 .page-header {
   margin-bottom: 18px;
 }
+
 .card {
   background: #fff;
   border: 1px solid #f0f0f3;
   border-radius: 12px;
   padding: 16px;
 }
+
 .card-title {
   font-size: 16px;
   margin-bottom: 12px;
 }
+
 .table-wrap {
   margin-top: 12px;
 }
+
 .approval-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .approval-table th,
 .approval-table td {
   padding: 16px 12px;
   border-bottom: 1px solid #f0f0f3;
   text-align: left;
 }
+
 .approval-table td.numeric {
   text-align: right;
 }
+
 .po {
   font-weight: 600;
 }
+
 .chip {
   padding: 6px 10px;
   border-radius: 12px;
   color: #fff;
   font-size: 13px;
 }
+
 .s-accepted {
   background: #16a34a;
 }
+
 .s-waiting {
   background: #6b46ff;
 }
+
 .s-rejected {
   background: #ef4444;
 }
+
 .actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
 }
+
 .btn-accept {
   background: #6b46ff;
   color: #fff;
@@ -167,6 +184,7 @@ function statusClass(s) {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .btn-reject {
   background: #fff;
   color: #6b46ff;
@@ -175,9 +193,11 @@ function statusClass(s) {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .clickable-row {
   cursor: pointer;
 }
+
 .no-data {
   text-align: center;
   color: #999;

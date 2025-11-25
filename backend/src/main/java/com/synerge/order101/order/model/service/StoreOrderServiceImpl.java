@@ -2,6 +2,8 @@ package com.synerge.order101.order.model.service;
 
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
+import com.synerge.order101.notification.model.repository.NotificationRepository;
+import com.synerge.order101.notification.model.service.NotificationService;
 import com.synerge.order101.order.exception.errorcode.OrderErrorCode;
 import com.synerge.order101.order.model.dto.*;
 import com.synerge.order101.order.model.entity.StoreOrder;
@@ -15,6 +17,7 @@ import com.synerge.order101.product.model.repository.ProductRepository;
 import com.synerge.order101.settlement.event.StoreOrderSettlementReqEvent;
 import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.store.model.repository.StoreRepository;
+import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
@@ -49,6 +52,8 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final WarehouseRepository warehouseRepository;
+
+    private final NotificationService notificationService;
 
     /**
      * 주문 목록을 조회합니다.
@@ -140,6 +145,13 @@ public class StoreOrderServiceImpl implements StoreOrderService {
             }
         }
 
+        // 가맹점 발주 알림(테스트 X)
+        List<User> hqList = userRepository.findByRole(Role.HQ);
+
+        if(!hqList.isEmpty()){
+            notificationService.notifyOrderCreatedToHQ(hqList, savedOrder);
+        }
+
         return StoreOrderCreateResponseDto.builder()
                 .storeOrderId(savedOrder.getStoreOrderId())
                 .orderNo(savedOrder.getOrderNo())
@@ -174,6 +186,10 @@ public class StoreOrderServiceImpl implements StoreOrderService {
                 .build();
 
         storeOrderStatusLogRepository.save(log);
+
+        if(curStatus ==  OrderStatus.CONFIRMED || curStatus == OrderStatus.REJECTED) {
+            notificationService.notifyStoreOrderResult(order);
+        }
 
 
         return StoreOrderUpdateStatusResponseDto.builder()

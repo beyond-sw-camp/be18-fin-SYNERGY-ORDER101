@@ -1,7 +1,9 @@
 package com.synerge.order101.purchase.model.service;
 
+import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.*;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -9,7 +11,7 @@ public interface PurchaseService {
 
 
     // 발주 목록 조회
-    List<PurchaseSummaryResponseDto> findPurchases(OrderStatus status, Integer page, Integer size);
+    Page<PurchaseSummaryResponseDto> findPurchases(String keyword, Integer page, Integer size, OrderStatus status);
 
     // 발주 상세 조회
     PurchaseDetailResponseDto findPurchaseDetailsById(Long purchaseOrderId);

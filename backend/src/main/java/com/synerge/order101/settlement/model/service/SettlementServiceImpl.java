@@ -1,5 +1,6 @@
 package com.synerge.order101.settlement.model.service;
 
+import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.common.exception.errorcode.CommonErrorCode;
 import com.synerge.order101.settlement.event.SettlementReqEvent;

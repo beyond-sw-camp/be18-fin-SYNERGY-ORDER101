@@ -8,7 +8,8 @@ import java.util.List;
 
 @Getter
 @ToString
-public class ItemsResponseDto<T> extends BaseResponseDto<T>{
+public class
+ItemsResponseDto<T> extends BaseResponseDto<T>{
     private final int page;
 
     private final int numOfRows;

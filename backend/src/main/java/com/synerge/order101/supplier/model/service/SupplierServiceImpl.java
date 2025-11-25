@@ -62,7 +62,7 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
-    public SupplierDetailRes getSupplierDetail(Long supplierId, int numOfRows, int page) {
+    public SupplierDetailRes getSupplierDetail(Long supplierId, int numOfRows, int page, String keyword) {
         Supplier supplier = supplierRepository.findById(supplierId).orElseThrow(() ->
                 new CustomException(SupplierErrorCode.SUPPLIER_NOT_FOUND));
 
@@ -80,7 +80,7 @@ public class SupplierServiceImpl implements SupplierService {
 
         Pageable pageable = PageRequest.of(pageIndex, numOfRows);
 
-        Page<ProductSupplier> psPage = productSupplierRepository.findBySupplierWithProduct(supplierId, pageable);
+        Page<ProductSupplier> psPage = productSupplierRepository.findBySupplierWithProductAndKeyword(supplierId, keyword, pageable);
 
         List<SupplierProductItemRes> items = psPage.getContent().stream()
                 .map(ps -> SupplierProductItemRes.builder()

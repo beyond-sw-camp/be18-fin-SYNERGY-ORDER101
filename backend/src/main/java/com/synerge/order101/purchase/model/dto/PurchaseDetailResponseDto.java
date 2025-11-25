@@ -44,6 +44,7 @@ public class PurchaseDetailResponseDto {
 
         public static PurchaseItemDto fromEntity(PurchaseDetail detail){
             return PurchaseItemDto.builder()
+                    .productCode(detail.getProduct().getProductCode())
                     .productName(detail.getProduct().getProductName())
                     .unitPrice(detail.getUnitPrice())
                     .orderQty(detail.getOrderQty())

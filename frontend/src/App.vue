@@ -1,9 +1,13 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { computed as vueComputed } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import Header from './components/Header.vue'
 import Sidebar from './components/Sidebar.vue'
-import { auth, setRole } from './stores/auth'
+import { useAuthStore } from './stores/authStore'
+
+// instantiate auth store
+const auth = useAuthStore()
 
 const roleOptions = [
   { label: 'HQ', value: 'HQ' },
@@ -44,6 +48,7 @@ const adminSidebar = [
     children: [
       { title: '정산 목록', path: '/hq/settlement/list' },
       { title: '일일 정산', path: '/hq/settlement/daily' },
+      { title: '정산 리포트', path: '/hq/settlement/report' },
     ],
   },
   {
@@ -79,17 +84,28 @@ const storeSidebar = [
     title: '재고 관리',
     children: [{ title: '재고 조회', path: '/store/inventory/stock' }],
   },
-  {
-    id: 'store-settlement',
-    title: '정산 관리',
-    children: [{ title: '정산 관리', path: '/store/settlement/overview' }],
-  },
 ]
 
 const router = useRouter()
 const route = useRoute()
+function setRole(v) {
+  // store role in userInfo.type for now
+  auth.userInfo.type = v
+  // also keep role and roles[] in sync for other consumers
+  auth.userInfo.role = v
+  auth.userInfo.roles = v ? [v] : []
+}
+
 const currentRole = computed({
-  get: () => auth.role,
+  get: () => {
+    // prefer explicit role, then type, otherwise first role in roles array
+    return (
+      auth.userInfo.role ||
+      auth.userInfo.type ||
+      (auth.userInfo.roles && auth.userInfo.roles[0]) ||
+      ''
+    )
+  },
   set: (v) => setRole(v),
 })
 const expandedSections = ref({})
@@ -158,17 +174,44 @@ const toggleSection = (sectionId) => {
 }
 
 const isSectionExpanded = (sectionId) => !!expandedSections.value[sectionId]
+
+// reactive loggedIn computed as a safety-net (mirrors router guard logic)
+const loggedIn = vueComputed(() => {
+  const token = auth.userInfo && auth.userInfo.accessToken
+  const expiresAtRaw = auth.userInfo && auth.userInfo.expiresAt
+  const expiresAt = expiresAtRaw ? Number(expiresAtRaw) : 0
+  return !!(token && expiresAt > Date.now())
+})
+
+// Ensure UI redirects to login if unauthenticated, or redirects away from login when authenticated.
+watch(
+  loggedIn,
+  (val) => {
+    if (!val) {
+      // if user is not logged in and not already on login, navigate to login
+      if (route.name !== 'login') router.push({ name: 'login' })
+    } else {
+      // logged in: if currently on login, send to role dashboard
+      if (route.name === 'login' || route.path === '/login') {
+        const role =
+          auth.userInfo &&
+          (auth.userInfo.role ||
+            auth.userInfo.type ||
+            (auth.userInfo.roles && auth.userInfo.roles[0]))
+        if (role === 'STORE_ADMIN') router.push({ name: 'store-dashboard' })
+        else router.push({ name: 'hq-dashboard' })
+      }
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div>
     <!-- If route is an auth page (login), render only the view without header/sidebar -->
-    <Header
-      v-if="!isAuthRoute"
-      :currentRole="currentRole"
-      :roleOptions="roleOptions"
-      @update:currentRole="(val) => (currentRole.value = val)"
-    />
+    <Header v-if="!isAuthRoute" :currentRole="currentRole" :roleOptions="roleOptions"
+      @update:currentRole="(val) => (currentRole.value = val)" />
 
     <div v-if="!isAuthRoute" class="app-shell">
       <div class="app-body" :class="sidebarPlacementClass">
@@ -293,6 +336,7 @@ const isSectionExpanded = (sectionId) => !!expandedSections.value[sectionId]
   padding: 24px;
   background-color: #fff;
 }
+
 /* Sidebar and header styles moved into their own components */
 
 @media (max-width: 1024px) {

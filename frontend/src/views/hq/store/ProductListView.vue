@@ -3,27 +3,37 @@
     <header class="page-header">
       <h1>상품 목록</h1>
       <div class="header-actions">
-        <button class="btn-primary">상품 등록</button>
+        <button class="btn-primary" @click="goCreate">상품 등록</button>
       </div>
     </header>
 
     <section class="card">
       <div class="filters">
-        <select v-model="filters.large">
-          <option value="">대분류</option>
-          <option>전자제품</option>
-          <option>식품</option>
+        <select v-model="largeCategoryId">
+          <option value="">대분류 전체</option>
+          <option v-for="c in largeCategories" :key="c.id" :value="String(c.id)">
+            {{ c.name }}
+          </option>
         </select>
-        <select v-model="filters.medium">
-          <option value="">중분류</option>
-          <option>가전</option>
-          <option>주방</option>
+        <select v-model="mediumCategoryId" :disabled="mediumCategories.length === 0">
+          <option value="">중분류 전체</option>
+          <option v-for="c in mediumCategories" :key="c.id" :value="String(c.id)">
+            {{ c.name }}
+          </option>
         </select>
-        <select v-model="filters.small">
-          <option value="">소분류</option>
-          <option>스마트폰</option>
-          <option>노트북</option>
+        <select v-model="smallCategoryId" :disabled="smallCategories.length === 0">
+          <option value="">소분류 전체</option>
+          <option v-for="c in smallCategories" :key="c.id" :value="String(c.id)">
+            {{ c.name }}
+          </option>
         </select>
+        <input
+          v-model="keyword"
+          class="search"
+          placeholder="상품명 검색..."
+          @keyup.enter="handleSearch"
+        />
+        <button @click="handleSearch">검색</button>
       </div>
 
       <h3 class="card-title">모든 상품</h3>
@@ -40,54 +50,181 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in products" :key="p.code" class="clickable-row" @click="openDetail(p)">
-              <td class="code">{{ p.code }}</td>
-              <td>{{ p.category }}</td>
-              <td>{{ p.name }}</td>
+            <tr
+              v-for="p in products"
+              :key="p.productId"
+              class="clickable-row"
+              @click="goDetail(p.productId)"
+            >
+              <td class="code">{{ p.productCode }}</td>
+              <td>{{ p.categoryName }}</td>
+              <td>{{ p.productName }}</td>
               <td class="numeric"><Money :value="p.price" /></td>
               <td>
-                <span :class="['chip', p.active ? 's-active' : 's-inactive']">{{
-                  p.active ? '활성' : '비활성'
+                <span :class="['chip', p.status ? 's-active' : 's-inactive']">{{
+                  p.status ? '활성' : '비활성'
                 }}</span>
               </td>
             </tr>
             <tr v-if="products.length === 0">
               <td colspan="5" class="no-data">등록된 상품이 없습니다.</td>
             </tr>
+            <tr v-if="isLoading">
+              <td colspan="6" class="empty-data">목록을 불러오는 중...</td>
+            </tr>
           </tbody>
         </table>
       </div>
 
       <div class="pagination">
-        <button class="pager">‹ Previous</button>
-        <button class="page active">1</button>
-        <button class="page">2</button>
-        <button class="page">3</button>
-        <button class="pager">Next ›</button>
+        <button class="pager" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">
+          ‹ Previous
+        </button>
+        <button
+          v-for="page in pageNumbers"
+          :key="page"
+          class="page"
+          :class="{ active: page === currentPage }"
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+        <button
+          class="pager"
+          :disabled="currentPage === totalPages"
+          @click="changePage(currentPage + 1)"
+        >
+          Next ›
+        </button>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
+import { getProductList } from '@/components/api/product/productService'
+import { getTopCategories, getChildCategories } from '@/components/api/product/categoryService'
 
 const router = useRouter()
-const filters = ref({ large: '', medium: '', small: '' })
 
-const products = ref([
-  { code: 'ELEC001', category: '전자제품', name: '스마트폰', price: 20000, active: true },
-  { code: 'CLTH005', category: '전자제품', name: '마우스', price: 858000, active: true },
-  { code: 'FOOD010', category: '전자제품', name: '키보드', price: 196000, active: false },
-  { code: 'OFFC003', category: '전자제품', name: '아이패드', price: 352000, active: true },
-  { code: 'BOOK002', category: '전자제품', name: '노트북', price: 980000, active: false },
-])
+const MAX_VISIBLE_PAGES = 5
 
-function openDetail(p) {
-  router.push({ name: 'hq-product-detail', params: { code: p.code } })
+const products = ref([])
+const totalCount = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const keyword = ref('')
+const isLoading = ref(false)
+
+const largeCategoryId = ref('')
+const mediumCategoryId = ref('')
+const smallCategoryId = ref('')
+
+const largeCategories = ref([])
+const mediumCategories = ref([])
+const smallCategories = ref([])
+
+const totalPages = computed(() =>
+  totalCount.value > 0 ? Math.ceil(totalCount.value / pageSize.value) : 1,
+)
+
+const pageNumbers = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  const half = Math.floor(MAX_VISIBLE_PAGES / 2)
+
+  let start = Math.max(1, current - half)
+  let end = Math.min(total, start + MAX_VISIBLE_PAGES - 1)
+
+  if (end - start + 1 < MAX_VISIBLE_PAGES) {
+    start = Math.max(1, end - MAX_VISIBLE_PAGES + 1)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+const fetchProducts = async (page = 1) => {
+  isLoading.value = true
+  try {
+    const data = await getProductList(
+      page,
+      pageSize.value,
+      keyword.value,
+      largeCategoryId.value ? Number(largeCategoryId.value) : null,
+      mediumCategoryId.value ? Number(mediumCategoryId.value) : null,
+      smallCategoryId.value ? Number(smallCategoryId.value) : null,
+    )
+
+    products.value = data.products
+    totalCount.value = data.totalCount
+    currentPage.value = data.currentPage
+  } catch (e) {
+    console.error(e)
+    alert('상품 목록 조회에 실패했습니다.')
+  } finally {
+    isLoading.value = false
+  }
 }
+
+const initCategories = async () => {
+  largeCategories.value = await getTopCategories()
+}
+
+watch(largeCategoryId, async (newVal) => {
+  mediumCategoryId.value = ''
+  smallCategoryId.value = ''
+  mediumCategories.value = []
+  smallCategories.value = []
+
+  if (newVal) {
+    mediumCategories.value = await getChildCategories(Number(newVal))
+  }
+  fetchProducts(1)
+})
+
+watch(mediumCategoryId, async (newVal) => {
+  smallCategories.value = []
+  smallCategoryId.value = ''
+
+  if (newVal) {
+    smallCategories.value = await getChildCategories(Number(newVal))
+  }
+  fetchProducts(1)
+})
+
+watch(smallCategoryId, () => {
+  fetchProducts(1)
+})
+
+const handleSearch = () => {
+  fetchProducts(1)
+}
+
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  fetchProducts(page)
+}
+
+const goDetail = (productId) => {
+  // 실제 라우트 이름/파라미터에 맞게 수정
+  router.push({ name: 'hq-product-detail', params: { id: productId } })
+}
+
+const goCreate = () => {
+  router.push({ name: 'hq-product-register' })
+}
+
+onMounted(async () => {
+  await initCategories() // 대분류 먼저 로딩
+  fetchProducts(1) // 첫 페이지 상품 조회
+})
 </script>
 
 <style scoped>
@@ -139,7 +276,7 @@ function openDetail(p) {
   text-align: left;
 }
 .product-table td.numeric {
-  text-align: right;
+  text-align: left;
 }
 .code {
   font-weight: 600;
@@ -162,7 +299,7 @@ function openDetail(p) {
   display: flex;
   gap: 8px;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
 }
 .pager {
   background: transparent;
@@ -175,6 +312,7 @@ function openDetail(p) {
   border-radius: 8px;
   border: 1px solid #eee;
   background: #fff;
+  cursor: pointer;
 }
 .page.active {
   background: #6b46ff;
@@ -188,5 +326,15 @@ function openDetail(p) {
 }
 .clickable-row {
   cursor: pointer;
+}
+
+.page-btn {
+  min-width: 32px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+  line-height: 1;
 }
 </style>

@@ -21,4 +21,6 @@ public class UserRegisterRequestDto {
     private Role role;
 
     private String phone;
+
+    private Long storeId;
 }

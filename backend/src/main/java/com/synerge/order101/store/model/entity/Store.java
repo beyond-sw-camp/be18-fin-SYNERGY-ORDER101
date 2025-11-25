@@ -3,6 +3,7 @@ package com.synerge.order101.store.model.entity;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -15,9 +16,11 @@ import java.time.LocalDateTime;
 @Table(name = "store")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Store {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "store_id", nullable = false)
     private Long storeId;
 
     @Column(name = "store_code", length = 50, nullable = false)
@@ -36,7 +39,7 @@ public class Store {
     @JoinColumn(name = "default_warehouse_id")
     private Warehouse defaultWarehouse;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active", nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean isActive = true;
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
@@ -46,5 +49,9 @@ public class Store {
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void updateActive(boolean active) {
+        this.isActive = active;
+    }
 
 }

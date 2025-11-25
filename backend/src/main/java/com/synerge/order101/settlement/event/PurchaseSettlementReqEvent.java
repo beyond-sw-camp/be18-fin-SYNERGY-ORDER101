@@ -29,8 +29,6 @@ public record PurchaseSettlementReqEvent(Purchase purchase) implements Settlemen
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-
-
     @Override
     public boolean existSettlement(SettlementRepository settlementRepository) {
         return settlementRepository.existsByPurchase_PurchaseId(purchase.getPurchaseId());

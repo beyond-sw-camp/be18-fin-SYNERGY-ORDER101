@@ -1,5 +1,5 @@
 """
-02d_split_hq_into_virtual_stores.py
+04_split_hq_into_virtual_stores.py
 - 입력 : hq_weekly.csv (02c_make_hq_weekly.py 출력)
 - 처리 : HQ(warehouse_id, sku_id, target_date, actual_order_qty)를
         S개의 가상 가맹점(store_id=1001.., 1001+S-1)으로 안정적으로 분해

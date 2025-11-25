@@ -2,30 +2,36 @@
 import { reactive } from 'vue'
 import logoUrl from '@/assets/logo.png'
 import { useRouter } from 'vue-router'
-import { login as authLogin } from '../stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 const form = reactive({
   email: '',
   password: '',
 })
 
-const handleLogin = () => {
-  // Dev stub: map credentials to roles until API/JWT is implemented
-  if (form.email === 'hq' && form.password === '1234') {
-    authLogin('HQ_ADMIN')
-    router.push('/hq/dashboard')
-    return
-  }
+const handleLogin = async () => {
+  try {
+    const stayLoggedIn = true
+    const result = await auth.login(form.email, form.password, stayLoggedIn)
+    if (!result || !result.success) {
+      window.alert(result && result.message ? result.message : '로그인에 실패했습니다.')
+      return
+    }
 
-  if (form.email === 'store' && form.password === '1234') {
-    authLogin('STORE_ADMIN')
-    router.push('/store/dashboard')
-    return
+    const role =
+      auth.userInfo.role || (auth.userInfo.roles && auth.userInfo.roles[0]) || auth.userInfo.type
+    if (role === 'STORE_ADMIN') {
+      router.push('/store/dashboard')
+    } else {
+      router.push('/hq/dashboard')
+    }
+  } catch (err) {
+    console.error('login error', err)
+    window.alert('로그인 중 오류가 발생했습니다.')
   }
-
-  window.alert('틀렸음용. 이메일에: "hq" / "store" 그리고 비번은 "1234"')
 }
 </script>
 
