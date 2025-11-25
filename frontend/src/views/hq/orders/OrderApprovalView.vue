@@ -59,7 +59,9 @@
             </tbody>
           </table>
         </section>
-        <PurchaseApprovalActions v-if="showApprovalButtons" :po-id="poId" @success="handleProcessSuccess" />
+        <div class="approval-actions-wrapper">
+          <PurchaseApprovalActions v-if="showApprovalButtons" :po-id="poId" @success="handleProcessSuccess" />
+        </div>
       </div>
 
       <aside class="right-col">
@@ -118,7 +120,6 @@ const fetchPurchaseDetail = async () => {
   // 2. await을 사용하여 API 호출이 완료되기를 기다립니다.
   const data = await getPurchaseDetail(poId);
   // 3. API 응답 데이터가 도착한 후 rows에 할당됩니다.
-  console.log("✅ 발주 상세 데이터:", data);
   Object.assign(po, {
     purchaseId: data.purchaseId,
     poNo: data.poNo,
@@ -149,11 +150,6 @@ onMounted(() => {
 })
 
 
-// TODO : 일반 발주 수정 기능
-// function removeItem(idx) {
-//   po.items.splice(idx, 1)
-// }
-
 const subtotal = computed(() => {
   return po.items.reduce((s, r) => s + Number(r.price || 0) * Number(r.qty || 0), 0) || 0
 })
@@ -174,6 +170,18 @@ function reject() {
 </script>
 
 <style scoped>
+.s-accepted {
+  background: #16a34a;
+}
+
+.s-waiting {
+  background: #d97706;
+}
+
+.s-rejected {
+  background: #ef4444;
+}
+
 .page-inner {
   display: flex;
   gap: 24px;
@@ -279,5 +287,10 @@ function reject() {
 .total {
   font-weight: 700;
   color: #4f46e5;
+}
+
+.approval-actions-wrapper {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

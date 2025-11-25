@@ -2,6 +2,25 @@
 import axios from 'axios';
 
 /**
+ * 발주 상태를 한글로 매핑하는 함수
+ * @param {string} status - 백엔드 상태 코드
+ * @returns {string} 한글 상태명
+ */
+export function mapPurchaseStatus(status) {
+    const statusMap = {
+        'DRAFT_AUTO': '초안',
+        'SUBMITTED': '제출',
+        'CONFIRMED': '승인',
+        'REJECTED': '반려',
+        'CANCELLED': '취소',
+        'MANUAL': '일반',
+        'AUTO': '자동',
+        'SMART': '스마트',
+    };
+    return statusMap[status] || '알 수 없음';
+}
+
+/**
  * [발주 상태 업데이트(승인 및 거절) ]
  * @param
  * 

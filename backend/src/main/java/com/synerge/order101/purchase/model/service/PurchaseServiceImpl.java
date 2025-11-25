@@ -104,6 +104,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         return PurchaseDetailResponseDto.builder()
                 .orderStatus(purchase.getOrderStatus())
                 .purchaseId(purchase.getPurchaseId())
+                .orderType(purchase.getOrderType())
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
                 .requesterName(purchase.getUser().getName())

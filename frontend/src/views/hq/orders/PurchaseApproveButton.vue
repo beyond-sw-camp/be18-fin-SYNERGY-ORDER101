@@ -64,9 +64,8 @@ const handleAction = async (status) => {
 <style scoped>
 .actions-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 8px;
-    margin-top: 8px;
 }
 
 .btn {

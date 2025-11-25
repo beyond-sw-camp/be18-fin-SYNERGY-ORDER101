@@ -13,27 +13,30 @@
             <tr>
               <th>PO 번호</th>
               <th>공급업체</th>
-              <th>품목 수</th>
-              <th class="numeric">금액</th>
-              <th>요청 날짜</th>
-              <th>상태</th>
-              <th>작업</th>
+              <th class="center">품목 수</th>
+              <th class="center">금액</th>
+              <th class="center">요청 날짜</th>
+              <th class="center">상태</th>
+              <th class="center">타입</th>
+              <th class="center">작업</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in rows" :key="row.id" class="clickable-row" @click="openDetail(row)">
               <td class="po">{{ row.No }}</td>
               <td>{{ row.vendor }}</td>
-              <td class="numeric">{{ row.items }}</td>
-              <td class="numeric">
+              <td class="center">{{ row.items }}</td>
+              <td class="center">
                 <Money :value="row.amount" />
               </td>
-              <td>{{ formatDateTimeMinute(row.requestedAt) }}</td>
-              <td>
+              <td class="center">{{ formatDateTimeMinute(row.requestedAt) }}</td>
+              <td class="center">
                 <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
               </td>
 
-              <td @click.stop>
+              <td class="center">{{ row.orderType }}</td>
+
+              <td class="center" @click.stop>
                 <PurchaseApprovalActions :po-id="row.id" @success="handleProcessSuccess" />
               </td>
             </tr>
@@ -51,7 +54,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
-import { getPurchases, updatePurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { getPurchases, updatePurchaseStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 
@@ -84,8 +87,10 @@ const searchPurchases = async () => {
     items: item.totalQty,
     amount: item.totalAmount,
     requestedAt: item.requestedAt,
-    status: item.status,
+    status: mapPurchaseStatus(item.status),
+    orderType: mapPurchaseStatus(item.orderType)
   }));
+
 }
 
 const router = useRouter()
@@ -99,14 +104,29 @@ function openDetail(row) {
 
 function statusClass(s) {
   if (!s) return ''
-  if (s.includes('CON')) return 's-accepted'
-  if (s.includes('SU')) return 's-waiting'
-  if (s.includes('RE')) return 's-rejected'
+  if (s === '승인') return 's-accepted'
+  if (s === '제출' || s === '대기') return 's-waiting'
+  if (s === '반려') return 's-rejected'
+  if (s === '취소') return 's-rejected'
+  if (s === '초안') return 's-waiting'
   return ''
 }
 </script>
 
 <style scoped>
+.s-accepted {
+  background: #16a34a;
+}
+
+.s-waiting {
+  background: #d97706;
+}
+
+.s-rejected {
+  background: #ef4444;
+}
+
+
 .page-shell {
   padding: 24px 32px;
 }
@@ -143,8 +163,9 @@ function statusClass(s) {
   text-align: left;
 }
 
-.approval-table td.numeric {
-  text-align: right;
+.approval-table th.center,
+.approval-table td.center {
+  text-align: center;
 }
 
 .po {
@@ -156,18 +177,6 @@ function statusClass(s) {
   border-radius: 12px;
   color: #fff;
   font-size: 13px;
-}
-
-.s-accepted {
-  background: #16a34a;
-}
-
-.s-waiting {
-  background: #6b46ff;
-}
-
-.s-rejected {
-  background: #ef4444;
 }
 
 .actions {
