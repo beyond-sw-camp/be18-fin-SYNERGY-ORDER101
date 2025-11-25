@@ -102,6 +102,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .toArray(PurchaseDetailResponseDto.PurchaseItemDto[]::new);
 
         return PurchaseDetailResponseDto.builder()
+                .orderStatus(purchase.getOrderStatus())
                 .purchaseId(purchase.getPurchaseId())
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())

@@ -52,9 +52,6 @@
                 <td class="numeric">
                   <Money :value="row.price * row.qty" />
                 </td>
-                <!-- <td> TODO: 일반 발주 수정 기능 
-                  <button class="btn-delete" @click.prevent="removeItem(idx)">삭제</button>
-                </td> -->
               </tr>
               <tr v-if="po.items.length === 0">
                 <td colspan="6" class="empty">품목이 없습니다.</td>
@@ -62,11 +59,7 @@
             </tbody>
           </table>
         </section>
-        <PurchaseApprovalActions v-if="poId" :po-id="poId" @success="handleProcessSuccess" />
-        <!-- <div class="actions-bottom">
-          <button class="btn-approve" @click="approve">승인</button>
-          <button class="btn-reject" @click="reject">반려</button>
-        </div> -->
+        <PurchaseApprovalActions v-if="showApprovalButtons" :po-id="poId" @success="handleProcessSuccess" />
       </div>
 
       <aside class="right-col">
@@ -109,6 +102,7 @@ const po = reactive({
   supplierName: '', // 공급업체
   userName: '', // 요청 담당자
   requestedAt: '', // 요청일자
+  status: '', // 발주 상태
   items: [
     {
       sku: 'prod-001',
@@ -124,12 +118,14 @@ const fetchPurchaseDetail = async () => {
   // 2. await을 사용하여 API 호출이 완료되기를 기다립니다.
   const data = await getPurchaseDetail(poId);
   // 3. API 응답 데이터가 도착한 후 rows에 할당됩니다.
+  console.log("✅ 발주 상세 데이터:", data);
   Object.assign(po, {
     purchaseId: data.purchaseId,
     poNo: data.poNo,
     supplierName: data.supplierName,
     userName: data.requesterName,
     requestedAt: data.requestedAt,
+    status: data.orderStatus, // 발주 상태 저장
     //items data.purchaseItems.productName,
   });
 
@@ -140,6 +136,13 @@ const fetchPurchaseDetail = async () => {
     qty: item.orderQty,
   }));
 }
+
+// 승인/반려 버튼 표시 여부 계산
+const showApprovalButtons = computed(() => {
+  // PENDING 상태일 때만 버튼 표시
+  console.log("현재 PO 상태:", po);
+  return po.status === 'SUBMITTED' || po.status === 'DRAFT_AUTO'
+})
 onMounted(() => {
   // In a real app, fetch PO details by poId here
   fetchPurchaseDetail()
