@@ -4,15 +4,25 @@
 
     <div class="filter-card">
       <div class="filter-row">
-        <select class="select">
-          <option>카테고리 분류</option>
-          <option>대분류</option>
-          <option>중분류</option>
-          <option>소분류</option>
+        <select class="select" v-model="largeCategoryId">
+          <option value="">대분류</option>
+          <option v-for="c in largeCategories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
         </select>
-        <select class="select">
-          <option>카테고리 명</option>
-          <option>분류에 따라 달라짐</option>
+
+        <select class="select" v-model="mediumCategoryId" :disabled="mediumCategories.length === 0">
+          <option value="">중분류</option>
+          <option v-for="c in mediumCategories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+
+        <select class="select" v-model="smallCategoryId" :disabled="!smallCategories.length">
+          <option value="">소분류</option>
+          <option v-for="c in smallCategories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
         </select>
       </div>
     </div>
@@ -61,14 +71,20 @@
 </template>
 
 <script setup>
-import { ref, computed ,onMounted } from 'vue'
+import { ref, computed ,onMounted, watch } from 'vue'
 import { useInventoryStore } from '@/stores/inventory/inventoryStore'
+import { getTopCategories, getChildCategories } from '@/components/api/product/categoryService' 
 
 const inventoryStore = useInventoryStore()
 
-onMounted(() => {
-  inventoryStore.fetchInventory({ page: 1 })
-})
+// 카테고리 데이터
+const largeCategories = ref([])
+const mediumCategories = ref([])
+const smallCategories = ref([])
+
+const largeCategoryId = ref('')
+const mediumCategoryId = ref('')
+const smallCategoryId = ref('')
 
 const page = computed(() => inventoryStore.page)
 const totalPages = computed(() => Math.ceil(inventoryStore.totalCount / inventoryStore.numOfRows))
@@ -78,9 +94,50 @@ const pages = computed(() => {
   return Array.from({ length: totalPages.value }, (_, i) => i + 1)
 })
 
-const changePage = (p) => {
+onMounted(async () => {
+  largeCategories.value = await getTopCategories()
+  await fetchInventory(1)
+})
+
+const fetchInventory = async (page = 1) => {
+  await inventoryStore.fetchInventory({
+    page,
+    largeId: largeCategoryId.value || null,
+    mediumId: mediumCategoryId.value || null,
+    smallId: smallCategoryId.value || null
+  })
+}
+
+// ------- 카테고리 변경 감지 -------
+watch(largeCategoryId, async (newVal) => {
+  mediumCategoryId.value = ''
+  smallCategoryId.value = ''
+  mediumCategories.value = []
+  smallCategories.value = []
+
+  if (newVal) {
+    mediumCategories.value = await getChildCategories(Number(newVal))
+  }
+  fetchInventory(1)
+})
+
+watch(mediumCategoryId, async (newVal) => {
+  smallCategoryId.value = ''
+  smallCategories.value = []
+
+  if (newVal) {
+    smallCategories.value = await getChildCategories(Number(newVal))
+  }
+  fetchInventory(1)
+})
+
+watch(smallCategoryId, () => {
+  fetchInventory(1)
+})
+
+const changePage = async (p) => {
   if (p < 1 || p > totalPages.value) return
-  inventoryStore.fetchInventory({ page: p })
+  await fetchInventory(p)
 }
 </script>
 

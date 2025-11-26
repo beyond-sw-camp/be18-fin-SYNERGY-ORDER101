@@ -26,12 +26,11 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows) {
+    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId) {
 
         Pageable pageable = PageRequest.of(page - 1, numOfRows);  // page는 0부터 시작
-        Page<WarehouseInventory> result = warehouseInventoryRepository.findAllWithProduct(pageable);
 
-        return result.map(InventoryResponseDto::fromEntity);
+        return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, pageable);
     }
 
     // 출고 반영

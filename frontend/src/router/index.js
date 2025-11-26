@@ -120,12 +120,6 @@ const hqRoutes = [
     component: ProductDetailView,
     meta: { title: '상품 상세' },
   },
-  {
-    path: '/hq/inventory/stock',
-    name: 'hq-inventory-stock',
-    component: PagePlaceholder,
-    meta: { title: '상품 목록' },
-  },
   // {
   //   path: '/hq/settlement/daily',
   //   name: 'hq-settlement-daily',

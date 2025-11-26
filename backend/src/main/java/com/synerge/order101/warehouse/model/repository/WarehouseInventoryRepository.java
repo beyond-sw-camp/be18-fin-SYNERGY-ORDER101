@@ -2,6 +2,7 @@ package com.synerge.order101.warehouse.model.repository;
 
 
 import com.synerge.order101.product.model.entity.Product;
+import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,4 +59,21 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
 
     Optional<WarehouseInventory> findByProduct(Product product);
 
+    @Query("""
+    SELECT new com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto(
+        i.inventoryId, p.productCode, pc.categoryName, p.productName,
+        i.onHandQuantity, i.safetyQuantity
+    )
+    FROM WarehouseInventory i
+    JOIN i.product p
+    JOIN p.productCategory pc
+    WHERE (:largeCategoryId IS NULL OR pc.categoryLevel = 'LARGE' AND pc.productCategoryId = :largeCategoryId)
+      AND (:mediumCategoryId IS NULL OR pc.categoryLevel = 'MEDIUM' AND pc.productCategoryId = :mediumCategoryId)
+      AND (:smallCategoryId IS NULL OR pc.categoryLevel = 'SMALL' AND pc.productCategoryId = :smallCategoryId)
+""")
+    Page<InventoryResponseDto> searchInventory(Long largeCategoryId,
+                                               Long mediumCategoryId,
+                                               Long smallCategoryId,
+                                               Pageable pageable
+    );
 }
