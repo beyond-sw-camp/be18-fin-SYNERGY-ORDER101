@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -46,6 +47,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final PurchaseDetailRepository purchaseDetailRepository;
     private final NotificationService notificationService;
+    private static final DateTimeFormatter PO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     //AI가 스마트 발주 초안 작성
     @Transactional
@@ -115,6 +117,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                             .forecastQty(weeklyForecast)
                             .recommendedOrderQty(recommendedOrderQty)
                             .smartOrderStatus(OrderStatus.DRAFT_AUTO)
+                            .poNumber(generatePoNumber(df.getTargetWeek(), mapping.getSupplier()))
                             .build();
 
                     so.setSystemUserIfNull(systemUser);
@@ -299,6 +302,12 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .build();
     }
 
+    private String generatePoNumber(LocalDate targetWeek, Supplier supplier) {
+        String datePart = targetWeek.format(PO_DATE_FORMAT);
+        String supplierPart = String.format("%04d", supplier.getSupplierId());
+        return "PO" + datePart + supplierPart;
+    }
+
 
 
     private SmartOrderResponseDto toResponse(SmartOrder so) {
@@ -312,6 +321,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
 
         // 라인 금액 = 단가 × 수량
         BigDecimal lineAmount = price.multiply(BigDecimal.valueOf(qty));
+
 
         return SmartOrderResponseDto.builder()
                 .id(so.getSmartOrderId())
@@ -329,6 +339,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .updatedAt(so.getUpdatedAt())
                 .unitPrice(price)
                 .lineAmount(lineAmount)
+                .poNumber(so.getPoNumber())
                 .build();
     }
 

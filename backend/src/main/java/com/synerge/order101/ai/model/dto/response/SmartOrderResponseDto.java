@@ -28,4 +28,5 @@ public class SmartOrderResponseDto {
     private LocalDateTime updatedAt;
     private BigDecimal unitPrice;
     private BigDecimal lineAmount;
+    private String poNumber;
 }

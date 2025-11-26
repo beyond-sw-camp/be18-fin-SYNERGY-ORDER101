@@ -68,7 +68,7 @@
         <table v-else class="smart-table">
           <thead>
             <tr>
-              <th>공급사 ID</th>
+              <th>PO 번호</th>
               <th>공급사명</th>
               <th class="numeric">품목 수</th>
               <th class="numeric">총 예측량</th>
@@ -85,7 +85,7 @@
               class="clickable-row"
               @click="openDetail(row)"
             >
-              <td>{{ row.supplierId }}</td>
+              <td>{{ row.poNumber }}</td>
               <td>{{ row.supplierName }}</td>
               <td class="numeric">{{ row.itemCount }}</td>
               <td class="numeric">{{ row.totalForecastQty.toLocaleString() }}</td>
@@ -203,6 +203,7 @@ function groupBySupplierAndWeek () {
         supplierId,
         supplierName,
         targetWeek,
+        poNumber: row.poNumber,
         itemCount: 0,
         totalForecastQty: 0,
         totalRecommendedQty: 0,
