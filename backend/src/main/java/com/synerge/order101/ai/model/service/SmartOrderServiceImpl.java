@@ -210,6 +210,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .supplierName(any.getSupplier().getSupplierName())
                 .targetWeek(targetWeek)
                 .requesterName(requesterName)
+                .status(any.getSmartOrderStatus())
                 .items(list.stream()
                         .map(this::toLineItemDto)
                         .toList())
@@ -238,7 +239,8 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         SmartOrder entity = smartOrderRepository.findById(smartOrderId)
                 .orElseThrow(() -> new CustomException(AiErrorCode.SMART_ORDER_NOT_FOUND));
 
-        if (request.getRecommendedOrderQty() != null) {
+        if (request.getRecommendedOrderQty() != null &&
+                !request.getRecommendedOrderQty().equals(entity.getRecommendedOrderQty())) {
             entity.updateRecommendedQty(request.getRecommendedOrderQty());
         }
 
@@ -246,7 +248,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         User currentUser = getCurrentUser();
         entity.submit(currentUser);
 
-        List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
+        List<User> admins = userRepository.findByRole(Role.HQ);
 
         if (!admins.isEmpty()){
             notificationService.notifySmartOrderApprovalToAdmins(entity, admins);
@@ -291,7 +293,10 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         return SmartOrderResponseDto.builder()
                 .id(so.getSmartOrderId())
                 .supplierId(so.getSupplier().getSupplierId())
+                .supplierName(so.getSupplier().getSupplierName())
                 .productId(so.getProduct().getProductId())
+                .productCode(so.getProduct().getProductCode())
+                .productName(so.getProduct().getProductName())
                 .demandForecastId(so.getDemandForecast().getDemandForecastId())
                 .targetWeek(so.getTargetWeek())
                 .recommendedOrderQty(so.getRecommendedOrderQty())

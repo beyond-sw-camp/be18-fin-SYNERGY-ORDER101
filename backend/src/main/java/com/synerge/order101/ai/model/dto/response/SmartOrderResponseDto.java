@@ -14,7 +14,10 @@ import java.time.LocalDateTime;
 public class SmartOrderResponseDto {
     private Long id;
     private Long supplierId;
+    private String supplierName;
     private Long productId;
+    private String productCode;
+    private String productName;
     private Long demandForecastId;
     private LocalDate targetWeek;
     private Integer recommendedOrderQty;
