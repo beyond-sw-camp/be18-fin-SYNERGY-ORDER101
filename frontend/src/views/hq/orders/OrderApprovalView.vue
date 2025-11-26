@@ -52,9 +52,6 @@
                 <td class="numeric">
                   <Money :value="row.price * row.qty" />
                 </td>
-                <!-- <td> TODO: 일반 발주 수정 기능 
-                  <button class="btn-delete" @click.prevent="removeItem(idx)">삭제</button>
-                </td> -->
               </tr>
               <tr v-if="po.items.length === 0">
                 <td colspan="6" class="empty">품목이 없습니다.</td>
@@ -62,11 +59,9 @@
             </tbody>
           </table>
         </section>
-        <PurchaseApprovalActions v-if="poId" :po-id="poId" @success="handleProcessSuccess" />
-        <!-- <div class="actions-bottom">
-          <button class="btn-approve" @click="approve">승인</button>
-          <button class="btn-reject" @click="reject">반려</button>
-        </div> -->
+        <div class="approval-actions-wrapper">
+          <PurchaseApprovalActions v-if="showApprovalButtons" :po-id="poId" @success="handleProcessSuccess" />
+        </div>
       </div>
 
       <aside class="right-col">
@@ -109,6 +104,7 @@ const po = reactive({
   supplierName: '', // 공급업체
   userName: '', // 요청 담당자
   requestedAt: '', // 요청일자
+  status: '', // 발주 상태
   items: [
     {
       sku: 'prod-001',
@@ -130,6 +126,7 @@ const fetchPurchaseDetail = async () => {
     supplierName: data.supplierName,
     userName: data.requesterName,
     requestedAt: data.requestedAt,
+    status: data.orderStatus, // 발주 상태 저장
     //items data.purchaseItems.productName,
   });
 
@@ -140,16 +137,18 @@ const fetchPurchaseDetail = async () => {
     qty: item.orderQty,
   }));
 }
+
+// 승인/반려 버튼 표시 여부 계산
+const showApprovalButtons = computed(() => {
+  // PENDING 상태일 때만 버튼 표시
+  console.log("현재 PO 상태:", po);
+  return po.status === 'SUBMITTED' || po.status === 'DRAFT_AUTO'
+})
 onMounted(() => {
   // In a real app, fetch PO details by poId here
   fetchPurchaseDetail()
 })
 
-
-// TODO : 일반 발주 수정 기능
-// function removeItem(idx) {
-//   po.items.splice(idx, 1)
-// }
 
 const subtotal = computed(() => {
   return po.items.reduce((s, r) => s + Number(r.price || 0) * Number(r.qty || 0), 0) || 0
@@ -171,6 +170,18 @@ function reject() {
 </script>
 
 <style scoped>
+.s-accepted {
+  background: #16a34a;
+}
+
+.s-waiting {
+  background: #d97706;
+}
+
+.s-rejected {
+  background: #ef4444;
+}
+
 .page-inner {
   display: flex;
   gap: 24px;
@@ -276,5 +287,10 @@ function reject() {
 .total {
   font-weight: 700;
   color: #4f46e5;
+}
+
+.approval-actions-wrapper {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

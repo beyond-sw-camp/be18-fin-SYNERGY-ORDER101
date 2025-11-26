@@ -31,6 +31,9 @@ const FranchiseDeliveryView = () => import('../views/hq/franchise/FranchiseDeliv
 const ProductListView = () => import('../views/hq/store/ProductListView.vue')
 const ProductRegisterView = () => import('../views/hq/store/ProductRegisterView.vue')
 const ProductDetailView = () => import('../views/hq/store/ProductDetailView.vue')
+const SmartOrderListViewView = () => import('../views/hq/orders/SmartOrderListView.vue')
+const SmartOrderDetailView = () => import('../views/hq/orders/SmartOrderDetailView.vue')
+const DemandForecastView = () => import('../views/hq/dashboard/DemandForecastView.vue')
 
 const hqRoutes = [
   {
@@ -118,11 +121,17 @@ const hqRoutes = [
     meta: { title: '상품 상세' },
   },
   {
-    path: '/hq/settlement/daily',
-    name: 'hq-settlement-daily',
-    component: DailySettlementView,
-    meta: { title: '일일 정산' },
+    path: '/hq/inventory/stock',
+    name: 'hq-inventory-stock',
+    component: PagePlaceholder,
+    meta: { title: '상품 목록' },
   },
+  // {
+  //   path: '/hq/settlement/daily',
+  //   name: 'hq-settlement-daily',
+  //   component: DailySettlementView,
+  //   meta: { title: '일일 정산' },
+  // },
   {
     path: '/hq/settlement/list',
     name: 'hq-settlement-list',
@@ -195,6 +204,31 @@ const hqRoutes = [
     component: FranchiseDeliveryView,
     meta: { title: '배송 관리' },
   },
+  {
+  path: '/hq/smart-orders',
+  name: 'hq-smart-orders',
+  component: SmartOrderListViewView,
+  meta: { title: '스마트 발주 현황' },
+},
+{
+  path: '/hq/smart-orders/:supplierId/:targetWeek',
+  name: 'hq-smart-order-detail',
+  component: SmartOrderDetailView,
+  meta: { title: '스마트 발주 상세' },
+  props: true,
+},
+{
+  path: '/hq/dashboard/forecast',
+  name: 'hq-dashboard-forecast',
+  component: DemandForecastView,
+  meta: { title: '수요 예측 보고서' },
+},
+{
+  path: '/hq/dashboard/forecast',
+  name: 'hq-forecast',
+  component: DemandForecastView,
+  meta: { title: '수요 예측' }
+},
 ]
 
 const storeRoutes = [

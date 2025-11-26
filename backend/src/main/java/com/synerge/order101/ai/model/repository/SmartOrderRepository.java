@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface SmartOrderRepository extends JpaRepository<SmartOrder,Long> {
     List<SmartOrder> findBySmartOrderStatus(OrderStatus status);
@@ -14,5 +15,6 @@ public interface SmartOrderRepository extends JpaRepository<SmartOrder,Long> {
     List<SmartOrder> findByTargetWeekBetween(LocalDate from, LocalDate to);
     List<SmartOrder> findBySmartOrderStatusAndTargetWeekBetween(OrderStatus status, LocalDate from, LocalDate to);
     List<SmartOrder> findBySupplier_SupplierIdAndTargetWeek(Long supplierId, LocalDate targetWeek);
+    Optional<SmartOrder> findTopByDemandForecast_DemandForecastId(Long demandForecastId);
 }
 
