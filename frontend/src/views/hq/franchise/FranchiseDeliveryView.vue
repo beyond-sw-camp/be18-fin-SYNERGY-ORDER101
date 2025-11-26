@@ -6,19 +6,33 @@
 
     <section class="filters card">
       <div class="filters-row">
-        <input placeholder="주문 ID 검색" v-model="filters.q" />
+        <input 
+          placeholder="주문 ID 검색" 
+          v-model="filters.q"
+        />
+
         <select v-model="filters.store">
           <option value="all">모든 가맹점</option>
-          <option value="강남점">강남점</option>
-          <option value="명동점">명동점</option>
-          <option value="부산 해운대점">부산 해운대점</option>
+          <option 
+            v-for="s in storeOptions" 
+            :value="s" 
+            :key="s"
+          >
+            {{ s }}
+          </option>
         </select>
+
         <select v-model="filters.status">
           <option value="all">모든 상태</option>
-          <option value="pending">배송 대기중</option>
-          <option value="in_transit">배송 중</option>
-          <option value="delivered">배송 완료</option>
+          <option 
+            v-for="st in statusOptions" 
+            :value="st.key" 
+            :key="st.key"
+          >
+            {{ st.label }}
+          </option>
         </select>
+
         <button class="btn" @click="applyFilter">필터 적용</button>
         <button class="btn" @click="resetFilter">필터 초기화</button>
       </div>
@@ -37,17 +51,29 @@
               <th>요청 시간</th>
             </tr>
           </thead>
+
           <tbody>
-            <tr v-for="r in filteredRows" :key="r.id">
+            <tr 
+              v-for="r in filteredRows" 
+              :key="r.id"
+            >
               <td class="po">{{ r.id }}</td>
               <td>{{ r.store }}</td>
               <td>{{ r.warehouse }}</td>
               <td class="numeric">{{ r.qty }}</td>
+
               <td>
-                <span :class="['chip', statusClass(r.status)]">{{ statusLabel(r.status) }}</span>
+                <span 
+                  class="chip" 
+                  :class="statusClass(r.status)"
+                >
+                  {{ statusLabel(r.status) }}
+                </span>
               </td>
-              <td>{{ r.requestedAt }}</td>
+
+              <td>{{ formatDateTime(r.requestedAt) }}</td>
             </tr>
+
             <tr v-if="filteredRows.length === 0">
               <td colspan="6" class="no-data">조회 결과가 없습니다.</td>
             </tr>
@@ -59,122 +85,125 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
-const filters = ref({ q: '', store: 'all', status: 'all' })
 
-const rows = ref([
-  {
-    id: 'ORD-001',
-    store: '강남점',
-    warehouse: '수도권 중앙 물류창고',
-    qty: 15,
-    status: 'pending',
-    requestedAt: '22/11/2024',
-  },
-  {
-    id: 'ORD-002',
-    store: '명동점',
-    warehouse: '수도권 중앙 물류창고',
-    qty: 8,
-    status: 'in_transit',
-    requestedAt: '20/11/2024',
-  },
-  {
-    id: 'ORD-003',
-    store: '부산 해운대점',
-    warehouse: '영남 지역 물류센터',
-    qty: 22,
-    status: 'delivered',
-    requestedAt: '30/08/2025',
-  },
-  {
-    id: 'ORD-004',
-    store: '대전 은행점',
-    warehouse: '충청 지역 물류센터',
-    qty: 5,
-    status: 'pending',
-    requestedAt: '05/05/2021',
-  },
-  {
-    id: 'ORD-005',
-    store: '제주 시청점',
-    warehouse: '제주 허브 물류센터',
-    qty: 10,
-    status: 'in_transit',
-    requestedAt: '17/06/2020',
-  },
-  {
-    id: 'ORD-006',
-    store: '광주 상무점',
-    warehouse: '호남 지역 물류센터',
-    qty: 7,
-    status: 'delivered',
-    requestedAt: '26/01/2021',
-  },
-  {
-    id: 'ORD-007',
-    store: '강남점',
-    warehouse: '수도권 중앙 물류창고',
-    qty: 12,
-    status: 'pending',
-    requestedAt: '14/06/2025',
-  },
-  {
-    id: 'ORD-008',
-    store: '동대문점',
-    warehouse: '수도권 중앙 물류창고',
-    qty: 3,
-    status: 'in_transit',
-    requestedAt: '01/11/2021',
-  },
-  {
-    id: 'ORD-009',
-    store: '광화문점',
-    warehouse: '수도권 중앙 물류창고',
-    qty: 20,
-    status: 'delivered',
-    requestedAt: '05/09/2021',
-  },
-  {
-    id: 'ORD-010',
-    store: '울산 삼산점',
-    warehouse: '영남 지역 물류센터',
-    qty: 9,
-    status: 'pending',
-    requestedAt: '07/09/2022',
-  },
-])
 
+const DELIVERY_STATUS = {
+  WAITING: 'WAITING',
+  IN_TRANSIT: 'IN_TRANSIT',
+  DELIVERED: 'DELIVERED',
+}
+
+// 셀렉트 박스용 상태 옵션
+const statusOptions = [
+  { key: DELIVERY_STATUS.WAITING, label: '배송 대기중' },
+  { key: DELIVERY_STATUS.IN_TRANSIT, label: '배송 중' },
+  { key: DELIVERY_STATUS.DELIVERED, label: '배송 완료' },
+]
+
+// 필터 상태
+const filters = ref({
+  q: '',
+  store: 'all',
+  status: 'all',
+})
+
+// API에서 받아올 배송 목록
+const rows = ref([])
+
+/* ================================
+   API 호출: /api/v1/shipments
+================================ */
+async function fetchDeliveryList() {
+  try {
+    const res = await axios.get('/api/v1/shipments', {
+      params: {
+        page: 0,
+        size: 20,
+      },
+    })
+
+    const page = res.data
+
+    rows.value = page.content.map(item => ({
+      id: item.orderNo,                 
+      store: item.storeName,           
+      warehouse: item.warehouseName || '-', 
+      qty: item.totalQty,         
+      status: item.shipmentStatus,      
+      requestedAt: item.orderDatetime,
+    }))
+  } catch (e) {
+    console.error('배송 목록 조회 실패', e)
+  }
+}
+
+onMounted(() => {
+  fetchDeliveryList()
+})
+
+/* ================================
+   가맹점 셀렉트 옵션 (데이터에서 추출)
+================================ */
+const storeOptions = computed(() => {
+  const set = new Set(rows.value.map(r => r.store))
+  return [...set]
+})
+
+/* ================================
+   필터링된 결과
+================================ */
 const filteredRows = computed(() => {
   return rows.value.filter((r) => {
     const q = filters.value.q && filters.value.q.toLowerCase()
+
+    // 주문 ID 검색 (orderNo 기준)
     if (q && !r.id.toLowerCase().includes(q)) return false
-    if (filters.value.store !== 'all' && r.store !== filters.value.store) return false
-    if (filters.value.status !== 'all' && r.status !== filters.value.status) return false
+
+    // 가맹점 필터
+    if (filters.value.store !== 'all' && r.store !== filters.value.store)
+      return false
+
+    // 상태 필터 (WAITING/IN_TRANSIT/DELIVERED)
+    if (filters.value.status !== 'all' && r.status !== filters.value.status)
+      return false
+
     return true
   })
 })
 
+/* ================================
+   상태 뱃지 스타일 & 라벨
+================================ */
 function statusClass(s) {
-  if (s === 'delivered') return 's-delivered'
-  if (s === 'in_transit') return 's-intransit'
-  return 's-pending'
+  if (s === DELIVERY_STATUS.DELIVERED) return 's-delivered'
+  if (s === DELIVERY_STATUS.IN_TRANSIT) return 's-intransit'
+  return 's-pending' // WAITING 등
 }
 
 function statusLabel(s) {
-  if (s === 'delivered') return '배송 완료'
-  if (s === 'in_transit') return '배송 중'
-  return '배송 대기중'
+  const opt = statusOptions.find(o => o.key === s)
+  return opt ? opt.label : '알 수 없음'
 }
 
+/* ================================
+   버튼 동작
+================================ */
 function applyFilter() {
-  // computed reacts to filters; this is a placeholder in case we want actions
 }
+
 function resetFilter() {
   filters.value = { q: '', store: 'all', status: 'all' }
 }
+function formatDateTime(dt) {
+  if (!dt) return '-'
+  return dt.replace('T', ' ').slice(0, 19)
+}
 </script>
+
+
 
 <style scoped>
 .page-shell {
@@ -208,18 +237,23 @@ function resetFilter() {
   background: white;
   cursor: pointer;
 }
+.table-wrap {
+  overflow-x: auto;
+}
 .delivery-table {
   width: 100%;
   border-collapse: collapse;
 }
 .delivery-table th,
 .delivery-table td {
-  padding: 16px 12px;
+  padding: 14px 12px;
   border-bottom: 1px solid #f0f0f3;
   text-align: left;
 }
+.delivery-table th.numeric,
 .delivery-table td.numeric {
   text-align: right;
+  width: 80px; 
 }
 .po {
   font-weight: 600;

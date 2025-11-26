@@ -10,7 +10,7 @@
         <div class="value">{{ order.id }}</div>
       </div>
       <div class="card info">
-        <label>상점</label>
+        <label>가맹점</label>
         <div class="value">{{ order.store }}</div>
       </div>
       <div class="card info">

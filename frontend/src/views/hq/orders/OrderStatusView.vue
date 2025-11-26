@@ -23,11 +23,11 @@
               <th>PO 번호</th>
               <th>요청자</th>
               <th>공급업체</th>
-              <th>품목 수</th>
-              <th class="numeric">금액</th>
-              <th>요청일</th>
+              <th class="center">품목 수</th>
+              <th class="center">금액</th>
+              <th class="center">요청일</th>
               <th>상태</th>
-              <th>작업</th>
+              <th class="center">타입</th>
             </tr>
           </thead>
           <tbody>
@@ -35,15 +35,15 @@
               <td class="po">{{ row.No }}</td>
               <td>{{ row.requester }}</td>
               <td>{{ row.vendor }}</td>
-              <td class="numeric">{{ row.items }}</td>
-              <td class="numeric">
+              <td class="center">{{ row.items }}</td>
+              <td class="center">
                 <Money :value="row.amount"></Money>
               </td>
-              <td>{{ formatDateTimeMinute(row.requestedAt) }}</td>
+              <td class="center">{{ formatDateTimeMinute(row.requestedAt) }}</td>
               <td>
                 <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
               </td>
-              <td class="actions">⋯</td>
+              <td class="center">{{ row.orderType }}</td>
             </tr>
             <tr v-if="rows.length === 0">
               <td colspan="8" class="no-data">검색 조건에 맞는 발주가 없습니다.</td>
@@ -66,7 +66,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getPurchases } from '@/components/api/purchase/purchaseService.js'
+import { getPurchases, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import OrderStatusSelect from '@/components/OrderStatusSelect.vue';
@@ -124,7 +124,8 @@ async function search() {
       items: item.totalQty,
       amount: item.totalAmount,
       requestedAt: item.requestedAt,
-      status: item.status
+      status: mapPurchaseStatus(item.status),
+      orderType: mapPurchaseStatus(item.orderType)
     }));
 
     console.log("데이터 할당 완료:", rows.value);
@@ -146,11 +147,14 @@ function openApproval(row) {
   router.push({ name: 'hq-orders-approval-detail', params: { id: row.id } })
 }
 
+
 function statusClass(s) {
   if (!s) return ''
-  if (s.includes('CONFIRMED')) return 's-accepted'
-  if (s.includes('SUBMITTED')) return 's-waiting'
-  if (s.includes('REJECTED')) return 's-rejected'
+  if (s === '승인') return 's-accepted'
+  if (s === '제출' || s === '대기') return 's-waiting'
+  if (s === '반려') return 's-rejected'
+  if (s === '취소') return 's-rejected'
+  if (s === '초안') return 's-waiting'
   return ''
 }
 </script>
@@ -223,8 +227,9 @@ function statusClass(s) {
   text-align: left;
 }
 
-.orders-table td.numeric {
-  text-align: right;
+.orders-table th.center,
+.orders-table td.center {
+  text-align: center;
 }
 
 .po {
@@ -264,12 +269,14 @@ function statusClass(s) {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 12px;
+  padding-top: 20px;
+  margin-top: 16px;
 }
 
 .pages {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 .pages button {

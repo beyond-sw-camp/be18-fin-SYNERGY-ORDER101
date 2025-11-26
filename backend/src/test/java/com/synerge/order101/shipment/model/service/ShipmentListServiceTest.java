@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -40,7 +41,7 @@ class ShipmentListServiceTest {
     @Test @Order(1)
     void GetShipmentListSuccess() {
         // given
-        var dto = new ShipmentResponseDto(1L, "ORDER-1", "가맹점A", null, ShipmentStatus.WAITING, LocalDateTime.now());
+        var dto = new ShipmentResponseDto(1L, "ORDER-1", "가맹점A", "본사 창고", BigDecimal.valueOf(10),ShipmentStatus.WAITING, LocalDateTime.now());
         var page = new PageImpl<>(List.of(dto), PageRequest.of(0,20), 1);
         given(shipmentListRepository.findPage(any(), any(), any(), any(), any(), any())).willReturn(page);
 

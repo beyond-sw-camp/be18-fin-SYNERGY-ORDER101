@@ -73,10 +73,6 @@ public class DemandForecast {
     @Column(name = "mape")
     private Integer mape;
 
-    @Lob
-    @Column(name = "external_factors", columnDefinition = "json")
-    private String externalFactors;
-
 
     @CreationTimestamp
     @Column(name = "snapshot_at", nullable = false, updatable = false)
