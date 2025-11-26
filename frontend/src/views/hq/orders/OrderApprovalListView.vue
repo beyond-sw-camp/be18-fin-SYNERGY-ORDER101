@@ -37,7 +37,8 @@
               <td class="center">{{ row.orderType }}</td>
 
               <td class="center" @click.stop>
-                <PurchaseApprovalActions :po-id="row.id" @success="handleProcessSuccess" />
+                <PurchaseApprovalActions :po-id="row.id" :source-type="row.sourceType"
+                  :smart-order-ids="row.smartOrderIds" @success="handleProcessSuccess" />
               </td>
             </tr>
             <tr v-if="rows.length === 0">
@@ -76,7 +77,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
-import { getPurchases, updatePurchaseStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { getPurchases, updatePurchaseStatus, updateSmartOrderStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 
@@ -149,7 +150,9 @@ const searchPurchases = async () => {
     amount: item.totalAmount,
     requestedAt: item.requestedAt,
     status: mapPurchaseStatus(item.status),
-    orderType: mapPurchaseStatus(item.orderType)
+    orderType: mapPurchaseStatus(item.orderType),
+    sourceType: item.sourceType,
+    smartOrderIds: item.smartOrderIds // 스마트 발주인 경우 ID 배열
   }));
 }
 

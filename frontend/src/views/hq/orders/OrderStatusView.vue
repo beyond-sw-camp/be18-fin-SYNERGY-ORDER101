@@ -73,7 +73,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getPurchases, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { getRegularPurchases, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute, getPastDateString } from '@/components/global/Date';
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue';
@@ -162,16 +162,22 @@ async function search() {
   const apiPage = page.value - 1; // 0-based index로 변환
 
   try {
-    console.log("API 응답 데이터:", filters);
+    console.log("검색 조건:", filters.value);
 
-    const data = await getPurchases(
+    // 일반 발주 검색 조건 생성
+    const regularCond = {
+      types: [],
+      statuses: filters.value.status ? [filters.value.status] : [],
+      vendorId: filters.value.vendorId || null,
+      searchText: filters.value.keyword || null,
+      fromDate: filters.value.startDate || null,
+      toDate: filters.value.endDate || null
+    };
+
+    const data = await getRegularPurchases(
+      regularCond,
       apiPage,
-      perPage.value,
-      filters.value.keyword,
-      filters.value.status,
-      filters.value.vendorId,
-      filters.value.startDate,
-      filters.value.endDate
+      perPage.value
     );
 
     console.log("API 응답 데이터:", data);

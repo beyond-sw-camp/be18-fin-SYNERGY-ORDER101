@@ -109,7 +109,7 @@ function mapSmartPurchase(smartOrder) {
  * @param {number} perPage 페이지당 항목 수
  * @returns {Promise<object>} 발주 목록 및 페이지 정보
  */
-async function getRegularPurchases(cond, page, perPage) {
+export async function getRegularPurchases(cond, page, perPage) {
     const url = '/api/v1/purchase-orders';
 
     try {
@@ -150,7 +150,7 @@ async function getRegularPurchases(cond, page, perPage) {
  * @param {string} [to] 종료 날짜 (YYYY-MM-DD)
  * @returns {Promise<object>} 발주 목록 (페이지네이션 없이 List 반환)
  */
-async function getSmartPurchases(status, from, to) {
+export async function getSmartPurchases(status, from, to) {
     const url = '/api/v1/smart-orders';
 
     try {
@@ -161,20 +161,100 @@ async function getSmartPurchases(status, from, to) {
 
         const response = await axios.get(url, { params });
 
-        // 스마트 발주는 List로 반환되므로 content 형식으로 변환
+        // 스마트 발주는 List로 반환
         const smartOrders = Array.isArray(response.data) ? response.data : [];
-        const mappedContent = smartOrders.map(mapSmartPurchase);
 
         console.log("스마트 발주 목록 조회 응답:", response);
 
         return {
-            content: mappedContent,
-            totalElements: mappedContent.length,
+            rawData: smartOrders, // 원본 데이터 추가
+            content: smartOrders.map(mapSmartPurchase),
+            totalElements: smartOrders.length,
             totalPages: 1
         };
     } catch (error) {
         console.error("[API Error] 스마트 발주 목록 조회 실패:", error.message);
         throw error;
+    }
+}
+
+/**
+ * [스마트 발주를 po_number별로 그룹화]
+ * @param {Array} smartOrders - 스마트 발주 원본 배열
+ * @returns {Array} po_number별로 그룹화된 발주 목록
+ */
+export function groupSmartOrdersByPoNumber(smartOrders) {
+    const grouped = {};
+
+    smartOrders.forEach(order => {
+        // 백엔드에서 po_number가 아직 안 올라온 경우 임시로 supplierId 사용
+        const poNumber = order.poNumber || order.po_number || `TEMP-${order.supplierId}`;
+
+        if (!grouped[poNumber]) {
+            grouped[poNumber] = {
+                poNumber: poNumber,
+                supplierId: order.supplierId,
+                supplierName: order.supplierName || '공급업체 정보 없음',
+                items: [],
+                smartOrderIds: [], // 같은 po_number의 모든 smart order ID
+                totalQty: 0,
+                status: order.smartOrderStatus,
+                requestedAt: order.snapshotAt || order.updatedAt,
+                targetWeek: order.targetWeek
+            };
+        }
+
+        grouped[poNumber].items.push({
+            productId: order.productId,
+            productName: order.productName,
+            recommendedOrderQty: order.recommendedOrderQty,
+            forecastQty: order.forecastQty
+        });
+
+        grouped[poNumber].smartOrderIds.push(order.id);
+        grouped[poNumber].totalQty += order.recommendedOrderQty || 0;
+    });
+
+    return Object.values(grouped).map((group, index) => ({
+        purchaseId: `SMART-GROUP-${group.poNumber}`,
+        poNo: group.poNumber,
+        supplierName: group.supplierName,
+        supplierId: group.supplierId,
+        requesterName: '자동 생성',
+        totalQty: group.totalQty,
+        totalAmount: 0,
+        status: group.status,
+        orderType: 'SMART',
+        requestedAt: group.requestedAt,
+        sourceType: 'SMART',
+        items: group.items,
+        smartOrderIds: group.smartOrderIds, // 승인 시 사용
+        targetWeek: group.targetWeek
+    }));
+}
+
+/**
+ * [스마트 발주 승인/반려]
+ * @param {Array} smartOrderIds - 승인/반려할 스마트 발주 ID 배열
+ * @param {string} status - 'CONFIRMED' or 'REJECTED'
+ * @returns {Promise<object>} 승인/반려 결과
+ */
+export async function updateSmartOrderStatus(smartOrderIds, status) {
+    try {
+        const promises = smartOrderIds.map(id =>
+            axios.patch(`/api/v1/smart-orders/${id}/${status.toLowerCase()}`)
+        );
+
+        const results = await Promise.all(promises);
+        console.log(`스마트 발주 ${status} 완료:`, results);
+
+        return {
+            success: true,
+            count: results.length
+        };
+    } catch (error) {
+        console.error(`[API Error] 스마트 발주 ${status} 실패:`, error.message);
+        throw new Error(`스마트 발주 ${status} 처리에 실패했습니다.`);
     }
 }
 
@@ -213,14 +293,17 @@ export async function getPurchases(page, perPage, q, status, vendorId, startDate
             }),
             getSmartPurchases(status, startDate, endDate).catch(err => {
                 console.warn("스마트 발주 조회 실패, 빈 결과 반환:", err.message);
-                return { content: [], totalElements: 0, totalPages: 0 };
+                return { rawData: [], content: [], totalElements: 0, totalPages: 0 };
             })
         ]);
+
+        // 스마트 발주를 po_number별로 그룹화
+        const groupedSmartOrders = groupSmartOrdersByPoNumber(smartData.rawData || []);
 
         // 두 결과를 병합
         const mergedContent = [
             ...(regularData.content || []),
-            ...(smartData.content || [])
+            ...groupedSmartOrders
         ];
 
         // requestedAt 기준으로 내림차순 정렬 (최신순)
