@@ -24,6 +24,8 @@ const SettlementReportView = () => import('../views/hq/settlement/SettlementRepo
 const DailySettlementView = () => import('../views/hq/settlement/DailySettlementView.vue')
 const FranchiseOrderApprovalView = () =>
   import('../views/hq/franchise/FranchiseOrderApprovalView.vue')
+const FranchiseOrderApprovalDetailView = () =>
+  import('../views/hq/franchise/FranchiseOrderApprovalDetailView.vue')
 const FranchiseOrderListView = () => import('../views/hq/franchise/FranchiseOrderListView.vue')
 const FranchiseOrderDetailView = () => import('../views/hq/franchise/FranchiseOrderDetailView.vue')
 const FranchiseDeliveryView = () => import('../views/hq/franchise/FranchiseDeliveryView.vue')
@@ -167,8 +169,8 @@ const hqRoutes = [
   {
     path: '/hq/franchise/approval/:id',
     name: 'hq-franchise-approval-detail',
-    component: OrderApprovalView,
-    meta: { title: '가맹점 발주 상세' },
+    component: FranchiseOrderApprovalDetailView,
+    meta: { title: '가맹점 주문 상세' },
   },
   {
     path: '/hq/franchise/orders',

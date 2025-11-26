@@ -15,9 +15,14 @@ import java.util.stream.Collectors;
 @Builder
 public class StoreOrderDetailResponseDto {
 
-//    -- 주문 디테일 기본 정보 --
     // 주문 id
     private Long storeOrderId;
+
+    // 주문 번호
+    private String storeOrderNo;
+
+    // 요청자
+    private String requesterName;
 
     // 상점이름
     private String storeName;
@@ -40,6 +45,8 @@ public class StoreOrderDetailResponseDto {
                 .collect(Collectors.toList());
 
         return StoreOrderDetailResponseDto.builder()
+                .requesterName(storeOrder.getUser().getName())
+                .storeOrderNo(storeOrder.getOrderNo())
                 .storeOrderId(storeOrder.getStoreOrderId())
                 .storeName(storeOrder.getStore()==null?null:storeOrder.getStore().getStoreName())
                 .status(storeOrder.getOrderStatus()==null?null:storeOrder.getOrderStatus().name())
@@ -53,6 +60,7 @@ public class StoreOrderDetailResponseDto {
     public static class OrderItemDto {
 
         private Long productId;
+        private String productName;
         private Integer orderQty;
         private BigDecimal unitPrice;
         private BigDecimal amount;
@@ -60,6 +68,7 @@ public class StoreOrderDetailResponseDto {
         public static OrderItemDto fromEntity(StoreOrderDetail detail) {
             return OrderItemDto.builder()
                     .productId(detail.getProduct()==null?null:detail.getProduct().getProductId())
+                    .productName(detail.getProduct()==null?null:detail.getProduct().getProductName())
                     .orderQty(detail.getOrderQty().intValue())
                     .unitPrice(detail.getUnitPrice())
                     .amount(detail.getAmount())

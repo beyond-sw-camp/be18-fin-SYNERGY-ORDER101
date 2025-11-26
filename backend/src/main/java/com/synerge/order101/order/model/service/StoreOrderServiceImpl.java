@@ -91,9 +91,11 @@ public class StoreOrderServiceImpl implements StoreOrderService {
 
         return StoreOrderDetailResponseDto.builder()
                 .storeOrderId(order.getStoreOrderId())
+                .storeOrderNo(order.getOrderNo())
+                .requesterName(order.getUser().getName())
                 .storeName(order.getStore() == null ? null : order.getStore().getStoreName())
                 .status(order.getOrderStatus() == null ? null : order.getOrderStatus().name())
-                .orderDate(order.getOrderDatetime())
+                .orderDate(order.getCreatedAt())
                 .orderItems(List.of(items))
                 .build();
 

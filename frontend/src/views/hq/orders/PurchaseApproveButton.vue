@@ -3,26 +3,41 @@
         <!-- 승인 버튼 -->
         <button class="btn btn-approve" @click="handleAction('CONFIRMED')" :disabled="isProcessing">
             <span v-if="isProcessing && actionType === 'CONFIRMED'" class="spinner"></span>
-            <span v-else>승인</span>
+            <span v-else>{{ approveLabel }}</span>
         </button>
 
         <!-- 반려 버튼 -->
         <button class="btn btn-reject" @click="handleAction('REJECTED')" :disabled="isProcessing">
             <span v-if="isProcessing && actionType === 'REJECTED'" class="spinner"></span>
-            <span v-else>반려</span>
+            <span v-else>{{ rejectLabel }}</span>
         </button>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { updatePurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 
 // 부모로부터 받을 데이터 정의
 const props = defineProps({
-    poId: {
+    orderId: {
         type: [String, Number],
         required: true
+    },
+    updateStatusApi: {
+        type: Function,
+        required: true
+    },
+    entityName: {
+        type: String,
+        default: '주문'
+    },
+    approveLabel: {
+        type: String,
+        default: '승인'
+    },
+    rejectLabel: {
+        type: String,
+        default: '반려'
     }
 })
 
@@ -34,18 +49,18 @@ const isProcessing = ref(false)
 const actionType = ref(null) // 현재 눌린 버튼 추적
 
 const handleAction = async (status) => {
-    const label = status === 'CONFIRMED' ? '승인' : '반려'
+    const label = status === 'CONFIRMED' ? props.approveLabel : props.rejectLabel
 
-    if (!confirm(`정말로 이 발주를 ${label} 하시겠습니까?`)) return
+    if (!confirm(`정말로 이 ${props.entityName}을(를) ${label} 하시겠습니까?`)) return
 
     try {
         isProcessing.value = true
         actionType.value = status
 
         // API 호출 (await 필수)
-        await updatePurchaseStatus(props.poId, status)
+        await props.updateStatusApi(props.orderId, status)
 
-        alert(`발주가 정상적으로 ${label} 되었습니다.`)
+        alert(`${props.entityName}이(가) 정상적으로 ${label} 되었습니다.`)
 
         // 부모에게 성공 이벤트 발송
         emit('success', status)

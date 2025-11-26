@@ -24,7 +24,7 @@
           </thead>
           <tbody>
             <tr v-for="row in filteredRows" :key="row.id" class="clickable-row" @click="openDetail(row)">
-              <td class="po">{{ row.id }}</td>
+              <td class="po">{{ row.No }}</td>
               <td>{{ row.store }}</td>
               <td class="numeric">{{ row.itemCount }}</td>
               <td class="numeric">{{ row.totalQty }}</td>
@@ -98,7 +98,6 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  console.log('🔍 필터 검색:', filterData)
   filters.value = { ...filterData }
   currentPage.value = 1 // 검색 시 첫 페이지로 이동
   searchStoreOrders()
@@ -116,7 +115,6 @@ const searchStoreOrders = async () => {
       searchText: filters.value.keyword || null
     };
 
-    console.log('📤 요청 파라미터:', params);
 
     // ✅ 단일 API 호출 (Spring Page 객체 반환)
     const pageData = await getFranchiseOrderList(
@@ -124,13 +122,6 @@ const searchStoreOrders = async () => {
       perPage.value,
       params
     );
-
-    console.log('📦 API 응답:', {
-      totalElements: pageData.totalElements,
-      totalPages: pageData.totalPages,
-      contentSize: pageData.content?.length,
-      content: pageData.content
-    });
 
     totalElements.value = pageData.totalElements || 0;
     totalPagesFromBackend.value = pageData.totalPages || 1;
@@ -146,8 +137,6 @@ const searchStoreOrders = async () => {
       createdAt: item.orderDate || item.createdAt,
       status: mapPurchaseStatus(item.orderStatus || item.status)
     }));
-
-    console.log('✅ 변환된 데이터:', rows.value);
 
   } catch (error) {
     console.error('❌ 데이터 로드 실패:', error);
@@ -175,14 +164,40 @@ function openDetail(row) {
   router.push({ name: 'hq-franchise-approval-detail', params: { id: row.id } })
 }
 
-function approve(row) {
-  alert(`${row.id} 승인 처리되었습니다.`)
-  searchStoreOrders() // 목록 새로고침
+async function approve(row) {
+  if (!confirm(`${row.store} 가맹점의 주문을 승인하시겠습니까?`)) return
+
+  try {
+    const { updateStoreOrderStatus } = await import('@/components/api/store/StoreService.js')
+    await updateStoreOrderStatus(row.id, 'CONFIRMED')
+
+    // ✅ 목록에서 제거 (필터링)
+    rows.value = rows.value.filter(r => r.id !== row.id)
+    totalElements.value = Math.max(0, totalElements.value - 1)
+
+    alert(`${row.store} 가맹점의 주문이 승인되었습니다.`)
+  } catch (error) {
+    console.error('승인 처리 실패:', error)
+    alert('승인 처리 중 오류가 발생했습니다.')
+  }
 }
 
-function reject(row) {
-  alert(`${row.id} 반려 처리되었습니다.`)
-  searchStoreOrders() // 목록 새로고침
+async function reject(row) {
+  if (!confirm(`${row.store} 가맹점의 주문을 반려하시겠습니까?`)) return
+
+  try {
+    const { updateStoreOrderStatus } = await import('@/components/api/store/StoreService.js')
+    await updateStoreOrderStatus(row.id, 'REJECTED')
+
+    // ✅ 목록에서 제거 (필터링)
+    rows.value = rows.value.filter(r => r.id !== row.id)
+    totalElements.value = Math.max(0, totalElements.value - 1)
+
+    alert(`${row.store} 가맹점의 주문이 반려되었습니다.`)
+  } catch (error) {
+    console.error('반려 처리 실패:', error)
+    alert('반려 처리 중 오류가 발생했습니다.')
+  }
 }
 </script>
 
