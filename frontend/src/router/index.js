@@ -284,6 +284,22 @@ router.beforeEach(async (to, from, next) => {
       authStore.userInfo.type ||
       (authStore.userInfo.roles && authStore.userInfo.roles[0]))
 
+  // If this is a store admin, ensure storeId exists; if not, force re-login
+  const rawStoreId =
+    authStore.userInfo && authStore.userInfo.storeId
+      ? authStore.userInfo.storeId
+      : localStorage.getItem('storeId')
+  const storeId = rawStoreId == null ? '' : String(rawStoreId).trim()
+  if (role === 'STORE_ADMIN' && (!storeId || storeId === 'null')) {
+    // clear auth and redirect to login to recover a valid state
+    try {
+      authStore.logout()
+    } catch (e) {
+      // ignore
+    }
+    return next({ name: 'login' })
+  }
+
   // redirect root/dashboard to role-specific dashboard
   if (to.path === '/' || to.name === 'dashboard') {
     if (role === 'STORE_ADMIN') return next({ name: 'store-dashboard' })

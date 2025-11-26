@@ -28,13 +28,26 @@ export const useAuthStore = defineStore('auth', () => {
       const role = data.role || (data.roles && data.roles[0]) || ''
       const expires = data.expiresAt || data.expireAt || data.expires || 0
 
+      // If the backend indicates this user is a STORE_ADMIN, ensure storeId is present
+      const backendStoreId = data.storeId == null ? null : String(data.storeId)
+      if (
+        (role === 'STORE_ADMIN' || data.type === 'STORE_ADMIN') &&
+        (backendStoreId === null || backendStoreId === '')
+      ) {
+        // Missing storeId for a store admin is a fatal auth condition
+        return {
+          success: false,
+          message: '매장 식별자(storeId)가 없습니다. 관리자에게 문의하세요.',
+        }
+      }
+
       Object.assign(userInfo, {
         accessToken: data.accessToken || '',
         userId: data.userId || data.id || 0,
         name: data.name || userName,
         phone: data.phone || '',
-        role: data.role,
-        storeId: data.storeId || userInfo.storeId,
+        role: data.role || role,
+        storeId: backendStoreId || userInfo.storeId || '',
         type: data.type || role || '',
         issuedAt: Number(data.issuedAt) || userInfo.issuedAt,
         expiresAt: Number(expires) || 0,
@@ -66,6 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
       accessToken: '',
       userId: 0,
       name: '',
+      userName: '',
       phone: '',
       role: '',
       storeId: '',
