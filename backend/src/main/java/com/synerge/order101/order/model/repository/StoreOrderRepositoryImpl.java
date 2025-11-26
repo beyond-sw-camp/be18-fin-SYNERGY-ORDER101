@@ -1,10 +1,18 @@
-package com.synerge.order101.settlement.model.repository;
+package com.synerge.order101.order.model.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.synerge.order101.common.enums.SettlementType;
 import com.synerge.order101.common.dto.TradeSearchCondition;
+import com.synerge.order101.common.enums.OrderStatus;
+import com.synerge.order101.common.enums.SettlementType;
+import com.synerge.order101.order.model.entity.QStoreOrder;
+import com.synerge.order101.order.model.entity.StoreOrder;
+import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.settlement.model.entity.Settlement;
+import com.synerge.order101.store.model.entity.QStore;
+import com.synerge.order101.supplier.model.entity.QSupplier;
+import com.synerge.order101.user.model.entity.QUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,38 +27,35 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.synerge.order101.order.model.entity.QStoreOrder.storeOrder;
-import static com.synerge.order101.settlement.model.entity.QSettlement.settlement;
 
-@RequiredArgsConstructor
 @Repository
-public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
+@RequiredArgsConstructor
+public class StoreOrderRepositoryImpl implements StoreOrderRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Settlement> search(TradeSearchCondition cond, Pageable pageable) {
+    public Page<StoreOrder> search(TradeSearchCondition cond, Pageable pageable) {
+
         //데이터 목록 조회
-        List<Settlement> content = queryFactory
-                .selectFrom(settlement)
+        List<StoreOrder> content = queryFactory
+                .selectFrom(storeOrder)
                 .where(
-                    statusIn(cond.getStatuses()),
-                    typeIn(cond.getTypes()),
-                    searchTextContains(cond.getSearchText()),
-                    DateBetween(cond.getFromDate(), cond.getToDate()),
-                    supplierIdEq(cond.getVendorId()),
-                    storeIdEq(cond.getVendorId())
+                        statusIn(cond.getStatuses()),
+                        searchTextContains(cond.getSearchText()),
+                        DateBetween(cond.getFromDate(), cond.getToDate()),
+                        storeIdEq(cond.getVendorId())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(settlement.createdAt.desc())
+                .orderBy(storeOrder.createdAt.desc())
                 .fetch();
         // 전체 카운트 조회
         Long total = queryFactory
-                .select(settlement.count())
-                .from(settlement)
+                .select(storeOrder.count())
+                .from(storeOrder)
                 .where(
                         statusIn(cond.getStatuses()),
-                        typeIn(cond.getTypes()),
                         searchTextContains(cond.getSearchText()),
                         DateBetween(cond.getFromDate(), cond.getToDate())
                 )
@@ -77,35 +82,18 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         if (statuses == null || statuses.isEmpty()) {
             return null;
         }
-        List<Settlement.SettlementStatus> enumStatues = statuses.stream()
-                .map(Settlement.SettlementStatus::valueOf)
-                .toList();
-        return settlement.settlementStatus.in(enumStatues);
-    }
-
-    private BooleanExpression typeIn(List<String> types) {
-        if (types == null || types.isEmpty()) {
-            return null;
-        }
-        List<SettlementType> enumTypes = types.stream()
-                .map(SettlementType::valueOf)
+        List<OrderStatus> enumStatues = statuses.stream()
+                .map(OrderStatus::valueOf)
                 .collect(Collectors.toList());
 
-        return settlement.settlementType.in(enumTypes);
-    }
-
-    private BooleanExpression supplierIdEq(Long supplierId) {
-        if (supplierId == null) {
-            return null;
-        }
-        return settlement.supplier.supplierId.eq(supplierId);
+        return storeOrder.orderStatus.in(enumStatues);
     }
 
     private BooleanExpression storeIdEq(Long storeId) {
         if (storeId == null) {
             return null;
         }
-        return settlement.store.storeId.eq(storeId);
+        return storeOrder.store.storeId.eq(storeId);
     }
 
     private BooleanExpression searchTextContains(String searchText) {
@@ -114,10 +102,9 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         }
         // 검색어(ID 또는 공급사 이름)를 OR 조건으로 처리
         // settlement_no (DB), supplier_id/store_id (DB)를 사용해야 함
-        return settlement.settlementNo.contains(searchText)
-                .or(settlement.supplier.supplierName.contains(searchText));
+        return storeOrder.orderNo.contains(searchText)
+                .or(storeOrder.store.storeName.contains(searchText));
         // 관계 엔티티 조회는 복잡할 수 있으므로, 실+제 DB 스키마에 따라 JOIN 필요
     }
-
 
 }

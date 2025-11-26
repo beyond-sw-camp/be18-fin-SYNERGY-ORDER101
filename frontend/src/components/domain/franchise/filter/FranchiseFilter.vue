@@ -1,9 +1,9 @@
 <template>
     <div class="settlement-filter-container">
         <div class="filter-row">
-            <FilterDropdown label="범위" :options="scopeOptions" v-model="filters.scope" />
+            <FilterDropdown v-if="showScope" label="범위" :options="scopeOptions" v-model="filters.scope" />
 
-            <FilterDropdown label="가맹점/공급업체" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
+            <FilterDropdown label="가맹점" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
                 placeholder="전체" @triggerSearchModal="openVendorSearchModal" />
 
             <FilterDateRange label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
@@ -42,11 +42,20 @@ import FilterDateRange from '../../../base/FilterDateRange.vue';
 import FilterSearchInput from '../../../base/FilterSearchInput.vue';
 import { getPastDateString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
+import { purchaseStatusOptions } from '@/components/api/purchase/purchaseService';
+
+// Props 정의
+const props = defineProps({
+    showScope: {
+        type: Boolean,
+        default: true
+    }
+});
 
 const initialFilters = {
     scope: 'ALL',
     vendorId: 'ALL',
-    vendorType: 'ALL', // 'ALL' | 'FRANCHISE' | 'SUPPLIER'
+    vendorType: 'FRANCHISE', // 'FRANCHISE' | 'SUPPLIER'
     vendorName: '전체',
     startDate: getPastDateString(30),
     endDate: new Date().toISOString().slice(0, 10),
@@ -56,11 +65,8 @@ const initialFilters = {
 const filters = ref({ ...initialFilters });
 const isVendorModalOpen = ref(false);
 
-const scopeOptions = [
-    { text: '전체', value: 'ALL' },
-    { text: '미수금(AR)', value: 'AR' },
-    { text: '미지급금(AP)', value: 'AP' },
-];
+// 범위 옵션
+const scopeOptions = purchaseStatusOptions();
 
 const vendorOptions = ref([
     { text: '전체', value: 'ALL' },
@@ -69,7 +75,6 @@ const vendorOptions = ref([
 const emit = defineEmits(['search']);
 
 function openVendorSearchModal() {
-    console.log('📋 모달 열기');
     isVendorModalOpen.value = true;
 }
 
@@ -78,7 +83,6 @@ function openVendorSearchModal() {
  * @param {Object} vendor - { type: 'FRANCHISE' | 'SUPPLIER', id: string, name: string, code: string }
  */
 function handleVendorSelect(vendor) {
-    console.log('✅ 선택된 업체:', vendor);
 
     const { type, id, name, code } = vendor;
 

@@ -20,6 +20,20 @@ export function mapPurchaseStatus(status) {
     return statusMap[status] || '알 수 없음';
 }
 
+export function purchaseStatusOptions() {
+    return [
+        { text: '전체', value: 'ALL' },
+        { text: '초안', value: 'DRAFT_AUTO' },
+        { text: '제출', value: 'SUBMITTED' },
+        { text: '승인', value: 'CONFIRMED' },
+        { text: '반려', value: 'REJECTED' },
+        { text: '취소', value: 'CANCELLED' },
+        { text: '일반', value: 'MANUAL' },
+        { text: '자동', value: 'AUTO' },
+        { text: '스마트', value: 'SMART' },
+    ];
+}
+
 /**
  * [발주 상태 업데이트(승인 및 거절) ]
  * @param

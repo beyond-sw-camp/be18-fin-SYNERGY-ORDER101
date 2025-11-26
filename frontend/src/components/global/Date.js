@@ -26,7 +26,7 @@ export function formatDateTimeMinute(dateString) {
 }
 
 // 날짜 객체를 'YYYY-MM-DD' 형식의 문자열로 포맷하는 내부 헬퍼 함수
-const formatDateToString = (date) => {
+export const formatDateToString = (date) => {
     const year = date.getFullYear();
     // 월은 0부터 시작하므로 +1, 두 자리로 맞춤
     const month = String(date.getMonth() + 1).padStart(2, '0');

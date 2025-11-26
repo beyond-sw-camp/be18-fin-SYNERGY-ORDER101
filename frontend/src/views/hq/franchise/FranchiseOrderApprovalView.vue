@@ -5,23 +5,7 @@
     </header>
 
     <section class="filters card">
-      <div class="filters-row">
-        <select v-model="filter.status">
-          <option value="all">모든 상태</option>
-          <option value="pending">대기</option>
-          <option value="approved">승인</option>
-          <option value="rejected">반려</option>
-        </select>
-
-        <select v-model="filter.store">
-          <option value="all">모든 상점</option>
-          <option value="본점">본점</option>
-          <option value="지점 A">지점 A</option>
-          <option value="지점 B">지점 B</option>
-        </select>
-
-        <input type="date" v-model="filter.date" />
-      </div>
+      <FranchiseFilter :showScope="false" @search="handleSearch" />
     </section>
 
     <section class="card list">
@@ -39,18 +23,15 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="row in filteredRows"
-              :key="row.id"
-              class="clickable-row"
-              @click="openDetail(row)"
-            >
+            <tr v-for="row in filteredRows" :key="row.id" class="clickable-row" @click="openDetail(row)">
               <td class="po">{{ row.id }}</td>
               <td>{{ row.store }}</td>
               <td class="numeric">{{ row.itemCount }}</td>
               <td class="numeric">{{ row.totalQty }}</td>
-              <td class="numeric"><Money :value="row.estimatedPrice" /></td>
-              <td>{{ row.createdAt }}</td>
+              <td class="numeric">
+                <Money :value="row.estimatedPrice" />
+              </td>
+              <td>{{ formatDateTimeMinute(row.createdAt) }}</td>
               <td class="actions">
                 <button class="btn-accept" @click.stop="approve(row)">승인</button>
                 <button class="btn-reject" @click.stop="reject(row)">반려</button>
@@ -62,75 +43,133 @@
           </tbody>
         </table>
       </div>
+
+      <div class="pagination">
+        <div class="pages">
+          <button v-for="p in totalPages" :key="p" :class="{ active: p === currentPage }" @click="goPage(p)">
+            {{ p }}
+          </button>
+        </div>
+      </div>
     </section>
   </div>
 </template>
 
+
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
+import FranchiseFilter from '@/components/domain/franchise/filter/FranchiseFilter.vue'
+import { getFranchiseOrderList } from '@/components/api/store/StoreService.js'
+import { mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { formatDateTimeMinute, getPastDateString, getTodayString } from '@/components/global/Date.js'
 
 const router = useRouter()
 
-const filter = ref({ status: 'all', store: 'all', date: '' })
+// 페이지네이션
+const currentPage = ref(1)
+const perPage = ref(10)
+const totalElements = ref(0)
+const totalPagesFromBackend = ref(0)
 
-const rows = ref([
-  {
-    id: 'ORD001',
-    store: '본점',
-    itemCount: 15,
-    totalQty: 120,
-    estimatedPrice: 250000,
-    createdAt: '2024-07-20 10:30',
-    status: 'pending',
-  },
-  {
-    id: 'ORD002',
-    store: '지점 A',
-    itemCount: 8,
-    totalQty: 45,
-    estimatedPrice: 95000,
-    createdAt: '2024-07-19 14:00',
-    status: 'pending',
-  },
-  {
-    id: 'ORD003',
-    store: '지점 B',
-    itemCount: 20,
-    totalQty: 200,
-    estimatedPrice: 320000,
-    createdAt: '2024-07-18 09:15',
-    status: 'pending',
-  },
-  {
-    id: 'ORD004',
-    store: '본점',
-    itemCount: 5,
-    totalQty: 30,
-    estimatedPrice: 60000,
-    createdAt: '2024-07-21 11:45',
-    status: 'pending',
-  },
-  {
-    id: 'ORD005',
-    store: '지점 A',
-    itemCount: 10,
-    totalQty: 80,
-    estimatedPrice: 150000,
-    createdAt: '2024-07-17 16:00',
-    status: 'pending',
-  },
-])
+// 필터 상태
+const filters = ref({
+  storeId: '',
+  startDate: getPastDateString(30),
+  endDate: getTodayString(),
+  keyword: '',
+  statuses: 'SUBMITTED'
 
-const filteredRows = computed(() => {
-  return rows.value.filter((r) => {
-    if (filter.value.status !== 'all' && r.status !== filter.value.status) return false
-    if (filter.value.store !== 'all' && r.store !== filter.value.store) return false
-    if (filter.value.date && !r.createdAt.startsWith(filter.value.date)) return false
-    return true
-  })
 })
+
+// 데이터
+const rows = ref([])
+
+// 총 페이지 수
+const totalPages = computed(() => totalPagesFromBackend.value || 1)
+
+// 필터된 행 (API에서 이미 필터링된 데이터를 받으므로 그대로 사용)
+const filteredRows = computed(() => rows.value)
+
+onMounted(() => {
+  searchStoreOrders()
+})
+
+// 필터 검색 이벤트 핸들러
+function handleSearch(filterData) {
+  console.log('🔍 필터 검색:', filterData)
+  filters.value = { ...filterData }
+  currentPage.value = 1 // 검색 시 첫 페이지로 이동
+  searchStoreOrders()
+}
+
+// API 조회
+const searchStoreOrders = async () => {
+  try {
+    // ✅ API 파라미터 구성 (Settlement과 동일한 패턴)
+    const params = {
+      storeId: filters.value.storeId || null,
+      fromDate: filters.value.startDate || null,
+      toDate: filters.value.endDate || null,
+      statuses: 'SUBMITTED',
+      searchText: filters.value.keyword || null
+    };
+
+    console.log('📤 요청 파라미터:', params);
+
+    // ✅ 단일 API 호출 (Spring Page 객체 반환)
+    const pageData = await getFranchiseOrderList(
+      currentPage.value,
+      perPage.value,
+      params
+    );
+
+    console.log('📦 API 응답:', {
+      totalElements: pageData.totalElements,
+      totalPages: pageData.totalPages,
+      contentSize: pageData.content?.length,
+      content: pageData.content
+    });
+
+    totalElements.value = pageData.totalElements || 0;
+    totalPagesFromBackend.value = pageData.totalPages || 1;
+
+    // ✅ 테이블 데이터 변환
+    rows.value = (pageData.content || []).map(item => ({
+      id: item.storeOrderId,
+      No: item.orderNo || item.storeOrderId,
+      store: item.storeName,
+      itemCount: item.itemCount || 0,
+      totalQty: item.totalQty || 0,
+      estimatedPrice: item.totalAmount || 0,
+      createdAt: item.orderDate || item.createdAt,
+      status: mapPurchaseStatus(item.orderStatus || item.status)
+    }));
+
+    console.log('✅ 변환된 데이터:', rows.value);
+
+  } catch (error) {
+    console.error('❌ 데이터 로드 실패:', error);
+
+    let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
+
+    if (error.response) {
+      errorMessage = `서버 오류 (${error.response.status}): ${error.response.data?.message || '알 수 없는 오류'}`;
+    } else if (error.request) {
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크 상태를 확인해주세요.';
+    }
+
+    alert(errorMessage);
+    rows.value = [];
+  }
+}
+
+// 페이지 이동
+function goPage(p) {
+  currentPage.value = p
+  searchStoreOrders()
+}
 
 function openDetail(row) {
   router.push({ name: 'hq-franchise-approval-detail', params: { id: row.id } })
@@ -138,9 +177,12 @@ function openDetail(row) {
 
 function approve(row) {
   alert(`${row.id} 승인 처리되었습니다.`)
+  searchStoreOrders() // 목록 새로고침
 }
+
 function reject(row) {
   alert(`${row.id} 반려 처리되었습니다.`)
+  searchStoreOrders() // 목록 새로고침
 }
 </script>
 
@@ -148,14 +190,17 @@ function reject(row) {
 .page-shell {
   padding: 24px 32px;
 }
+
 .page-header {
   margin-bottom: 18px;
 }
+
 .filters-row {
   display: flex;
   gap: 12px;
   align-items: center;
 }
+
 .card {
   background: #fff;
   border: 1px solid #f0f0f3;
@@ -163,30 +208,37 @@ function reject(row) {
   padding: 16px;
   margin-bottom: 20px;
 }
+
 .table-wrap {
   margin-top: 12px;
 }
+
 .approval-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .approval-table th,
 .approval-table td {
   padding: 16px 12px;
   border-bottom: 1px solid #f0f0f3;
   text-align: left;
 }
+
 .approval-table td.numeric {
   text-align: right;
 }
+
 .po {
   font-weight: 600;
 }
+
 .actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
 }
+
 .btn-accept {
   background: #6b46ff;
   color: #fff;
@@ -195,6 +247,7 @@ function reject(row) {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .btn-reject {
   background: #fff;
   color: #6b46ff;
@@ -203,12 +256,50 @@ function reject(row) {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .clickable-row {
   cursor: pointer;
 }
+
 .no-data {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.pages {
+  display: flex;
+  gap: 8px;
+}
+
+.pages button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.pages button:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.pages button.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 600;
 }
 </style>

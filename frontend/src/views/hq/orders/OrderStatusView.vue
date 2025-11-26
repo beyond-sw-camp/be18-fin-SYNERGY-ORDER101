@@ -128,7 +128,6 @@ async function search() {
       orderType: mapPurchaseStatus(item.orderType)
     }));
 
-    console.log("데이터 할당 완료:", rows.value);
 
   } catch (err) {
     console.error('발주 목록을 가져오는 중 오류 발생:', err);

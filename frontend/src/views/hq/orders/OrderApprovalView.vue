@@ -156,17 +156,6 @@ const subtotal = computed(() => {
 //const shipping = 50000
 const total = computed(() => subtotal.value)
 
-function approve() {
-  console.log("승인 처리 호출 - PO ID:", poId);
-  updatePurchaseStatus(poId, 'CONFIRMED');
-  alert(`발주 ${poId}를 승인했습니다.`)
-  router.back()
-}
-function reject() {
-  updatePurchaseStatus(poId, 'REJECTED');
-  alert(`발주 ${poId}를 반려했습니다.`)
-  router.back()
-}
 </script>
 
 <style scoped>

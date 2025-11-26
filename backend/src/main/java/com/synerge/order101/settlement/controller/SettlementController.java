@@ -1,7 +1,7 @@
 package com.synerge.order101.settlement.controller;
 
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.settlement.model.dto.*;
-import com.synerge.order101.settlement.model.entity.Settlement;
 import com.synerge.order101.settlement.model.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,7 +18,7 @@ public class SettlementController {
 
     @GetMapping
     public ResponseEntity<Page<SettlementSummaryDto>> getSettlements(
-            @ModelAttribute SettlementSearchCondition cond,
+            @ModelAttribute TradeSearchCondition cond,
             Pageable pageable
     ) {
         Page<SettlementSummaryDto> results = settlementService.getSettlements(cond, pageable);

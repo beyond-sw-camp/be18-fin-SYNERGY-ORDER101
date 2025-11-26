@@ -1,6 +1,8 @@
 package com.synerge.order101.order.model.dto;
 
 import com.synerge.order101.common.enums.OrderStatus;
+import com.synerge.order101.order.model.entity.StoreOrder;
+import com.synerge.order101.order.model.entity.StoreOrderDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
+@Builder
 public class StoreOrderSummaryResponseDto {
 
     private Long storeOrderId;
@@ -29,4 +32,18 @@ public class StoreOrderSummaryResponseDto {
 
     private OrderStatus orderStatus;
 
+    public static StoreOrderSummaryResponseDto fromEntity(StoreOrder storeOrder) {
+        return StoreOrderSummaryResponseDto.builder()
+                .storeOrderId(storeOrder.getStoreOrderId())
+                .orderNo(storeOrder.getOrderNo())
+                .storeName(storeOrder.getStore().getStoreName())
+                .itemCount(storeOrder.getStoreOrderDetails().size())
+                .totalQTY(storeOrder.getStoreOrderDetails().stream()
+                        .mapToInt(StoreOrderDetail::getOrderQty)
+                        .sum())
+                .orderDate(storeOrder.getCreatedAt())
+                .orderStatus(storeOrder.getOrderStatus())
+                .build();
+
+    }
 }
