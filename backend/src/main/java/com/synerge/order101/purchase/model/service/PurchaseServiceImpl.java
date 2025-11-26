@@ -1,6 +1,7 @@
 package com.synerge.order101.purchase.model.service;
 
 import com.synerge.order101.common.dto.ItemsResponseDto;
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.notification.model.service.NotificationService;
@@ -70,19 +71,13 @@ public class PurchaseServiceImpl implements PurchaseService {
     // 발주 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public Page<PurchaseSummaryResponseDto> findPurchases(String keyword, Integer page, Integer size, OrderStatus status) {
+    public Page<PurchaseSummaryResponseDto> findPurchases(TradeSearchCondition cond, Pageable pageable) {
 
-        int pageNumber = (page != null && page >= 0) ? page : 0;
-        int pageSize = (size != null && size > 0) ? size : 10;
-
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<PurchaseSummaryResponseDto> pageResult;
-
-        if (keyword.isBlank() && status == null) {
-            return purchaseRepository.findAll(pageable).map(PurchaseSummaryResponseDto::fromEntity);
+        if (pageable == null) {
+            pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
         }
 
-        return purchaseRepository.findByDynamicSearch(keyword, status, pageable).map(PurchaseSummaryResponseDto::fromEntity);
+        return purchaseRepository.search(cond, pageable).map(PurchaseSummaryResponseDto::fromEntity);
     }
 
     // 발주 상세 조회

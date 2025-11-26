@@ -1,17 +1,18 @@
 package com.synerge.order101.purchase.model.service;
 
-import com.synerge.order101.common.dto.ItemsResponseDto;
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.*;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface PurchaseService {
 
 
-    // 발주 목록 조회
-    Page<PurchaseSummaryResponseDto> findPurchases(String keyword, Integer page, Integer size, OrderStatus status);
+    // 발주 목록 조회 (TradeSearchCondition + Pageable)
+    Page<PurchaseSummaryResponseDto> findPurchases(TradeSearchCondition cond, Pageable pageable);
 
     // 발주 상세 조회
     PurchaseDetailResponseDto findPurchaseDetailsById(Long purchaseOrderId);
@@ -31,4 +32,3 @@ public interface PurchaseService {
 
     AutoPurchaseDetailResponseDto submitAutoPurchase(Long purchaseId, AutoPurchaseSubmitRequestDto request);
 }
-

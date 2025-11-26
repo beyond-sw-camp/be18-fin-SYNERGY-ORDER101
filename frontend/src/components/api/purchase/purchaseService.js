@@ -59,41 +59,196 @@ export async function updatePurchaseStatus(purchaseId, status) {
 }
 
 /**
- * [발주 목록 조회]
- * 페이지네이션 및 검색 조건에 맞는 발주 목록을 백엔드로부터 조회합니다.
+ * 일반 발주 DTO를 공통 형식으로 변환
+ * @param {object} purchase - 일반 발주 DTO
+ * @returns {object} 공통 형식의 발주 객체
+ */
+function mapRegularPurchase(purchase) {
+    return {
+        purchaseId: purchase.purchaseId,
+        poNo: purchase.poNo,
+        supplierName: purchase.supplierName,
+        requesterName: purchase.requesterName,
+        totalQty: purchase.totalQty,
+        totalAmount: purchase.totalAmount,
+        status: purchase.status,
+        orderType: purchase.orderType || 'MANUAL',
+        requestedAt: purchase.requestedAt,
+        sourceType: 'REGULAR' // 구분용
+    };
+}
+
+/**
+ * 스마트 발주 DTO를 공통 형식으로 변환
+ * @param {object} smartOrder - 스마트 발주 DTO
+ * @returns {object} 공통 형식의 발주 객체
+ */
+function mapSmartPurchase(smartOrder) {
+    return {
+        purchaseId: smartOrder.id,
+        poNo: `SMART-${smartOrder.id}`, // 스마트 발주는 PO 번호 생성
+        supplierName: smartOrder.supplierName || '공급업체 정보 없음',
+        requesterName: '자동 생성', // 스마트 발주는 자동 생성
+        totalQty: smartOrder.recommendedOrderQty || 0,
+        totalAmount: 0, // 스마트 발주는 금액 정보 없음
+        status: smartOrder.smartOrderStatus,
+        orderType: 'SMART',
+        requestedAt: smartOrder.snapshotAt || smartOrder.updatedAt,
+        sourceType: 'SMART', // 구분용
+        // 스마트 발주 전용 필드
+        targetWeek: smartOrder.targetWeek,
+        forecastQty: smartOrder.forecastQty,
+        demandForecastId: smartOrder.demandForecastId
+    };
+}
+
+/**
+ * [일반 발주 목록 조회]
+ * @param {object} cond - 검색 조건 객체
  * @param {number} page 조회할 페이지 번호 (0부터 시작)
  * @param {number} perPage 페이지당 항목 수
- * @param {string} [q] PO 번호, 공급업체, 요청자 등을 포함하는 검색어 (선택 사항)
- * @returns {Purchase<object>} 발주 목록 및 관련 페이지 정보를 포함하는 객체 (예: { purchases: [...], totalCount: 100 })
- * @throws {Error} API 통신 실패 시 에러 발생
+ * @returns {Promise<object>} 발주 목록 및 페이지 정보
  */
-export async function getPurchases(page, perPage, q, status) {
-
+async function getRegularPurchases(cond, page, perPage) {
     const url = '/api/v1/purchase-orders';
 
     try {
-        // Axios의 'params' 옵션을 사용하여 쿼리 파라미터를 전송합니다.
-        console.log("발주 목록 조회 요청 - page:", page, "perPage:", perPage, "q:", q, "status:", status);
+        const params = {
+            page: page || 0,
+            size: perPage || 10
+        };
 
-        const response = await axios.get(url, {
-            params: {
-                keyword: q,
-                status: status || '',
-                page: page || 0,       // 0-based index
-                size: perPage || 10,    // 페이지당 항목 수
-            }
+        // TradeSearchCondition 필드 매핑
+        if (cond.types && cond.types.length > 0) params.types = cond.types.join(',');
+        if (cond.statuses && cond.statuses.length > 0) params.statuses = cond.statuses.join(',');
+        if (cond.vendorId) params.vendorId = cond.vendorId;
+        if (cond.searchText) params.searchText = cond.searchText;
+        if (cond.fromDate) params.fromDate = cond.fromDate;
+        if (cond.toDate) params.toDate = cond.toDate;
+
+        const response = await axios.get(url, { params });
+
+        // 일반 발주 데이터를 공통 형식으로 변환
+        const mappedContent = (response.data.content || []).map(mapRegularPurchase);
+
+        console.log("일반 발주 목록 조회 응답:", response);
+
+        return {
+            ...response.data,
+            content: mappedContent
+        };
+    } catch (error) {
+        console.error("[API Error] 일반 발주 목록 조회 실패:", error.message);
+        throw error;
+    }
+}
+
+/**
+ * [스마트 발주 목록 조회]
+ * @param {string} [status] 상태 필터
+ * @param {string} [from] 시작 날짜 (YYYY-MM-DD)
+ * @param {string} [to] 종료 날짜 (YYYY-MM-DD)
+ * @returns {Promise<object>} 발주 목록 (페이지네이션 없이 List 반환)
+ */
+async function getSmartPurchases(status, from, to) {
+    const url = '/api/v1/smart-orders';
+
+    try {
+        const params = {};
+        if (status) params.status = status;
+        if (from) params.from = from;
+        if (to) params.to = to;
+
+        const response = await axios.get(url, { params });
+
+        // 스마트 발주는 List로 반환되므로 content 형식으로 변환
+        const smartOrders = Array.isArray(response.data) ? response.data : [];
+        const mappedContent = smartOrders.map(mapSmartPurchase);
+
+        console.log("스마트 발주 목록 조회 응답:", response);
+
+        return {
+            content: mappedContent,
+            totalElements: mappedContent.length,
+            totalPages: 1
+        };
+    } catch (error) {
+        console.error("[API Error] 스마트 발주 목록 조회 실패:", error.message);
+        throw error;
+    }
+}
+
+/**
+ * [통합 발주 목록 조회]
+ * 일반 발주와 스마트 발주를 병합하여 반환합니다.
+ * @param {number} page 조회할 페이지 번호 (0부터 시작)
+ * @param {number} perPage 페이지당 항목 수
+ * @param {string} [q] 검색어 (searchText)
+ * @param {string} [status] 상태 필터 (단일 상태, statuses 배열로 변환)
+ * @param {string} [vendorId] 공급업체 ID
+ * @param {string} [startDate] 시작 날짜 (fromDate)
+ * @param {string} [endDate] 종료 날짜 (toDate)
+ * @returns {Promise<object>} 병합된 발주 목록 및 페이지 정보
+ * @throws {Error} API 통신 실패 시 에러 발생
+ */
+export async function getPurchases(page, perPage, q, status, vendorId, startDate, endDate) {
+    try {
+
+        // 일반 발주 검색 조건 생성
+        const regularCond = {
+            types: [], // 발주는 types 사용 안 함
+            statuses: status ? [status] : [], // 단일 상태를 배열로 변환
+            vendorId: vendorId || null,
+            searchText: q || null,
+            fromDate: startDate || null,
+            toDate: endDate || null
+        };
+        console.log("파라미터 regularCond:", regularCond);
+
+        // 두 API를 병렬로 호출 (모든 데이터 가져오기)
+        const [regularData, smartData] = await Promise.all([
+            getRegularPurchases(regularCond, 0, 1000).catch(err => {
+                console.warn("일반 발주 조회 실패, 빈 결과 반환:", err.message);
+                return { content: [], totalElements: 0, totalPages: 0 };
+            }),
+            getSmartPurchases(status, startDate, endDate).catch(err => {
+                console.warn("스마트 발주 조회 실패, 빈 결과 반환:", err.message);
+                return { content: [], totalElements: 0, totalPages: 0 };
+            })
+        ]);
+
+        // 두 결과를 병합
+        const mergedContent = [
+            ...(regularData.content || []),
+            ...(smartData.content || [])
+        ];
+
+        // requestedAt 기준으로 내림차순 정렬 (최신순)
+        mergedContent.sort((a, b) => {
+            const dateA = new Date(a.requestedAt || 0);
+            const dateB = new Date(b.requestedAt || 0);
+            return dateB - dateA;
         });
-        console.log("발주 목록 조회 응답:", response.data);
-        // 백엔드 응답 구조가 발주 목록을 포함하는 객체라고 가정합니다.
-        // 예: response.data === { purchases: [...], totalCount: 100, ... }
-        // 호출하는 컴포넌트의 search 함수에서 사용된 구조와 일치하도록 응답을 반환합니다.
-        return response.data;
+
+        // 클라이언트 사이드 페이지네이션
+        const startIndex = page * perPage;
+        const endIndex = startIndex + perPage;
+        const paginatedContent = mergedContent.slice(startIndex, endIndex);
+
+        // 통합 결과 반환
+        const result = {
+            content: paginatedContent,
+            totalElements: mergedContent.length,
+            totalPages: Math.ceil(mergedContent.length / perPage),
+            size: perPage,
+            number: page
+        };
+
+        console.log("통합 발주 목록 조회 응답:", result);
+        return result;
 
     } catch (error) {
-        // API 통신 실패 로그
-        console.error("[API Error] 발주 목록 조회 실패:", error.message, error.response);
-
-        // 에러 발생
+        console.error("[API Error] 통합 발주 목록 조회 실패:", error.message, error.response);
         throw new Error("API 서버와의 통신에 실패했습니다.");
     }
 }

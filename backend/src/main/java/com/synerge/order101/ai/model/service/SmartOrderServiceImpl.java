@@ -166,13 +166,16 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         boolean hasStatus = (status != null);
         boolean hasRange = (from != null && to != null);
 
+        // 💡 날짜 범위의 끝(to)을 포함하기 위해 to에 하루를 더합니다.
+        LocalDate endDateInclusive = (hasRange) ? to.plusDays(1) : null;
+
         if (hasStatus && hasRange) {
             list = smartOrderRepository
-                    .findBySmartOrderStatusAndTargetWeekBetween(status, from, to);
+                    .findBySmartOrderStatusAndTargetWeekBetween(status, from, endDateInclusive);
         } else if (hasStatus) {
             list = smartOrderRepository.findBySmartOrderStatus(status);
         } else if (hasRange) {
-            list = smartOrderRepository.findByTargetWeekBetween(from, to);
+            list = smartOrderRepository.findByTargetWeekBetween(from, endDateInclusive);
         } else {
             list = smartOrderRepository.findAllByOrderByTargetWeekDesc();
         }

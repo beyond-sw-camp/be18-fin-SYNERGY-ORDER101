@@ -1,13 +1,10 @@
 package com.synerge.order101.purchase.model.repository;
 
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
-import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.purchase.model.entity.QPurchase;
 import com.synerge.order101.supplier.model.entity.QSupplier;
@@ -17,17 +14,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-import static com.synerge.order101.settlement.model.entity.QSettlement.settlement;
-
-@Repository
 @RequiredArgsConstructor
+@Repository
 public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
 
-    private final QPurchase purchase = QPurchase.purchase;
     private final JPAQueryFactory queryFactory;
+    private final QPurchase purchase = QPurchase.purchase;
 
     @Override
     public Page<Purchase> findByDynamicSearch(
@@ -35,45 +31,101 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
             OrderStatus status,
             Pageable pageable) {
 
-        BooleanBuilder builder = new BooleanBuilder();
-
-        // 1. 상태 필터 조건 (status 있으면)
-        if (status != null && !status.equals("전체")) {
-            builder.and(purchase.orderStatus.stringValue().equalsIgnoreCase(status.toString())); // Enum인 경우 stringValue() 사용
-        }
-
-        // 2. 키워드 검색 조건 (검색어 있으면)
-        if (keyword != null && !keyword.isEmpty()) {
-            BooleanExpression keywordCondition =
-                    purchase.poNo.containsIgnoreCase(keyword) // PO 번호
-                            .or(purchase.user.name.containsIgnoreCase(keyword)) // 요청자 이름
-                            .or(purchase.supplier.supplierName.containsIgnoreCase(keyword)); // 공급업체
-            builder.and(keywordCondition);
-        }
-
-        Long totalCount = queryFactory
-                .select(purchase.count())
-                .from(purchase)
-                .leftJoin(purchase.user)
-                .leftJoin(purchase.supplier)
-                .where(builder)
-                .fetchOne();
-
-        if (totalCount == null || totalCount == 0) {
-            return new PageImpl<>(List.of(), pageable, 40);
-        }
-
-        // 3. 쿼리 생성 및 실행 (Querydsl Pageable 처리 생략, 간단한 예시)
+        // 데이터 목록 조회
         List<Purchase> content = queryFactory
                 .selectFrom(purchase)
-                .join(purchase.user, QUser.user).fetchJoin()        // User 엔티티를 함께 로드
-                .join(purchase.supplier, QSupplier.supplier).fetchJoin() // Supplier 엔티티를 함께 로드
-                .where(builder) // 💡 동적 WHERE 절 적용
+                .leftJoin(purchase.user, QUser.user).fetchJoin()
+                .leftJoin(purchase.supplier, QSupplier.supplier).fetchJoin()
+                .where(
+                        statusEq(status),
+                        keywordContains(keyword)
+                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(purchase.createdAt.desc())
                 .fetch();
 
-        return new PageImpl<>(content,pageable,totalCount);
+        // 전체 카운트 조회
+        Long total = queryFactory
+                .select(purchase.count())
+                .from(purchase)
+                .leftJoin(purchase.user)
+                .leftJoin(purchase.supplier)
+                .where(
+                        statusEq(status),
+                        keywordContains(keyword)
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
+
+    @Override
+    public Page<Purchase> search(TradeSearchCondition cond, Pageable pageable) {
+        // 조건 매핑
+        String searchText = cond.getSearchText();
+        List<String> statusStrings = cond.getStatuses();
+        Long vendorId = cond.getVendorId();
+
+        // 목록
+        List<Purchase> content = queryFactory
+                .selectFrom(purchase)
+                .leftJoin(purchase.user, QUser.user).fetchJoin()
+                .leftJoin(purchase.supplier, QSupplier.supplier).fetchJoin()
+                .where(
+                        statusIn(statusStrings),
+                        searchTextContains(searchText),
+                        vendorIdEq(vendorId)
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(purchase.createdAt.desc())
+                .fetch();
+
+        // total
+        Long total = queryFactory
+                .select(purchase.count())
+                .from(purchase)
+                .leftJoin(purchase.user)
+                .leftJoin(purchase.supplier)
+                .where(
+                        statusIn(statusStrings),
+                        searchTextContains(searchText),
+                        vendorIdEq(vendorId)
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
+    }
+
+    // --- 헬퍼 메서드들 ---
+    private BooleanExpression statusEq(OrderStatus status) {
+        if (status == null) return null;
+        return purchase.orderStatus.eq(status);
+    }
+
+    private BooleanExpression keywordContains(String keyword) {
+        if (!StringUtils.hasText(keyword)) return null;
+        return purchase.poNo.containsIgnoreCase(keyword)
+                .or(purchase.user.name.containsIgnoreCase(keyword))
+                .or(purchase.supplier.supplierName.containsIgnoreCase(keyword));
+    }
+
+    private BooleanExpression statusIn(List<String> statuses) {
+        if (statuses == null || statuses.isEmpty()) return null;
+        return purchase.orderStatus.in(statuses.stream().map(OrderStatus::valueOf).toList());
+    }
+
+    private BooleanExpression searchTextContains(String searchText) {
+        if (!StringUtils.hasText(searchText)) return null;
+        return purchase.poNo.containsIgnoreCase(searchText)
+                .or(purchase.user.name.containsIgnoreCase(searchText))
+                .or(purchase.supplier.supplierName.containsIgnoreCase(searchText));
+    }
+
+    private BooleanExpression vendorIdEq(Long vendorId) {
+        if (vendorId == null) return null;
+        return purchase.supplier.supplierId.eq(vendorId).or(purchase.user.userId.eq(vendorId));
+    }
+
 }
