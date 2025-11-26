@@ -15,7 +15,7 @@
         <tr v-for="row in items" :key="row.outboundId" class="row-clickable"
           @click="$emit('open-modal', { id: row.outboundId, no: row.outboundNo })">
           <td>{{ row.outboundNo }}</td>
-          <td>{{ row.customerName }}</td>
+          <td>{{ row.storeName }}</td>
           <td>{{ row.itemCount }}</td>
           <td class="numeric">{{ row.totalShippedQty }}</td>
           <td>{{ formatDate(row.outboundDatetime)  }}</td>

@@ -4,6 +4,7 @@ import com.synerge.order101.order.model.entity.StoreOrder;
 import com.synerge.order101.order.model.repository.StoreOrderRepository;
 import com.synerge.order101.outbound.model.dto.OutboundDetailResponseDto;
 import com.synerge.order101.outbound.model.dto.OutboundResponseDto;
+import com.synerge.order101.outbound.model.dto.OutboundSearchRequestDto;
 import com.synerge.order101.outbound.model.entity.Outbound;
 import com.synerge.order101.outbound.model.entity.OutboundDetail;
 import com.synerge.order101.outbound.model.repository.OutboundDetailRepository;
@@ -15,9 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -104,6 +107,41 @@ public class OutboundServiceImpl implements OutboundService {
         // 로그
         log.info("출고 생성 및 재고 차감 완료: shipmentId={}, storeOrderId={}",
                 event.shipmentId(), event.storeOrderId());
+    }
+
+    @Override
+    @Transactional
+    public Page<OutboundResponseDto> searchOutboundList(OutboundSearchRequestDto request) {
+
+        int page = request.page();
+        int numOfRows = request.numOfRows();
+
+        Pageable pageable = PageRequest.of(page - 1, numOfRows, Sort.by("outboundId").descending());
+
+        LocalDateTime start = request.startDate() != null ? request.startDate().atStartOfDay() : null;
+        LocalDateTime end = request.endDate() != null ? request.endDate().atTime(23, 59, 59) : null;
+
+        Page<Object[]> result = outboundRepository.searchOutbounds(
+                request.storeId(),
+                start,
+                end,
+                pageable
+        );
+
+        return result.map(row -> {
+            Outbound ob = (Outbound) row[0];
+            Integer itemCount = ((Number) row[1]).intValue();
+            Integer totalQty = ((Number) row[2]).intValue();
+
+            return OutboundResponseDto.builder()
+                    .outboundId(ob.getOutboundId())
+                    .outboundNo(ob.getOutboundNo())
+                    .outboundDatetime(ob.getOutboundDatetime())
+                    .storeName(ob.getStore().getStoreName())
+                    .itemCount(itemCount)
+                    .totalShippedQty(totalQty)
+                    .build();
+        });
     }
 
     // 수정

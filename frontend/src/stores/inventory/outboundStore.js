@@ -43,6 +43,30 @@ export const useOutboundStore = defineStore('outbound', {
                 console.error("출고 상세 조회 실패", e)
             }
 
+        },
+
+        async searchOutbound({ storeId = null, startDate = null, endDate = null, page = 1, numOfRows = 10 }) {
+            try {
+                this.loading = true
+
+                const res = await axios.post(`/api/v1/outbounds/search`, {
+                    storeId,
+                    startDate,
+                    endDate,
+                    page,
+                    numOfRows
+                })
+
+                this.items = res.data.items
+                this.page = res.data.page
+                this.totalCount = res.data.totalCount
+                this.numOfRows = numOfRows
+                this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
+            } catch (e) {
+                console.error("출고 검색 실패: ", e)
+            } finally {
+                this.loading = false
+            }
         }
     }
 })

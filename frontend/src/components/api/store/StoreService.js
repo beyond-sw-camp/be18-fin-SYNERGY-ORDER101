@@ -31,3 +31,26 @@ export async function getFranchiseList(page, pageSize, keyword) {
         throw new Error("가맹점 API 서버와의 통신에 실패했습니다.");
     }
 }
+
+export async function getStoreList(page = 1, pageSize = 10, keyword = '') {
+  try {
+    const res = await axios.get('/api/v1/stores', {
+      params: {
+        page,
+        numOfRows: pageSize,
+        keyword: keyword
+      }
+    })
+
+    const data = res.data
+
+    return {
+      stores: data.items || [],
+      totalCount: data.totalCount || 0,
+      currentPage: data.page || page
+    }
+  } catch (error) {
+    console.error('[API Error] 가맹점 목록 조회 실패', error)
+    throw error
+  }
+}

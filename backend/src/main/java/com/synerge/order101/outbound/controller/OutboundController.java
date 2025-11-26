@@ -4,6 +4,7 @@ import com.synerge.order101.common.dto.BaseResponseDto;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.outbound.model.dto.OutboundDetailResponseDto;
 import com.synerge.order101.outbound.model.dto.OutboundResponseDto;
+import com.synerge.order101.outbound.model.dto.OutboundSearchRequestDto;
 import com.synerge.order101.outbound.model.service.OutboundService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,5 +38,15 @@ public class OutboundController {
         OutboundDetailResponseDto outboundDetail = outboundService.getOutboundDetail(outboundId);
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, outboundDetail));
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<ItemsResponseDto<OutboundResponseDto>> searchOutboundList(
+            @RequestBody OutboundSearchRequestDto request
+    ) {
+        Page<OutboundResponseDto> outboundList = outboundService.searchOutboundList(request);
+        int totalCount = (int) outboundList.getTotalElements();
+
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, outboundList.getContent(), outboundList.getNumber() + 1, totalCount));
     }
 }

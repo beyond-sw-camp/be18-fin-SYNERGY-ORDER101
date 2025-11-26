@@ -4,6 +4,7 @@ import com.synerge.order101.common.dto.BaseResponseDto;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.inbound.model.dto.InboundDetailResponseDto;
 import com.synerge.order101.inbound.model.dto.InboundResponseDto;
+import com.synerge.order101.inbound.model.dto.InboundSearchRequestDto;
 import com.synerge.order101.inbound.model.service.InboundService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,5 +38,16 @@ public class InboundController {
         InboundDetailResponseDto inboundDetail = inboundService.getInboundDetail(inboundId);
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, inboundDetail));
+    }
+
+    // 검색 필터링
+    @PostMapping("/search")
+    public ResponseEntity<ItemsResponseDto<InboundResponseDto>> searchInboundList(
+            @RequestBody InboundSearchRequestDto request
+    ) {
+        Page<InboundResponseDto> inboundList = inboundService.searchInboundList(request);
+        int totalCount = (int) inboundList.getTotalElements();
+
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inboundList.getContent(), inboundList.getNumber() + 1, totalCount));
     }
 }

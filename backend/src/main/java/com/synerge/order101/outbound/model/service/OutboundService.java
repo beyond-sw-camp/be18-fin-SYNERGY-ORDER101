@@ -2,6 +2,7 @@ package com.synerge.order101.outbound.model.service;
 
 import com.synerge.order101.outbound.model.dto.OutboundDetailResponseDto;
 import com.synerge.order101.outbound.model.dto.OutboundResponseDto;
+import com.synerge.order101.outbound.model.dto.OutboundSearchRequestDto;
 import com.synerge.order101.shipment.event.ShipmentInTransitEvent;
 import org.springframework.data.domain.Page;
 
@@ -13,4 +14,6 @@ public interface OutboundService {
     OutboundDetailResponseDto getOutboundDetail(Long outboundId);
 
     void createOutboundFromShipment(ShipmentInTransitEvent event);
+
+    Page<OutboundResponseDto> searchOutboundList(OutboundSearchRequestDto request);
 }

@@ -1,12 +1,14 @@
 package com.synerge.order101.outbound.model.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
+@Builder
 public class OutboundResponseDto {
     private Long outboundId;
 
@@ -14,9 +16,9 @@ public class OutboundResponseDto {
 
     private LocalDateTime outboundDatetime;
 
-    private String customerName; // supplierName -> customerName
+    private String storeName;
 
     private Integer itemCount;
 
-    private Integer totalShippedQty; // totalReceivedQty -> totalShippedQty
+    private Integer totalShippedQty;
 }
