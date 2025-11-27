@@ -10,15 +10,15 @@ const props = defineProps({
     },
     currentType: {
         type: String,
-        default: 'FRANCHISE', // 초기 타입
-        validator: (value) => ['FRANCHISE', 'SUPPLIER'].includes(value)
+        default: 'ALL', // 'ALL' | 'FRANCHISE' | 'SUPPLIER'
+        validator: (value) => ['ALL', 'FRANCHISE', 'SUPPLIER'].includes(value)
     }
 })
 
 const emit = defineEmits(['close', 'select'])
 
 // 모달 내부에서 타입 선택
-const selectedType = ref(props.currentType)
+const selectedType = ref(props.currentType === 'ALL' ? 'FRANCHISE' : props.currentType)
 const searchQuery = ref('')
 const selectedVendor = ref(null)
 const vendors = ref([])
@@ -27,11 +27,22 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const totalCount = ref(0)
 
-// 타입 옵션
-const typeOptions = [
-    { label: '가맹점', value: 'FRANCHISE' },
-    { label: '공급업체', value: 'SUPPLIER' }
-]
+// 타입 옵션 - currentType에 따라 동적으로 결정
+const typeOptions = computed(() => {
+    if (props.currentType === 'ALL') {
+        return [
+            { label: '가맹점', value: 'FRANCHISE' },
+            { label: '공급업체', value: 'SUPPLIER' }
+        ]
+    } else if (props.currentType === 'FRANCHISE') {
+        return [{ label: '가맹점', value: 'FRANCHISE' }]
+    } else {
+        return [{ label: '공급업체', value: 'SUPPLIER' }]
+    }
+})
+
+// 탭 표시 여부
+const showTabs = computed(() => props.currentType === 'ALL')
 
 // 동적 타이틀 및 플레이스홀더
 const modalTitle = computed(() =>
@@ -193,8 +204,8 @@ watch(() => selectedType.value, () => {
             </header>
 
             <section class="modal-body">
-                <!-- 타입 선택 탭 -->
-                <div class="type-tabs">
+                <!-- 타입 선택 탭 (ALL일 때만 표시) -->
+                <div v-if="showTabs" class="type-tabs">
                     <button v-for="option in typeOptions" :key="option.value" class="tab-btn"
                         :class="{ active: selectedType === option.value }" @click="handleTypeChange(option.value)">
                         {{ option.label }}

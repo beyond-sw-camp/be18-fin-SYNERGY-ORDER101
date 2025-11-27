@@ -13,6 +13,7 @@ public class ShipmentResponseDto {
     private Long storeOrderId;
     private String orderNo;
     private String storeName;
+    private String warehouseName;
     private BigDecimal totalQty;
     private ShipmentStatus shipmentStatus;
     private LocalDateTime orderDatetime;

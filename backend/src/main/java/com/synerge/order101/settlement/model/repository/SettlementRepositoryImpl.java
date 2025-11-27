@@ -3,7 +3,7 @@ package com.synerge.order101.settlement.model.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.synerge.order101.common.enums.SettlementType;
-import com.synerge.order101.settlement.model.dto.SettlementSearchCondition;
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.settlement.model.entity.Settlement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.synerge.order101.order.model.entity.QStoreOrder.storeOrder;
 import static com.synerge.order101.settlement.model.entity.QSettlement.settlement;
 
 @RequiredArgsConstructor
@@ -27,7 +28,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Settlement> search(SettlementSearchCondition cond, Pageable pageable) {
+    public Page<Settlement> search(TradeSearchCondition cond, Pageable pageable) {
         //데이터 목록 조회
         List<Settlement> content = queryFactory
                 .selectFrom(settlement)
@@ -60,16 +61,17 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
 
     // --- 동적 쿼리 조건을 생성하는 BooleanExpression 메소드들 ---}
     private BooleanExpression DateBetween(LocalDate startDate, LocalDate endDate) {
-        if (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) {
-                return null;
-        }
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        try {
-            return settlement.createdAt.between(startDate.atStartOfDay(), endDate.atStartOfDay());
-        } catch (Exception e) {
+        if (startDate == null || endDate == null) {
             return null;
         }
+        // 1. startDate는 해당 날짜의 시작 시간 (00:00:00)
+        LocalDateTime start = startDate.atStartOfDay();
+
+        // 2. endDate는 해당 날짜의 '다음 날'의 시작 시간 (00:00:00)으로 설정합니다.
+        LocalDate nextDay = endDate.plusDays(1);
+        LocalDateTime end = nextDay.atStartOfDay();
+
+        return storeOrder.createdAt.goe(start).and(storeOrder.createdAt.lt(end));
     }
     private BooleanExpression statusIn(List<String> statuses) {
         if (statuses == null || statuses.isEmpty()) {

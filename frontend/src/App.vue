@@ -18,11 +18,12 @@ const roleOptions = [
 const adminSidebar = [
   {
     id: 'orders',
-    title: '주문 관리',
+    title: '발주 관리',
     children: [
-      { title: '구매 주문 생성', path: '/hq/orders/create' },
-      { title: '주문 현황', path: '/hq/orders/status' },
-      { title: '주문 승인', path: '/hq/orders/approval' },
+      { title: '발주서 생성', path: '/hq/orders/create' },
+      { title: '일반 발주 현황', path: '/hq/orders/status' },
+      { title: "스마트 발주 현황", path: '/hq/smart-orders'},
+      { title: '발주 승인', path: '/hq/orders/approval' },
       { title: '공급사 관리', path: '/hq/orders/vendors' },
     ],
   },
@@ -47,7 +48,7 @@ const adminSidebar = [
     title: '정산 관리',
     children: [
       { title: '정산 목록', path: '/hq/settlement/list' },
-      { title: '일일 정산', path: '/hq/settlement/daily' },
+      //{ title: '일일 정산', path: '/hq/settlement/daily' },
       { title: '정산 리포트', path: '/hq/settlement/report' },
     ],
   },
@@ -69,6 +70,14 @@ const adminSidebar = [
       { title: '가맹점 주문 승인', path: '/hq/franchise/approval' },
       { title: '가맹점 주문 조회', path: '/hq/franchise/orders' },
       { title: '배송 관리', path: '/hq/franchise/delivery' },
+    ],
+  },
+  {
+    id: 'dashboard',
+    title: '대시보드',
+    children: [
+      { title: '수요 예측', path: '/hq/dashboard/forecast' },
+      { title: '주문 대시보드', path: '/hq/dashboard/order' },
     ],
   },
 ]

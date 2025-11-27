@@ -1,5 +1,6 @@
 package com.synerge.order101.order.model.service;
 
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.notification.model.repository.NotificationRepository;
@@ -14,7 +15,10 @@ import com.synerge.order101.order.model.repository.StoreOrderRepository;
 import com.synerge.order101.order.model.repository.StoreOrderStatusLogRepository;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.repository.ProductRepository;
+import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import com.synerge.order101.settlement.event.StoreOrderSettlementReqEvent;
+import com.synerge.order101.settlement.model.dto.SettlementSummaryDto;
+import com.synerge.order101.settlement.model.entity.Settlement;
 import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.store.model.repository.StoreRepository;
 import com.synerge.order101.user.model.entity.Role;
@@ -34,10 +38,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
-/** TODO : 페이지 조회 로직 성능 TEST 및 개선
+/**
+ * TODO : 페이지 조회 로직 성능 TEST 및 개선
  *  TODO : 페이지 동적 쿼리 변경
  *  #박진우
-*/
+ */
 
 @Service
 @RequiredArgsConstructor
@@ -60,22 +65,11 @@ public class StoreOrderServiceImpl implements StoreOrderService {
      */
     @Override
     @Transactional(readOnly = true)
+    public Page<StoreOrderSummaryResponseDto> findOrders(TradeSearchCondition cond, Pageable pageable){
 
-    public List<StoreOrderSummaryResponseDto> findOrders(OrderStatus status, Integer page, Integer size) {
+        Page<StoreOrder> page = storeOrderRepository.search(cond, pageable);
 
-        int pageNum = (page == null || page < 0) ? 0 : page;
-        int pageSize = (size != null && size > 0) ? size : 10; // 기본 페이지 크기 설정
-        Pageable pageable = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "orderDatetime"));
-        Page<StoreOrderSummaryResponseDto> pageResult;
-
-        if (status == null) {
-            pageResult = storeOrderRepository.findOrderAllStatus(pageable);
-        } else {
-            pageResult = storeOrderRepository.findByOrderStatus(status, pageable);
-        }
-
-
-        return pageResult.getContent();
+        return page.map(StoreOrderSummaryResponseDto::fromEntity);
     }
 
 
@@ -97,9 +91,11 @@ public class StoreOrderServiceImpl implements StoreOrderService {
 
         return StoreOrderDetailResponseDto.builder()
                 .storeOrderId(order.getStoreOrderId())
+                .storeOrderNo(order.getOrderNo())
+                .requesterName(order.getUser().getName())
                 .storeName(order.getStore() == null ? null : order.getStore().getStoreName())
                 .status(order.getOrderStatus() == null ? null : order.getOrderStatus().name())
-                .orderDate(order.getOrderDatetime())
+                .orderDate(order.getCreatedAt())
                 .orderItems(List.of(items))
                 .build();
 
@@ -148,7 +144,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         // 가맹점 발주 알림(테스트 X)
         List<User> hqList = userRepository.findByRole(Role.HQ);
 
-        if(!hqList.isEmpty()){
+        if (!hqList.isEmpty()) {
             notificationService.notifyOrderCreatedToHQ(hqList, savedOrder);
         }
 
@@ -174,7 +170,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
 
         OrderStatus curStatus = order.getOrderStatus();
 
-        if(curStatus == OrderStatus.CONFIRMED) {
+        if (curStatus == OrderStatus.CONFIRMED) {
             // 주문 완료 이벤트 발행
             eventPublisher.publishEvent(new StoreOrderSettlementReqEvent(order));
         }
@@ -187,7 +183,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
 
         storeOrderStatusLogRepository.save(log);
 
-        if(curStatus ==  OrderStatus.CONFIRMED || curStatus == OrderStatus.REJECTED) {
+        if (curStatus == OrderStatus.CONFIRMED || curStatus == OrderStatus.REJECTED) {
             notificationService.notifyStoreOrderResult(order);
         }
 

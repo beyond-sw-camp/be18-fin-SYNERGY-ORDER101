@@ -1,10 +1,9 @@
 package com.synerge.order101.settlement.model.service;
 
-import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.common.exception.errorcode.CommonErrorCode;
 import com.synerge.order101.settlement.event.SettlementReqEvent;
-import com.synerge.order101.settlement.model.dto.SettlementSearchCondition;
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.settlement.model.dto.SettlementSummaryDto;
 import com.synerge.order101.settlement.model.entity.Settlement;
 import com.synerge.order101.settlement.model.repository.SettlementRepository;
@@ -24,7 +23,7 @@ public class SettlementServiceImpl implements SettlementService{
     private final SettlementRepository settlementRepository;
 
     @Override
-    public Page<SettlementSummaryDto> getSettlements(SettlementSearchCondition cond, Pageable pageable) {
+    public Page<SettlementSummaryDto> getSettlements(TradeSearchCondition cond, Pageable pageable) {
 
         Page<Settlement> page = settlementRepository.search(cond, pageable);
 

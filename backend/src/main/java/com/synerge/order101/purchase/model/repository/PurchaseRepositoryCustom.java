@@ -1,5 +1,6 @@
 package com.synerge.order101.purchase.model.repository;
 
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import com.synerge.order101.purchase.model.entity.Purchase;
@@ -12,4 +13,7 @@ public interface PurchaseRepositoryCustom {
             OrderStatus status,
             Pageable pageable
     );
+
+    // StoreOrder/Settlement과 같은 TradeSearchCondition 기반 검색
+    Page<Purchase> search(TradeSearchCondition cond, Pageable pageable);
 }

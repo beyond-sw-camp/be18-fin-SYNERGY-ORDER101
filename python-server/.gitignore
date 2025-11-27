@@ -2,10 +2,13 @@
 app/data_pipeline/*.csv
 app/data_pipeline/*.zip
 app/data_pipeline/*.json
-!app/data_pipeline/sample_*.csv
-!app/data_pipeline/cleaned_domain_sales.csv
+!app/data_pipeline/raw/*.csv
 !app/data_pipeline/sku_catalog.csv
 !app/data_pipeline/external_factors.csv
+!app/data_pipeline/taxonomy_product_map.csv
+!app/data_pipeline/product_master_load.csv
+!app/data_pipeline/sample_domain_sales.csv
+!app/data_pipeline/sample_domain_sales_sku.csv
 
 # caches
 __pycache__/

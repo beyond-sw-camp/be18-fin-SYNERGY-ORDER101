@@ -1,9 +1,13 @@
 package com.synerge.order101.order.controller;
 
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.order.model.dto.*;
 import com.synerge.order101.order.model.service.StoreOrderService;
+import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,13 +27,12 @@ public class StoreOrderController {
      * - 요청 파라미터(RequestParam)로 상태(status)와 페이지(page)를 받아 해당 조건에 맞는 주문 목록을 반환합니다.
      */
     @GetMapping
-    public ResponseEntity<List<StoreOrderSummaryResponseDto>> findStoreOrders(
-            @RequestParam(required = false) OrderStatus status,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size
-    ) {
+    public ResponseEntity<Page<StoreOrderSummaryResponseDto>> findStoreOrders(
+            @ModelAttribute TradeSearchCondition cond,
+            Pageable pageable
+            ) {
 
-        List<StoreOrderSummaryResponseDto> response = storeOrderService.findOrders(status, page, size);
+        Page<StoreOrderSummaryResponseDto> response = storeOrderService.findOrders(cond, pageable);
 
         return ResponseEntity.ok(response);
     }

@@ -20,8 +20,9 @@ import static jakarta.persistence.FetchType.LAZY;
 public class StoreOrderStatusLog {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "store_order_status_log_id")
-    private String storeOrderStatusLogId;
+    private Long storeOrderStatusLogId;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "store_order_id")
@@ -31,9 +32,11 @@ public class StoreOrderStatusLog {
     private LocalDateTime updated_at;
 
     @Column(name = "prev_order_status")
+    @Enumerated(EnumType.STRING)
     private OrderStatus prevStatus;
 
     @Column(name = "cur_order_status")
+    @Enumerated(EnumType.STRING)
     private OrderStatus curStatus;
 
 }

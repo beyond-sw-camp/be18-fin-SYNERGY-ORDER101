@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -14,7 +15,10 @@ import java.time.LocalDateTime;
 public class SmartOrderResponseDto {
     private Long id;
     private Long supplierId;
+    private String supplierName;
     private Long productId;
+    private String productCode;
+    private String productName;
     private Long demandForecastId;
     private LocalDate targetWeek;
     private Integer recommendedOrderQty;
@@ -22,4 +26,7 @@ public class SmartOrderResponseDto {
     private OrderStatus smartOrderStatus;
     private LocalDateTime snapshotAt;
     private LocalDateTime updatedAt;
+    private BigDecimal unitPrice;
+    private BigDecimal lineAmount;
+    private String poNumber;
 }

@@ -31,11 +31,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +47,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final PurchaseDetailRepository purchaseDetailRepository;
     private final NotificationService notificationService;
+    private static final DateTimeFormatter PO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     //AI가 스마트 발주 초안 작성
     @Transactional
@@ -117,6 +117,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                             .forecastQty(weeklyForecast)
                             .recommendedOrderQty(recommendedOrderQty)
                             .smartOrderStatus(OrderStatus.DRAFT_AUTO)
+                            .poNumber(generatePoNumber(df.getTargetWeek(), mapping.getSupplier()))
                             .build();
 
                     so.setSystemUserIfNull(systemUser);
@@ -166,13 +167,16 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         boolean hasStatus = (status != null);
         boolean hasRange = (from != null && to != null);
 
+        // 💡 날짜 범위의 끝(to)을 포함하기 위해 to에 하루를 더합니다.
+        LocalDate endDateInclusive = (hasRange) ? to.plusDays(1) : null;
+
         if (hasStatus && hasRange) {
             list = smartOrderRepository
-                    .findBySmartOrderStatusAndTargetWeekBetween(status, from, to);
+                    .findBySmartOrderStatusAndTargetWeekBetween(status, from, endDateInclusive);
         } else if (hasStatus) {
             list = smartOrderRepository.findBySmartOrderStatus(status);
         } else if (hasRange) {
-            list = smartOrderRepository.findByTargetWeekBetween(from, to);
+            list = smartOrderRepository.findByTargetWeekBetween(from, endDateInclusive);
         } else {
             list = smartOrderRepository.findAllByOrderByTargetWeekDesc();
         }
@@ -207,6 +211,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .supplierName(any.getSupplier().getSupplierName())
                 .targetWeek(targetWeek)
                 .requesterName(requesterName)
+                .status(any.getSmartOrderStatus())
                 .items(list.stream()
                         .map(this::toLineItemDto)
                         .toList())
@@ -219,6 +224,11 @@ public class SmartOrderServiceImpl implements SmartOrderService{
 
         boolean edited = (forecast != null && recommended != null && !forecast.equals(recommended));
 
+        var product = so.getProduct();
+        BigDecimal price = Optional.ofNullable(product.getPrice()).orElse(BigDecimal.ZERO);
+        int qty = (recommended != null) ? recommended : 0;
+        BigDecimal lineAmount = price.multiply(BigDecimal.valueOf(qty));
+
         return SmartOrderLineItemResponseDto.builder()
                 .smartOrderId(so.getSmartOrderId())
                 .productId(so.getProduct().getProductId())
@@ -226,6 +236,8 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .productName(so.getProduct().getProductName())
                 .forecastQty(forecast)
                 .recommendedOrderQty(recommended)
+                .unitPrice(price)
+                .lineAmount(lineAmount)
                 .manualEdited(edited)
                 .build();
     }
@@ -235,7 +247,8 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         SmartOrder entity = smartOrderRepository.findById(smartOrderId)
                 .orElseThrow(() -> new CustomException(AiErrorCode.SMART_ORDER_NOT_FOUND));
 
-        if (request.getRecommendedOrderQty() != null) {
+        if (request.getRecommendedOrderQty() != null &&
+                !request.getRecommendedOrderQty().equals(entity.getRecommendedOrderQty())) {
             entity.updateRecommendedQty(request.getRecommendedOrderQty());
         }
 
@@ -243,7 +256,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         User currentUser = getCurrentUser();
         entity.submit(currentUser);
 
-        List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
+        List<User> admins = userRepository.findByRole(Role.HQ);
 
         if (!admins.isEmpty()){
             notificationService.notifySmartOrderApprovalToAdmins(entity, admins);
@@ -273,22 +286,53 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .filter(so -> so.getSmartOrderStatus() == OrderStatus.SUBMITTED)
                 .count();
 
+        BigDecimal totalRecommendedAmount = list.stream()
+                .map(so -> {
+                    BigDecimal price = Optional.ofNullable(so.getProduct().getPrice())
+                            .orElse(BigDecimal.ZERO);
+                    int qty = Optional.ofNullable(so.getRecommendedOrderQty()).orElse(0);
+                    return price.multiply(BigDecimal.valueOf(qty));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return SmartOrderDashboardResponseDto.builder()
                 .targetWeek(targetWeek)
                 .totalRecommendedQty(totalRecommended)
                 .totalForecastQty(totalForecast)
                 .draftCount((int) draftCount)
                 .submittedCount((int) submittedCount)
+                .totalRecommendedAmount(totalRecommendedAmount)
                 .build();
+    }
+
+    private String generatePoNumber(LocalDate targetWeek, Supplier supplier) {
+        String datePart = targetWeek.format(PO_DATE_FORMAT);
+        String supplierPart = String.format("%04d", supplier.getSupplierId());
+        return "PO" + datePart + supplierPart;
     }
 
 
 
     private SmartOrderResponseDto toResponse(SmartOrder so) {
+        // 단가
+        BigDecimal price = Optional.ofNullable(so.getProduct().getPrice())
+                .orElse(BigDecimal.ZERO);
+
+        // 수량
+        int qty = Optional.ofNullable(so.getRecommendedOrderQty())
+                .orElse(0);
+
+        // 라인 금액 = 단가 × 수량
+        BigDecimal lineAmount = price.multiply(BigDecimal.valueOf(qty));
+
+
         return SmartOrderResponseDto.builder()
                 .id(so.getSmartOrderId())
                 .supplierId(so.getSupplier().getSupplierId())
+                .supplierName(so.getSupplier().getSupplierName())
                 .productId(so.getProduct().getProductId())
+                .productCode(so.getProduct().getProductCode())
+                .productName(so.getProduct().getProductName())
                 .demandForecastId(so.getDemandForecast().getDemandForecastId())
                 .targetWeek(so.getTargetWeek())
                 .recommendedOrderQty(so.getRecommendedOrderQty())
@@ -296,6 +340,9 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .smartOrderStatus(so.getSmartOrderStatus())
                 .snapshotAt(so.getSnapshotAt())
                 .updatedAt(so.getUpdatedAt())
+                .unitPrice(price)
+                .lineAmount(lineAmount)
+                .poNumber(so.getPoNumber())
                 .build();
     }
 

@@ -4,15 +4,8 @@
       <h1>발주 관리</h1>
     </header>
 
-    <section class="card controls">
-      <div class="controls-row">
-        <input class="search" v-model="filters.q" placeholder="PO 번호, 공급업체 등으로 검색..." />
-
-        <div class="controls-right">
-          <OrderStatusSelect v-model="filters.status" />
-          <button class="btn" @click="search">조회</button>
-        </div>
-      </div>
+    <section class="filters card">
+      <PurchaseFilter @search="handleSearch" />
     </section>
 
     <section class="card list">
@@ -23,11 +16,11 @@
               <th>PO 번호</th>
               <th>요청자</th>
               <th>공급업체</th>
-              <th>품목 수</th>
-              <th class="numeric">금액</th>
-              <th>요청일</th>
+              <th class="center">품목 수</th>
+              <th class="center">금액</th>
+              <th class="center">요청일</th>
               <th>상태</th>
-              <th>작업</th>
+              <th class="center">타입</th>
             </tr>
           </thead>
           <tbody>
@@ -35,15 +28,15 @@
               <td class="po">{{ row.No }}</td>
               <td>{{ row.requester }}</td>
               <td>{{ row.vendor }}</td>
-              <td class="numeric">{{ row.items }}</td>
-              <td class="numeric">
+              <td class="center">{{ row.items }}</td>
+              <td class="center">
                 <Money :value="row.amount"></Money>
               </td>
-              <td>{{ formatDateTimeMinute(row.requestedAt) }}</td>
+              <td class="center">{{ formatDateTimeMinute(row.requestedAt) }}</td>
               <td>
                 <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
               </td>
-              <td class="actions">⋯</td>
+              <td class="center">{{ row.orderType }}</td>
             </tr>
             <tr v-if="rows.length === 0">
               <td colspan="8" class="no-data">검색 조건에 맞는 발주가 없습니다.</td>
@@ -53,11 +46,25 @@
       </div>
 
       <div class="pagination">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+          &laquo;
+        </button>
+        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+          &lsaquo;
+        </button>
+
         <div class="pages">
-          <button v-for="p in totalPages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
+          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
             {{ p }}
           </button>
         </div>
+
+        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+          &rsaquo;
+        </button>
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+          &raquo;
+        </button>
       </div>
     </section>
   </div>
@@ -66,15 +73,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getPurchases } from '@/components/api/purchase/purchaseService.js'
+import { getRegularPurchases, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import Money from '@/components/global/Money.vue'
-import { formatDateTimeMinute } from '@/components/global/Date';
-import OrderStatusSelect from '@/components/OrderStatusSelect.vue';
+import { formatDateTimeMinute, getPastDateString } from '@/components/global/Date';
+import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue';
 
-const filters = ref({ q: '', status: '전체' })
+const filters = ref({
+  status: 'ALL',
+  vendorId: null,
+  startDate: getPastDateString(30),
+  endDate: new Date().toISOString().slice(0, 10),
+  keyword: ''
+})
 
 const page = ref(1)
-const perPage = ref(7)
+const perPage = ref(10)
 const rows = ref([])
 const totalElements = ref(0) // 전체 항목 수
 const totalPagesFromBackend = ref(0) // 백엔드에서 받은 총 페이지 수
@@ -89,10 +102,58 @@ const totalPages = computed(() => totalPagesFromBackend.value || 1)
 // 현재 페이지의 데이터만 표시 (백엔드에서 이미 페이징된 데이터)
 const filteredRowsPaginated = computed(() => rows.value)
 
+// 표시할 페이지 번호 계산 (최대 5개)
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2 // 현재 페이지 양옆으로 보여줄 페이지 수
+  const pages = []
+
+  if (total <= 5) {
+    // 전체 페이지가 5개 이하면 모두 표시
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // 5개보다 많으면 현재 페이지 기준으로 표시
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    // 시작이 1이면 끝을 늘림
+    if (start === 1) {
+      end = Math.min(5, total)
+    }
+    // 끝이 마지막이면 시작을 줄임
+    if (end === total) {
+      start = Math.max(1, total - 4)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
+
 // 시작시
 onMounted(() => {
   search();
 });
+
+// 필터 검색 이벤트 핸들러
+function handleSearch(filterData) {
+  console.log('🔍 발주 필터 검색:', filterData)
+  filters.value = {
+    status: filterData.status !== 'ALL' ? filterData.status : null,
+    vendorId: filterData.vendorId !== 'ALL' ? filterData.vendorId : null,
+    startDate: filterData.startDate,
+    endDate: filterData.endDate,
+    keyword: filterData.keyword
+  }
+  page.value = 1
+  search()
+}
 
 async function search() {
   loading.value = true
@@ -101,13 +162,23 @@ async function search() {
   const apiPage = page.value - 1; // 0-based index로 변환
 
   try {
-    const data = await getPurchases(
-      apiPage,
-      perPage.value,
-      filters.value.q,
-      filters.value.status === '전체' ? null : filters.value.status
-    );
+    console.log("검색 조건:", filters.value);
 
+    // 일반 발주 검색 조건 생성
+    const regularCond = {
+      types: [],
+      statuses: filters.value.status ? [filters.value.status] : [],
+      vendorId: filters.value.vendorId || null,
+      searchText: filters.value.keyword || null,
+      fromDate: filters.value.startDate || null,
+      toDate: filters.value.endDate || null
+    };
+
+    const data = await getRegularPurchases(
+      regularCond,
+      apiPage,
+      perPage.value
+    );
 
     console.log("API 응답 데이터:", data);
 
@@ -124,10 +195,9 @@ async function search() {
       items: item.totalQty,
       amount: item.totalAmount,
       requestedAt: item.requestedAt,
-      status: item.status
+      status: mapPurchaseStatus(item.status),
+      orderType: mapPurchaseStatus(item.orderType)
     }));
-
-    console.log("데이터 할당 완료:", rows.value);
 
   } catch (err) {
     console.error('발주 목록을 가져오는 중 오류 발생:', err);
@@ -146,11 +216,14 @@ function openApproval(row) {
   router.push({ name: 'hq-orders-approval-detail', params: { id: row.id } })
 }
 
+
 function statusClass(s) {
   if (!s) return ''
-  if (s.includes('CONFIRMED')) return 's-accepted'
-  if (s.includes('SUBMITTED')) return 's-waiting'
-  if (s.includes('REJECTED')) return 's-rejected'
+  if (s === '승인') return 's-accepted'
+  if (s === '제출' || s === '대기') return 's-waiting'
+  if (s === '반려') return 's-rejected'
+  if (s === '취소') return 's-rejected'
+  if (s === '초안') return 's-waiting'
   return ''
 }
 </script>
@@ -180,33 +253,6 @@ function statusClass(s) {
   margin-bottom: 20px;
 }
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.search {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #e6e6e9;
-}
-
-.controls-right {
-  display: flex;
-  gap: 8px;
-}
-
-.btn {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e6e6e9;
-  background: white;
-  cursor: pointer;
-}
-
 .table-wrap {
   margin-top: 12px;
 }
@@ -223,8 +269,9 @@ function statusClass(s) {
   text-align: left;
 }
 
-.orders-table td.numeric {
-  text-align: right;
+.orders-table th.center,
+.orders-table td.center {
+  text-align: center;
 }
 
 .po {
@@ -264,12 +311,34 @@ function statusClass(s) {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 12px;
+  gap: 8px;
+  padding-top: 20px;
+  margin-top: 16px;
+}
+
+.page-nav {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.page-nav:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.page-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .pages {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 .pages button {
@@ -277,6 +346,13 @@ function statusClass(s) {
   border-radius: 6px;
   border: 1px solid #e6e6e9;
   background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 36px;
+}
+
+.pages button:hover:not(.active) {
+  background: #f3f4f6;
 }
 
 .pages button.active {

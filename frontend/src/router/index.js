@@ -24,12 +24,17 @@ const SettlementReportView = () => import('../views/hq/settlement/SettlementRepo
 const DailySettlementView = () => import('../views/hq/settlement/DailySettlementView.vue')
 const FranchiseOrderApprovalView = () =>
   import('../views/hq/franchise/FranchiseOrderApprovalView.vue')
+const FranchiseOrderApprovalDetailView = () =>
+  import('../views/hq/franchise/FranchiseOrderApprovalDetailView.vue')
 const FranchiseOrderListView = () => import('../views/hq/franchise/FranchiseOrderListView.vue')
 const FranchiseOrderDetailView = () => import('../views/hq/franchise/FranchiseOrderDetailView.vue')
 const FranchiseDeliveryView = () => import('../views/hq/franchise/FranchiseDeliveryView.vue')
 const ProductListView = () => import('../views/hq/store/ProductListView.vue')
 const ProductRegisterView = () => import('../views/hq/store/ProductRegisterView.vue')
 const ProductDetailView = () => import('../views/hq/store/ProductDetailView.vue')
+const SmartOrderListViewView = () => import('../views/hq/orders/SmartOrderListView.vue')
+const SmartOrderDetailView = () => import('../views/hq/orders/SmartOrderDetailView.vue')
+const DemandForecastView = () => import('../views/hq/dashboard/DemandForecastView.vue')
 
 const hqRoutes = [
   {
@@ -110,12 +115,12 @@ const hqRoutes = [
     component: PagePlaceholder,
     meta: { title: '상품 목록' },
   },
-  {
-    path: '/hq/settlement/daily',
-    name: 'hq-settlement-daily',
-    component: DailySettlementView,
-    meta: { title: '일일 정산' },
-  },
+  // {
+  //   path: '/hq/settlement/daily',
+  //   name: 'hq-settlement-daily',
+  //   component: DailySettlementView,
+  //   meta: { title: '일일 정산' },
+  // },
   {
     path: '/hq/settlement/list',
     name: 'hq-settlement-list',
@@ -167,8 +172,8 @@ const hqRoutes = [
   {
     path: '/hq/franchise/approval/:id',
     name: 'hq-franchise-approval-detail',
-    component: OrderApprovalView,
-    meta: { title: '가맹점 발주 상세' },
+    component: FranchiseOrderApprovalDetailView,
+    meta: { title: '가맹점 주문 상세' },
   },
   {
     path: '/hq/franchise/orders',
@@ -188,6 +193,31 @@ const hqRoutes = [
     component: FranchiseDeliveryView,
     meta: { title: '배송 관리' },
   },
+  {
+  path: '/hq/smart-orders',
+  name: 'hq-smart-orders',
+  component: SmartOrderListViewView,
+  meta: { title: '스마트 발주 현황' },
+},
+{
+  path: '/hq/smart-orders/:supplierId/:targetWeek',
+  name: 'hq-smart-order-detail',
+  component: SmartOrderDetailView,
+  meta: { title: '스마트 발주 상세' },
+  props: true,
+},
+{
+  path: '/hq/dashboard/forecast',
+  name: 'hq-dashboard-forecast',
+  component: DemandForecastView,
+  meta: { title: '수요 예측 보고서' },
+},
+{
+  path: '/hq/dashboard/forecast',
+  name: 'hq-forecast',
+  component: DemandForecastView,
+  meta: { title: '수요 예측' }
+},
 ]
 
 const storeRoutes = [
@@ -283,6 +313,22 @@ router.beforeEach(async (to, from, next) => {
     (authStore.userInfo.role ||
       authStore.userInfo.type ||
       (authStore.userInfo.roles && authStore.userInfo.roles[0]))
+
+  // If this is a store admin, ensure storeId exists; if not, force re-login
+  const rawStoreId =
+    authStore.userInfo && authStore.userInfo.storeId
+      ? authStore.userInfo.storeId
+      : localStorage.getItem('storeId')
+  const storeId = rawStoreId == null ? '' : String(rawStoreId).trim()
+  if (role === 'STORE_ADMIN' && (!storeId || storeId === 'null')) {
+    // clear auth and redirect to login to recover a valid state
+    try {
+      authStore.logout()
+    } catch (e) {
+      // ignore
+    }
+    return next({ name: 'login' })
+  }
 
   // redirect root/dashboard to role-specific dashboard
   if (to.path === '/' || to.name === 'dashboard') {

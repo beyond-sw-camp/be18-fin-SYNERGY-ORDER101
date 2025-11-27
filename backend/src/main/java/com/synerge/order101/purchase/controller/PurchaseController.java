@@ -2,12 +2,14 @@ package com.synerge.order101.purchase.controller;
 
 import com.synerge.order101.common.dto.BaseResponseDto;
 import com.synerge.order101.common.dto.ItemsResponseDto;
+import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.*;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.purchase.model.service.PurchaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,12 +29,10 @@ public class PurchaseController {
      */
     @GetMapping
     public ResponseEntity<Page<PurchaseSummaryResponseDto>> findPurchases(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) OrderStatus status
+            @ModelAttribute TradeSearchCondition cond,
+            Pageable pageable
     ) {
-        Page<PurchaseSummaryResponseDto> response = purchaseService.findPurchases(keyword, page, size, status);
+        Page<PurchaseSummaryResponseDto> response = purchaseService.findPurchases(cond, pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -109,4 +109,3 @@ public class PurchaseController {
     }
 
 }
-

@@ -1,5 +1,7 @@
 package com.synerge.order101.purchase.model.dto;
 
+import com.synerge.order101.common.enums.OrderStatus;
+import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.purchase.model.entity.PurchaseDetail;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +15,12 @@ public class PurchaseDetailResponseDto {
 
     // 발주 ID
     private Long purchaseId;
+
+    // 발주 타임
+    private Purchase.OrderType orderType;
+
+    // 발주 상태
+    private OrderStatus orderStatus;
 
     // 발주 번호
     private String poNo;

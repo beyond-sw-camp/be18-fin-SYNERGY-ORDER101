@@ -23,6 +23,8 @@ public class PurchaseSummaryResponseDto {
 
     private String requesterName;
 
+    private Purchase.OrderType orderType;
+
     private String poNo;
 
     private Integer totalQty;
@@ -48,16 +50,14 @@ public class PurchaseSummaryResponseDto {
                 // 3. 모든 항목별 금액을 누적 합산 (reduce)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        User test22 = purchase.getUser();
-        String test = purchase.getUser().getName();
-
         return  PurchaseSummaryResponseDto.builder()
                 .purchaseId(purchase.getPurchaseId())
                 .supplierName(purchase.getSupplier().getSupplierName())
                 .requesterName(purchase.getUser().getName())
                 .poNo(purchase.getPoNo())
-                .totalQty(purchase.getPurchaseDetails().stream().mapToInt(PurchaseDetail::getOrderQty).sum())
+                .totalQty(purchase.getPurchaseDetails().size())
                 .totalAmount(totalAmount)
+                .orderType(purchase.getOrderType())
                 .status(purchase.getOrderStatus())
                 .requestedAt(purchase.getCreatedAt())
                 .build();
