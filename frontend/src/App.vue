@@ -22,7 +22,7 @@ const adminSidebar = [
     children: [
       { title: '발주서 생성', path: '/hq/orders/create' },
       { title: '일반 발주 현황', path: '/hq/orders/status' },
-      { title: "스마트 발주 현황", path: '/hq/smart-orders'},
+      { title: '스마트 발주 현황', path: '/hq/smart-orders' },
       { title: '발주 승인', path: '/hq/orders/approval' },
       { title: '공급사 관리', path: '/hq/orders/vendors' },
     ],
@@ -66,7 +66,6 @@ const adminSidebar = [
     children: [
       { title: '가맹점 목록', path: '/hq/franchise/list' },
       { title: '가맹점 등록', path: '/hq/franchise/registration' },
-      { title: '가맹점 재고 현황', path: '/hq/franchise/stock' },
       { title: '가맹점 주문 승인', path: '/hq/franchise/approval' },
       { title: '가맹점 주문 조회', path: '/hq/franchise/orders' },
       { title: '배송 관리', path: '/hq/franchise/delivery' },
@@ -219,8 +218,12 @@ watch(
 <template>
   <div>
     <!-- If route is an auth page (login), render only the view without header/sidebar -->
-    <Header v-if="!isAuthRoute" :currentRole="currentRole" :roleOptions="roleOptions"
-      @update:currentRole="(val) => (currentRole.value = val)" />
+    <Header
+      v-if="!isAuthRoute"
+      :currentRole="currentRole"
+      :roleOptions="roleOptions"
+      @update:currentRole="(val) => (currentRole.value = val)"
+    />
 
     <div v-if="!isAuthRoute" class="app-shell">
       <div class="app-body" :class="sidebarPlacementClass">
