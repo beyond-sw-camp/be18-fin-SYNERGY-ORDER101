@@ -6,14 +6,10 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-BASE = Path(__file__).resolve().parents[1]  # app 디렉토리
+BASE = Path(__file__).resolve().parents[1]  
 DATA_PIPELINE = BASE / "data_pipeline"
 MODELING = BASE / "modeling"
 
-# "없으면 안 되는" 결과 파일들
-# 06_generate_features.py → features_all.csv
-# 07_train_model.py       → lightgbm_model.pkl
-# 08_predict_future.py    → predictions.csv
 REQUIRED_FILES = [
     DATA_PIPELINE / "features_all.csv",
     DATA_PIPELINE / "lightgbm_model.pkl",
@@ -56,7 +52,8 @@ def run_full_pipeline() -> Dict[str, Any]:
     logs: List[str] = []
     try:
         scripts = [
-            DATA_PIPELINE / "00_generate_sku_catalog.py",
+            # DATA_PIPELINE / "00_generate_sku_catalog.py",
+            # DATA_PIPELINE / "product_ml.py",
             DATA_PIPELINE / "00a_generate_sku_catalog_ml.py",
             DATA_PIPELINE / "01_generate_base_share.py",
             DATA_PIPELINE / "02_generate_synthetic_weather.py",

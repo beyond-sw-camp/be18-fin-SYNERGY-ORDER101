@@ -24,7 +24,8 @@ def main():
 
     exclude_cols = [
         "actual_order_qty", "target_date", "cat_low",
-        "brand", "minor_option"
+        "brand", "minor_option",
+        "product_code",
     ]
 
     feature_cols = [c for c in df.columns if c not in exclude_cols]

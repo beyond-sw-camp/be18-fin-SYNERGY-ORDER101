@@ -23,11 +23,11 @@ def _load_predictions_for_week(target_week: date) -> pd.DataFrame:
     return df[df["target_date"] == target_week].copy()
 
 
-def _build_product_map(conn, sku_codes: list[str]) -> dict[str, int]:
-    if not sku_codes:
+def _build_product_map(conn, product_codes: list[str]) -> dict[str, int]:
+    if not product_codes:
         return {}
 
-    placeholders = ",".join(["%s"] * len(sku_codes))
+    placeholders = ",".join(["%s"] * len(product_codes))
     sql = (
         f"SELECT product_id, product_code "
         f"FROM product "
@@ -35,11 +35,11 @@ def _build_product_map(conn, sku_codes: list[str]) -> dict[str, int]:
     )
 
     with conn.cursor() as cur:
-        cur.execute(sql, sku_codes)
+        cur.execute(sql, product_codes)
         rows = cur.fetchall()
 
     code_to_id = {row["product_code"]: row["product_id"] for row in rows}
-    missing = set(sku_codes) - set(code_to_id.keys())
+    missing = set(product_codes) - set(code_to_id.keys())
     if missing:
         print(f"[WARN] product_code not found in product table: {missing}")
 
@@ -68,7 +68,7 @@ def run_forecast_pipeline(target_week: date | str) -> int:
         if col not in week_df.columns:
             raise ValueError(f"predictions.csv 에 '{col}' 컬럼이 없습니다.")
 
-    sku_list = sorted(week_df["sku_id"].astype(str).unique())
+    sku_list = sorted(week_df["product_code"].astype(str).unique())
 
     with get_connection() as conn:
         code_to_id = _build_product_map(conn, sku_list)
@@ -85,8 +85,8 @@ def run_forecast_pipeline(target_week: date | str) -> int:
         inserted = 0
         with conn.cursor() as cur:
             for _, row in week_df.iterrows():
-                sku = str(row["sku_id"])
-                product_id = code_to_id.get(sku)
+                code = str(row["product_code"])
+                product_id = code_to_id.get(code)
                 if product_id is None:
                     continue
 

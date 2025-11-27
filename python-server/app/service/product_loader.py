@@ -1,38 +1,9 @@
 from pathlib import Path
 import pandas as pd
-
-from ..db import get_connection
+from app.db import get_connection
 
 BASE = Path(__file__).resolve().parents[1] / "data_pipeline"
-CSV = BASE / "product_master_load.csv"
-
-
-# product_category_id 매핑
-def _category_id_from_code(code: str) -> int | None:
-    prefix = code.split("-")[0]
-    mapping = {
-        "TV": 12,
-        "FR": 13,
-        "WM": 14,
-        "DRY": 15,
-        "VAC": 16,
-        "AC": 17,
-        "AIR": 18,
-        "MW": 19,
-        "OV": 20,
-        "DW": 21,
-        "COF": 22,
-        "TOA": 23,
-        "MIX": 24,
-        "NBK": 25,
-        "DES": 26,
-        "MON": 27,
-        "PHN": 28,
-        "WAT": 29,
-        "PRN": 30,
-        "RTR": 31,
-    }
-    return mapping.get(prefix)
+CSV = BASE / "sku_catalog_converted.csv"
 
 
 def load_product_master_once():
@@ -68,16 +39,14 @@ def load_product_master_once():
     with get_connection() as conn:
         with conn.cursor() as cur:
             for _, row in df.iterrows():
-                code = row["product_code"]
-                cat_id = _category_id_from_code(code)
                 cur.execute(
                     sql,
                     {
-                        "product_code": code,
+                        "product_code": row["product_code"],
                         "product_name": row["product_name"],
-                        "price": 0.00,   # 임시 가격
-                        "status": 1,    
-                        "product_category_id": cat_id,
+                        "price": float(row["price"]),
+                        "status": int(row["status"]),
+                        "product_category_id": int(row["category_id"]),
                     },
                 )
         conn.commit()

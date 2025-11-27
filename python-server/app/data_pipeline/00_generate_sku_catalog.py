@@ -192,7 +192,35 @@ def main():
             brand_code = normalize_brand(brand)
 
             option_code = slugify("-".join(chosen.values()))
-            product_code = f"{cat_name[:2].upper()}-{brand_code}-{option_code}"
+
+
+            prefix_map = {
+                "TV": "TV",
+                "냉장고": "FR",
+                "세탁기": "WM",
+                "건조기": "DRY",
+                "청소기": "VAC",
+                "에어컨": "AC",
+                "공기청정기": "AIR",
+                "전자레인지": "MW",
+                "오븐": "OV",
+                "식기세척기": "DW",
+                "커피머신": "COF",
+                "토스터기": "TOA",
+                "믹서기": "MIX",
+                "노트북": "NBK",
+                "데스크탑": "DES",
+                "모니터": "MON",
+                "프린터": "PRN",
+                "라우터": "RTR",
+                "스마트폰": "PHN",
+                "스마트워치": "WAT",
+            }
+
+            code_prefix = prefix_map.get(cat_name, slugify(cat_name)[:3])
+            product_code = f"{code_prefix}-{brand_code}-{option_code}-{product_id:05d}"
+
+
 
             price = make_price(*price_range)
 
