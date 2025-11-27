@@ -334,6 +334,10 @@ public class ProductServiceImpl implements ProductService {
             return;
         }
 
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            return;
+        }
+
         try {
             String fileName = Paths.get(imageUrl).getFileName().toString();
             Path filePath = Paths.get(System.getProperty("user.dir"),
@@ -344,7 +348,7 @@ public class ProductServiceImpl implements ProductService {
             if(Files.exists(filePath)) {
                 Files.delete(filePath);
             }
-        } catch (IOException e) {
+        } catch (IOException | java.nio.file.InvalidPathException e) {
             throw new CustomException(ProductErrorCode.IMAGE_UPLOAD_FAIL);
         }
     }

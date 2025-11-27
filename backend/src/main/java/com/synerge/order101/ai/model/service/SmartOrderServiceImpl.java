@@ -256,7 +256,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         User currentUser = getCurrentUser();
         entity.submit(currentUser);
 
-        List<User> admins = userRepository.findByRole(Role.HQ);
+        List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
 
         if (!admins.isEmpty()){
             notificationService.notifySmartOrderApprovalToAdmins(entity, admins);
