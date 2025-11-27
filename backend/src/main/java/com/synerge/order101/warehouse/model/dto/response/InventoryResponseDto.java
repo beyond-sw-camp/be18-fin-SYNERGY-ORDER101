@@ -4,6 +4,8 @@ import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @Getter
 @AllArgsConstructor
 public class InventoryResponseDto {
@@ -20,6 +22,8 @@ public class InventoryResponseDto {
 
     private Integer safetyQty;
 
+    private BigDecimal price;
+
     public static InventoryResponseDto fromEntity (WarehouseInventory inventory) {
         return new InventoryResponseDto(
                 inventory.getInventoryId(),
@@ -27,7 +31,9 @@ public class InventoryResponseDto {
                 inventory.getProduct().getProductCategory().getCategoryName(),
                 inventory.getProduct().getProductName(),
                 inventory.getOnHandQuantity(),
-                inventory.getSafetyQuantity()
+                inventory.getSafetyQuantity(),
+                inventory.getProduct().getPrice()
+
         );
     }
 }
