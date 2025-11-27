@@ -7,6 +7,9 @@ import com.synerge.order101.user.model.dto.UserRegisterRequestDto;
 import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
+import com.synerge.order101.store.model.entity.Store;
+import com.synerge.order101.store.model.repository.StoreRepository;
+import com.synerge.order101.store.exception.StoreErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StoreRepository storeRepository;
 
     @Override
     @Transactional
@@ -33,8 +37,15 @@ public class UserServiceImpl implements UserService {
         String encoded = passwordEncoder.encode(rawPassword);
 
         Role role = userRequestDto.getRole() == null ? Role.STORE_ADMIN : userRequestDto.getRole();
+        // 가맹점 관리자일 경우 storeId가 있으면 매핑
+        Store store = null;
+        if (role == Role.STORE_ADMIN && userRequestDto.getStoreId() != null) {
+            Long storeId = userRequestDto.getStoreId();
+            store = storeRepository.findById(storeId)
+                    .orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
+        }
 
-        User user = User.create(email, encoded, userRequestDto.getName(), role, userRequestDto.getPhone());
+        User user = User.create(email, encoded, userRequestDto.getName(), role, userRequestDto.getPhone(), store);
 
         return userRepository.save(user);
     }
