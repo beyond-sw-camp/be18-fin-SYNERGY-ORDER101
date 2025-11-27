@@ -31,11 +31,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +47,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final PurchaseDetailRepository purchaseDetailRepository;
     private final NotificationService notificationService;
+    private static final DateTimeFormatter PO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     //AI가 스마트 발주 초안 작성
     @Transactional
@@ -117,6 +117,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                             .forecastQty(weeklyForecast)
                             .recommendedOrderQty(recommendedOrderQty)
                             .smartOrderStatus(OrderStatus.DRAFT_AUTO)
+                            .poNumber(generatePoNumber(df.getTargetWeek(), mapping.getSupplier()))
                             .build();
 
                     so.setSystemUserIfNull(systemUser);
@@ -220,6 +221,11 @@ public class SmartOrderServiceImpl implements SmartOrderService{
 
         boolean edited = (forecast != null && recommended != null && !forecast.equals(recommended));
 
+        var product = so.getProduct();
+        BigDecimal price = Optional.ofNullable(product.getPrice()).orElse(BigDecimal.ZERO);
+        int qty = (recommended != null) ? recommended : 0;
+        BigDecimal lineAmount = price.multiply(BigDecimal.valueOf(qty));
+
         return SmartOrderLineItemResponseDto.builder()
                 .smartOrderId(so.getSmartOrderId())
                 .productId(so.getProduct().getProductId())
@@ -227,6 +233,8 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .productName(so.getProduct().getProductName())
                 .forecastQty(forecast)
                 .recommendedOrderQty(recommended)
+                .unitPrice(price)
+                .lineAmount(lineAmount)
                 .manualEdited(edited)
                 .build();
     }
@@ -275,18 +283,46 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .filter(so -> so.getSmartOrderStatus() == OrderStatus.SUBMITTED)
                 .count();
 
+        BigDecimal totalRecommendedAmount = list.stream()
+                .map(so -> {
+                    BigDecimal price = Optional.ofNullable(so.getProduct().getPrice())
+                            .orElse(BigDecimal.ZERO);
+                    int qty = Optional.ofNullable(so.getRecommendedOrderQty()).orElse(0);
+                    return price.multiply(BigDecimal.valueOf(qty));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return SmartOrderDashboardResponseDto.builder()
                 .targetWeek(targetWeek)
                 .totalRecommendedQty(totalRecommended)
                 .totalForecastQty(totalForecast)
                 .draftCount((int) draftCount)
                 .submittedCount((int) submittedCount)
+                .totalRecommendedAmount(totalRecommendedAmount)
                 .build();
+    }
+
+    private String generatePoNumber(LocalDate targetWeek, Supplier supplier) {
+        String datePart = targetWeek.format(PO_DATE_FORMAT);
+        String supplierPart = String.format("%04d", supplier.getSupplierId());
+        return "PO" + datePart + supplierPart;
     }
 
 
 
     private SmartOrderResponseDto toResponse(SmartOrder so) {
+        // 단가
+        BigDecimal price = Optional.ofNullable(so.getProduct().getPrice())
+                .orElse(BigDecimal.ZERO);
+
+        // 수량
+        int qty = Optional.ofNullable(so.getRecommendedOrderQty())
+                .orElse(0);
+
+        // 라인 금액 = 단가 × 수량
+        BigDecimal lineAmount = price.multiply(BigDecimal.valueOf(qty));
+
+
         return SmartOrderResponseDto.builder()
                 .id(so.getSmartOrderId())
                 .supplierId(so.getSupplier().getSupplierId())
@@ -301,6 +337,9 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .smartOrderStatus(so.getSmartOrderStatus())
                 .snapshotAt(so.getSnapshotAt())
                 .updatedAt(so.getUpdatedAt())
+                .unitPrice(price)
+                .lineAmount(lineAmount)
+                .poNumber(so.getPoNumber())
                 .build();
     }
 

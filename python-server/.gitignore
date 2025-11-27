@@ -2,6 +2,7 @@
 app/data_pipeline/*.csv
 app/data_pipeline/*.zip
 app/data_pipeline/*.json
+!app/data_pipeline/raw/*.csv
 !app/data_pipeline/sku_catalog.csv
 !app/data_pipeline/external_factors.csv
 !app/data_pipeline/taxonomy_product_map.csv
