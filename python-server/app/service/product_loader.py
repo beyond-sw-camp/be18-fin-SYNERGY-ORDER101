@@ -3,7 +3,7 @@ import pandas as pd
 from app.db import get_connection
 
 BASE = Path(__file__).resolve().parents[1] / "data_pipeline"
-CSV = BASE / "sku_catalog_converted.csv"
+CSV = BASE / "product_master_load.csv"
 
 
 def load_product_master_once():
@@ -46,7 +46,7 @@ def load_product_master_once():
                         "product_name": row["product_name"],
                         "price": float(row["price"]),
                         "status": int(row["status"]),
-                        "product_category_id": int(row["category_id"]),
+                        "product_category_id": int(row["product_category_id"]),
                     },
                 )
         conn.commit()

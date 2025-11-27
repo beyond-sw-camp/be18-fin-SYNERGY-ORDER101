@@ -16,32 +16,32 @@ app = FastAPI()
 
 @app.on_event("startup")
 def startup_tasks():
-    """
-    1) sku_catalog.csv -> product_master_load.csv 생성
-    2) product_master_load.csv 를 DB product 테이블에 seed
-    3) 수요예측에 필요한 CSV/모델 파일 없으면 전체 파이프라인 실행
-    """
-    try:
-        print("[STARTUP] build product_master_load from sku_catalog...")
-        build_master()
-    except FileNotFoundError as e:
-        print(f"[WARN] sku_catalog.csv not found. skip build_master(): {e}")
-    except Exception as e:
-        print(f"[ERROR] build_master() failed: {e}")
-
+    # 1) DB product seed
     try:
         print("[STARTUP] load product_master_load.csv into DB...")
         load_product_master_once()
     except Exception as e:
         print(f"[ERROR] load_product_master_once() failed: {e}")
 
-    # 여기 추가
+    # 2) AI artifact 체크
     try:
         print("[STARTUP] ensure AI artifacts exist (features / model etc.)...")
         ensure_artifacts_exist()
     except Exception as e:
-        # 어떤 일이 있어도 서버 시작 자체는 막지 않는다.
         print(f"[ERROR] ensure_artifacts_exist() failed: {e}")
+
+    # try:
+    #     print("[STARTUP] load product_master_load.csv into DB...")
+    #     load_product_master_once()
+    # except Exception as e:
+    #     print(f"[ERROR] load_product_master_once() failed: {e}")
+
+    # try:
+    #     print("[STARTUP] ensure AI artifacts exist (features / model etc.)...")
+    #     ensure_artifacts_exist()
+    # except Exception as e:
+    #     # 어떤 일이 있어도 서버 시작 자체는 막지 않는다.
+    #     print(f"[ERROR] ensure_artifacts_exist() failed: {e}")
 
 
 
@@ -52,7 +52,7 @@ def run_full_pipeline_endpoint():
     내부적으로는 train_service.run_full_pipeline() 을 재사용한다.
     """
     result = run_full_pipeline()
-    # 기존 응답 형식(log 키 이름)을 맞추고 싶으면 변환해도 됨.
+
     return {
         "status": result.get("status"),
         "log": result.get("logs", []),
