@@ -14,27 +14,6 @@ BASE = Path(__file__).resolve().parent
 
 app = FastAPI()
 
-# 서버 시작하면 한번 실행됨
-# 필요 파일들 생성
-# @app.on_event("startup")
-# def startup_tasks():
-#     """
-#     1) sku_catalog.csv -> product_master_load.csv 생성
-#     2) product_master_load.csv 를 DB product 테이블에 seed
-#     """
-#     try:
-#         print("[STARTUP] build product_master_load from sku_catalog...")
-#         build_master()
-#     except FileNotFoundError as e:
-#         print(f"[WARN] sku_catalog.csv not found. skip build_master(): {e}")
-#     except Exception as e:
-#         print(f"[ERROR] build_master() failed: {e}")
-
-#     try:
-#         print("[STARTUP] load product_master_load.csv into DB...")
-#         load_product_master_once()
-#     except Exception as e:
-#         print(f"[ERROR] load_product_master_once() failed: {e}")
 @app.on_event("startup")
 def startup_tasks():
     """
@@ -66,27 +45,6 @@ def startup_tasks():
 
 
 
-
-# 02, 05, 07 순서대로 실행
-# @app.get("/api/v1/ai/train")
-# def run_full_pipeline():
-#     scripts = [
-#         BASE / "data_pipeline" / "02_expand_sku_from_category.py",
-#         BASE / "data_pipeline" / "05_make_features.py",
-#         BASE / "modeling" / "07_train_eval.py"
-#     ]
-#     logs: list[str] = []
-#     for script in scripts:
-#         try:
-#             res = subprocess.run(
-#                 ["python", str(script)],
-#                 capture_output=True, text=True, check=True
-#             )
-#             logs.append(f"[OK] {script.name}\n{res.stdout}")
-#         except subprocess.CalledProcessError as e:
-#             logs.append(f"[ERROR] {script.name}\n{e.stderr}")
-#             return {"status": "failed", "log": logs}
-#     return {"status": "success", "log": logs}
 @app.get("/api/v1/ai/train")
 def run_full_pipeline_endpoint():
     """

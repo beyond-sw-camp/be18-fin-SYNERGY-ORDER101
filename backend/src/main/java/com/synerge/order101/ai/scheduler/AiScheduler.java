@@ -41,4 +41,18 @@ public class AiScheduler {
         // 실제로는 이 스케줄보다 더 앞서 예측 작업이 돌게 해야함
         smartOrderService.generateSmartOrders(nextWeekMonday);
     }
+
+    @Scheduled(cron = "0 0 1 ? * MON")
+    public void weeklyForecastGenerate() {
+        LocalDate today = LocalDate.now();
+        // 다음 주 월요일
+        LocalDate nextWeekMonday = today.plusWeeks(1).with(java.time.DayOfWeek.MONDAY);
+
+        log.info("[AI] Weekly forecast generation start. targetWeek={}", nextWeekMonday);
+
+        // 이미 구현된 서비스 메서드 사용 (새 API 필요 없음)
+        demandForecastService.triggerForecast(nextWeekMonday);
+
+        log.info("[AI] Weekly forecast generation requested to Python. targetWeek={}", nextWeekMonday);
+    }
 }
