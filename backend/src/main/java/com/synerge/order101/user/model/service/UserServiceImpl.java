@@ -2,13 +2,14 @@ package com.synerge.order101.user.model.service;
 
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.user.exception.UserErrorCode;
-import com.synerge.order101.user.model.dto.UpdateProfileRequestDto;
 import com.synerge.order101.user.model.dto.UserProfile;
 import com.synerge.order101.user.model.dto.UserRegisterRequestDto;
 import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +57,7 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
+                .isActive(user.isActive())
                 .phone(user.getPhone())
                 .createdAt(user.getCreatedAt())
                 .build();
@@ -66,5 +68,40 @@ public class UserServiceImpl implements UserService {
     public boolean checkEmailExists(String email) {
         if (email == null) return false;
         return userRepository.findByEmail(email.trim()).isPresent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserProfile> findUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(user -> UserProfile.builder()
+                        .userId(user.getUserId())
+                        .email(user.getEmail())
+                        .name(user.getName())
+                        .role(user.getRole())
+                        .isActive(user.isActive())
+                        .phone(user.getPhone())
+                        .createdAt(user.getCreatedAt())
+                        .build());
+    }
+
+    @Override
+    @Transactional
+    public UserProfile toggleUserActive(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        user.toggleActive();
+        User saved = userRepository.save(user);
+
+        return UserProfile.builder()
+                .userId(saved.getUserId())
+                .email(saved.getEmail())
+                .name(saved.getName())
+                .role(saved.getRole())
+                .isActive(saved.isActive())
+                .phone(saved.getPhone())
+                .createdAt(saved.getCreatedAt())
+                .build();
     }
 }

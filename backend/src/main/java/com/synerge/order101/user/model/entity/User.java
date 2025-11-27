@@ -77,4 +77,9 @@ public class User {
         return new User(null, null, email, encodedPassword, name, role, true, null, null, false, phone);
     }
 
+    // Add: toggle active status
+    public void toggleActive() {
+        this.isActive = !this.isActive;
+    }
+
 }
