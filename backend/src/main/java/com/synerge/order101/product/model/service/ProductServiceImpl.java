@@ -1,5 +1,7 @@
 package com.synerge.order101.product.model.service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.inbound.model.repository.InboundDetailRepository;
@@ -29,6 +31,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +63,12 @@ public class ProductServiceImpl implements ProductService {
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final SupplierRepository supplierRepository;
     private final ProductSupplierRepository productSupplierRepository;
+
+    private final AmazonS3 amazonS3;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
     private static final String UPLOAD_ROOT = "uploads";
     @Override
     public ProductCreateRes create(ProductCreateReq request, MultipartFile imageFile) {
@@ -309,19 +318,14 @@ public class ProductServiceImpl implements ProductService {
         }
 
         try {
-            Path uploadDir = Paths.get(System.getProperty("user.dir"),
-                    UPLOAD_ROOT,
-                    "product-images");
-            if(!Files.exists(uploadDir)) {
-                Files.createDirectories(uploadDir);
-            }
-
             String originalName = imageFile.getOriginalFilename();
             String ext = StringUtils.getFilenameExtension(originalName);
             String fileName = "product-" + UUID.randomUUID() + (ext != null ? "." + ext : "");
 
-            Path target = uploadDir.resolve(fileName);
-            imageFile.transferTo(target.toFile());
+            String key = "product-images/" + fileName;
+
+            ObjectMetadata metadata = new ObjectMetadata();
+
 
             return "/product-images/" + fileName;
         } catch (IOException e) {
