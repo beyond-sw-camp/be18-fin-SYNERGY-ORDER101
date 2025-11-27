@@ -1,39 +1,37 @@
-import axios from 'axios';
-
+import axios from 'axios'
 
 export async function getFranchiseOrderList(page, pageSize, searchParams) {
-    const url = '/api/v1/store-orders'; // 가맹점 API 엔드포인트
-    const apiPage = page - 1; // 0-based 변환
+  const url = '/api/v1/store-orders' // 가맹점 API 엔드포인트
+  const apiPage = page - 1 // 0-based 변환
 
-    console.log("가맹점 API 요청 파라미터:", searchParams);
-    const params = {
-        // 검색 조건
-        fromDate: searchParams.fromDate || null,
-        toDate: searchParams.toDate || null,
-        storeId: searchParams.storeId || null,       // 가맹점 ID
-        statuses: searchParams.statuses || null,
-        searchText: searchParams.searchText || null,
+  console.log('가맹점 API 요청 파라미터:', searchParams)
+  const params = {
+    // 검색 조건
+    fromDate: searchParams.fromDate || null,
+    toDate: searchParams.toDate || null,
+    storeId: searchParams.storeId || null, // 가맹점 ID
+    statuses: searchParams.statuses || null,
+    searchText: searchParams.searchText || null,
 
-        // Pageable 필드
-        page: apiPage,
-        size: pageSize,
-        sort: 'createdAt,desc'                  // 생성일 내림차순
-    };
+    // Pageable 필드
+    page: apiPage,
+    size: pageSize,
+    sort: 'createdAt,desc', // 생성일 내림차순
+  }
 
-    console.log("📤 실제 전송 파라미터:", params);
+  console.log('📤 실제 전송 파라미터:', params)
 
-    try {
-        const response = await axios.get(url, { params });
-        const apiData = response.data;
+  try {
+    const response = await axios.get(url, { params })
+    const apiData = response.data
 
-        // Settlement과 동일한 구조로 반환 (Spring Page 객체)
-        return apiData;
-    } catch (error) {
-        console.error("[API Error] 가맹점 목록 조회 실패:", error.message);
-        throw new Error("가맹점 API 서버와의 통신에 실패했습니다.");
-    }
+    // Settlement과 동일한 구조로 반환 (Spring Page 객체)
+    return apiData
+  } catch (error) {
+    console.error('[API Error] 가맹점 목록 조회 실패:', error.message)
+    throw new Error('가맹점 API 서버와의 통신에 실패했습니다.')
+  }
 }
-
 
 /**
  * [가맹점 목록 조회]
@@ -43,28 +41,30 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
  * @returns {Promise<{franchises: Array, totalCount: number, currentPage: number}>}
  */
 export async function getFranchiseList(page, pageSize, keyword) {
-    const url = '/api/v1/stores'; // 가맹점 API 엔드포인트
-    const apiPage = page - 1; // 0-based 변환
+  const url = '/api/v1/stores' // 가맹점 API 엔드포인트
+  const apiPage = page - 1 // 0-based 변환
 
-    const params = {
-        page: apiPage,
-        size: pageSize,
-        keyword: keyword || ''
-    };
+  const params = {
+    page: apiPage,
+    size: pageSize,
+    keyword: keyword || '',
+  }
 
-    try {
-        const response = await axios.get(url, { params });
-        const apiData = response.data;
+  try {
+    const response = await axios.get(url, { params })
+    const apiData = response.data
 
-        return {
-            franchises: apiData.items || [],
-            totalCount: apiData.totalCount || 0,
-            currentPage: (apiData.page !== undefined ? apiData.page + 1 : page)
-        };
-    } catch (error) {
-        console.error("[API Error] 가맹점 목록 조회 실패:", error.message);
-        throw new Error("가맹점 API 서버와의 통신에 실패했습니다.");
+    return {
+      franchises: apiData.items || [],
+      totalCount: apiData.totalCount || 0,
+      // API returns `page` as 1-based in our backend samples, so use it directly.
+      // Previously we added +1 which caused the UI to show page 2 by default.
+      currentPage: apiData.page !== undefined ? apiData.page : page,
     }
+  } catch (error) {
+    console.error('[API Error] 가맹점 목록 조회 실패:', error.message)
+    throw new Error('가맹점 API 서버와의 통신에 실패했습니다.')
+  }
 }
 
 /**
@@ -73,16 +73,16 @@ export async function getFranchiseList(page, pageSize, keyword) {
  * @returns {Promise<Object>}
  */
 export async function getStoreOrderById(storeOrderId) {
-    const url = `/api/v1/store-orders/${storeOrderId}`;
+  const url = `/api/v1/store-orders/${storeOrderId}`
 
-    try {
-        const response = await axios.get(url);
-        console.log(`주문 ${storeOrderId} 조회 성공:`, response.data);
-        return response;
-    } catch (error) {
-        console.error("[API Error] 주문 상세 조회 실패:", error.message);
-        throw new Error("주문 정보를 불러올 수 없습니다.");
-    }
+  try {
+    const response = await axios.get(url)
+    console.log(`주문 ${storeOrderId} 조회 성공:`, response.data)
+    return response
+  } catch (error) {
+    console.error('[API Error] 주문 상세 조회 실패:', error.message)
+    throw new Error('주문 정보를 불러올 수 없습니다.')
+  }
 }
 
 /**
@@ -92,14 +92,14 @@ export async function getStoreOrderById(storeOrderId) {
  * @returns {Promise<Object>}
  */
 export async function updateStoreOrderStatus(storeOrderId, newStatus) {
-    const url = `/api/v1/store-orders/${storeOrderId}/${newStatus}`;
+  const url = `/api/v1/store-orders/${storeOrderId}/${newStatus}`
 
-    try {
-        const response = await axios.patch(url, { status: newStatus });
-        console.log(`주문 ${storeOrderId} 상태 업데이트 성공:`, response.data);
-        return response.data;
-    } catch (error) {
-        console.error("[API Error] 주문 상태 업데이트 실패:", error.message);
-        throw new Error("주문 상태 업데이트에 실패했습니다.");
-    }
+  try {
+    const response = await axios.patch(url, { status: newStatus })
+    console.log(`주문 ${storeOrderId} 상태 업데이트 성공:`, response.data)
+    return response.data
+  } catch (error) {
+    console.error('[API Error] 주문 상태 업데이트 실패:', error.message)
+    throw new Error('주문 상태 업데이트에 실패했습니다.')
+  }
 }

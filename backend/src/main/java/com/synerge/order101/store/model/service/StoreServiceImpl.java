@@ -36,15 +36,17 @@ public class StoreServiceImpl implements StoreService {
 
     @Override
     @Transactional(readOnly = true)
-    public ItemsResponseDto<StoreListRes> getStores(int page, int numOfRows, String keyword) {
-        int pageIndex = Math.max(0, page - 1);
-        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public ItemsResponseDto<StoreListRes> getStores(Pageable pageable, String keyword) {
+        // 기본 정렬이 없으면 createdAt DESC를 기본으로 적용
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Store> resultPage;
         if (keyword != null && !keyword.isBlank()) {
-            resultPage = storeRepository.findByStoreNameContainingIgnoreCase(keyword, pageable);
+            resultPage = storeRepository.findByStoreNameContainingIgnoreCase(keyword, effective);
         } else {
-            resultPage = storeRepository.findAll(pageable);
+            resultPage = storeRepository.findAll(effective);
         }
 
         List<StoreListRes> items = resultPage.getContent().stream()
@@ -60,7 +62,9 @@ public class StoreServiceImpl implements StoreService {
                 .toList();
 
         int totalCount = (int) resultPage.getTotalElements();
-        return new ItemsResponseDto<>(HttpStatus.OK, items, page, totalCount);
+        // 클라이언트에서 사용하던 1-based 페이지 번호 유지
+        int responsePage = effective.getPageNumber() + 1;
+        return new ItemsResponseDto<>(HttpStatus.OK, items, responsePage, totalCount);
     }
 
     @Override

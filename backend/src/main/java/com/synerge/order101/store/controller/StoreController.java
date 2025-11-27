@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
 
 
 @RestController
@@ -21,11 +22,10 @@ public class StoreController {
 
     @GetMapping
     public ResponseEntity<ItemsResponseDto<StoreListRes>> getStores(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int numOfRows,
+            Pageable pageable,
             @RequestParam(required = false) String keyword
     ) {
-        ItemsResponseDto<StoreListRes> body = storeService.getStores(page, numOfRows, keyword);
+        ItemsResponseDto<StoreListRes> body = storeService.getStores(pageable, keyword);
         return ResponseEntity.ok(body);
     }
 
