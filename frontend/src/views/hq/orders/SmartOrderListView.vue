@@ -50,6 +50,10 @@
         <p class="summary-label">제출</p>
         <p class="summary-value">{{ submittedCount }} 건</p>
       </div>
+      <div class="summary-card">
+        <p class="summary-label">총 추천 발주 금액</p>
+        <p class="summary-value">{{ formatCurrency(totalRecommendedAmount) }}</p>
+      </div>
     </section>
 
     <!-- 리스트 테이블 -->
@@ -64,11 +68,12 @@
         <table v-else class="smart-table">
           <thead>
             <tr>
-              <th>공급사 ID</th>
+              <th>PO 번호</th>
               <th>공급사명</th>
               <th class="numeric">품목 수</th>
               <th class="numeric">총 예측량</th>
               <th class="numeric">총 추천 발주량</th>
+              <th class="numeric">총 발주 금액</th>
               <th class="center">상태</th>
               <th class="center">주차</th>
             </tr>
@@ -80,11 +85,12 @@
               class="clickable-row"
               @click="openDetail(row)"
             >
-              <td>{{ row.supplierId }}</td>
+              <td>{{ row.poNumber }}</td>
               <td>{{ row.supplierName }}</td>
               <td class="numeric">{{ row.itemCount }}</td>
               <td class="numeric">{{ row.totalForecastQty.toLocaleString() }}</td>
               <td class="numeric">{{ row.totalRecommendedQty.toLocaleString() }}</td>
+              <td class="numeric">{{ formatCurrency(row.totalAmount) }}</td>
               <td class="center">
                 <span :class="['chip', statusClass(row.status)]">
                   {{ statusLabel(row.status) }}
@@ -93,7 +99,7 @@
               <td class="center">{{ row.targetWeek }}</td>
             </tr>
             <tr v-if="!loading && groupedRows.length === 0">
-              <td colspan="7" class="no-data">스마트 발주가 없습니다.</td>
+              <td colspan="8" class="no-data">스마트 발주가 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -117,6 +123,10 @@ const rawRows = ref([])
 const groupedRows = ref([])
 
 const loading = ref(false)
+
+const totalRecommendedAmount = computed(() =>
+  groupedRows.value.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+)
 
 const totalForecastQty = computed(() =>
   groupedRows.value.reduce((sum, r) => sum + r.totalForecastQty, 0)
@@ -172,6 +182,11 @@ async function fetchSmartOrders () {
   }
 }
 
+function formatCurrency (value) {
+  const num = Number(value || 0)
+  return num.toLocaleString('ko-KR') + '원'
+}
+
 function groupBySupplierAndWeek () {
   const map = new Map()
 
@@ -188,9 +203,11 @@ function groupBySupplierAndWeek () {
         supplierId,
         supplierName,
         targetWeek,
+        poNumber: row.poNumber,
         itemCount: 0,
         totalForecastQty: 0,
         totalRecommendedQty: 0,
+        totalAmount: 0,
         status: row.smartOrderStatus,
       })
     }
@@ -199,6 +216,10 @@ function groupBySupplierAndWeek () {
     g.itemCount += 1
     g.totalForecastQty += row.forecastQty || 0
     g.totalRecommendedQty += row.recommendedOrderQty || 0
+
+    const unitPrice = Number(row.unitPrice || 0)
+    const qty = Number(row.recommendedOrderQty || 0)
+    g.totalAmount += unitPrice * qty
 
     if (row.smartOrderStatus === 'SUBMITTED') {
       g.status = 'SUBMITTED'

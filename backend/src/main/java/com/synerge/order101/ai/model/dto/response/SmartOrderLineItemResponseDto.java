@@ -3,6 +3,8 @@ package com.synerge.order101.ai.model.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Builder
 public class SmartOrderLineItemResponseDto {
@@ -14,6 +16,9 @@ public class SmartOrderLineItemResponseDto {
 
     private Integer forecastQty;
     private Integer recommendedOrderQty;
+
+    private BigDecimal unitPrice;
+    private BigDecimal lineAmount;
 
     private boolean manualEdited;
 }

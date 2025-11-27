@@ -73,8 +73,13 @@ public class User {
     }
 
     // Add: factory method to create a new User instance with required fields
-    public static User create(String email, String encodedPassword, String name, Role role, String phone) {
-        return new User(null, null, email, encodedPassword, name, role, true, null, null, false, phone);
+    public static User create(String email, String encodedPassword, String name, Role role, String phone, Store store) {
+        return new User(null, store, email, encodedPassword, name, role, true, null, null, false, phone);
+    }
+
+    // Add: toggle active status
+    public void toggleActive() {
+        this.isActive = !this.isActive;
     }
 
 }

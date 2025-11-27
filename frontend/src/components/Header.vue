@@ -3,10 +3,15 @@ import { RouterLink } from 'vue-router'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
+import { useNotificationStore } from './api/notification/notification'
+import NotificationModal from './api/notification/NotificationModal.vue'
 
 // use the provided flaticon image URL
 const notificationIcon = 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
+const notiStore = useNotificationStore()
+
 import logoUrl from '../assets/logo.png'
+
 const props = defineProps({
   currentRole: { type: String, required: true },
   roleOptions: { type: Array, default: () => [] },
@@ -17,6 +22,11 @@ const emit = defineEmits(['update:currentRole'])
 const updateRole = (e) => emit('update:currentRole', e.target.value)
 
 const router = useRouter()
+const authStore = useAuthStore()
+
+const showNotiMenu = ref(false)
+const notiBtnRef = ref(null)
+const notiMenuRef = ref(null)
 
 // avatar dropdown state
 const showProfileMenu = ref(false)
@@ -34,6 +44,8 @@ const goToMyPage = () => {
 
 const handleLogoutClick = () => {
   showProfileMenu.value = false
+  showNotiMenu.value = false
+  notiStore.reset()
   const authStore = useAuthStore()
   authStore.logout()
   router.push('/login')
@@ -45,10 +57,31 @@ const onDocumentClick = (e) => {
   if (!btn || !menu) return
   if (btn.contains(e.target) || menu.contains(e.target)) return
   showProfileMenu.value = false
+
+  const nbtn = notiBtnRef.value
+  const nmenu = notiMenuRef.value
+  if (nbtn && nmenu && !nbtn.contains(e.target) && !nmenu.contains(e.target)) {
+    showNotiMenu.value = false
+  }
 }
 
-onMounted(() => document.addEventListener('click', onDocumentClick))
-onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+  notiStore.init()
+})
+
+const toggleNotiMenu = async () => {
+  showNotiMenu.value = !showNotiMenu.value
+
+  // 모달 열 때 읽지 않은게 있으면 "전체 읽음" 처리 → 뱃지 사라짐
+
+  await notiStore.markAllRead()
+}
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  notiStore.disconnectSSE()
+})
 </script>
 
 <template>
@@ -59,14 +92,33 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
       </RouterLink>
       <div class="header-tools">
         <div class="header-actions">
-          <button type="button" class="notification-button" aria-label="알림">
-            <span class="notification-content">
-              <img :src="notificationIcon" alt="Notification" class="notification-icon" />
+          <div class="noti-wrap">
+            <button
+              ref="notiBtnRef"
+              type="button"
+              class="notification-button"
+              aria-label="알림"
+              @click.stop="toggleNotiMenu"
+            >
+              <span class="notification-content">
+                <img :src="notificationIcon" alt="Notification" class="notification-icon" />
+                <span class="notification-label">알림</span>
+              </span>
 
-              <span class="notification-label">알림</span>
-            </span>
-            <span class="badge">3</span>
-          </button>
+              <!-- ✅ 뱃지: unreadCount 바인딩 -->
+              <span v-if="notiStore.unreadCount > 0" class="badge">
+                {{ notiStore.unreadCount }}
+              </span>
+            </button>
+
+            <!-- ✅ 네이버 스타일 드롭다운 모달 -->
+            <div v-if="showNotiMenu" ref="notiMenuRef">
+              <NotificationModal
+                :items="notiStore.notifications"
+                @delete="notiStore.deleteNotification"
+              />
+            </div>
+          </div>
           <div class="avatar-wrap">
             <button
               ref="avatarBtnRef"
@@ -282,6 +334,10 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
 .notification-img {
   width: 18px;
   height: 18px;
+  display: inline-block;
+}
+.noti-wrap {
+  position: relative;
   display: inline-block;
 }
 </style>

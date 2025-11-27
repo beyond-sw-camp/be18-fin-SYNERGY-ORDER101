@@ -2,13 +2,14 @@ package com.synerge.order101.user.controller;
 
 import com.synerge.order101.common.dto.BaseResponseDto;
 import com.synerge.order101.user.exception.UserErrorCode;
-import com.synerge.order101.user.model.dto.UpdateProfileRequestDto;
 import com.synerge.order101.user.model.dto.UserProfile;
 import com.synerge.order101.user.model.dto.UserRegisterRequestDto;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.service.UserService;
 import com.synerge.order101.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -67,5 +68,17 @@ public class UserController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(new BaseResponseDto<>(HttpStatus.OK, data));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<UserProfile>> findUsers(Pageable pageable) {
+        Page<UserProfile> response = userService.findUsers(pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{userId}/toggle-active")
+    public ResponseEntity<BaseResponseDto<UserProfile>> toggleUserActive(@PathVariable Long userId) {
+        UserProfile updated = userService.toggleUserActive(userId);
+        return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, updated));
     }
 }

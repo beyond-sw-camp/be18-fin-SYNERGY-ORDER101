@@ -3,6 +3,7 @@ package com.synerge.order101.ai.model.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -13,4 +14,5 @@ public class SmartOrderDashboardResponseDto {
     private long totalForecastQty;
     private int draftCount;
     private int submittedCount;
+    private BigDecimal totalRecommendedAmount;
 }
