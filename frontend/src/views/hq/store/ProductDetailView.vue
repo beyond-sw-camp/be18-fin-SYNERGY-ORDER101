@@ -407,9 +407,18 @@ const product = ref(null)
 
 const API_BASE = axios.defaults.baseURL || 'http://localhost:8080'
 
-const imageSrc = computed(() =>
-  product.value?.imageUrl ? `${API_BASE}${product.value.imageUrl}` : null,
-)
+const imageSrc = computed(() => {
+  const url = product.value?.imageUrl
+  if (!url) return null
+
+  // S3 같이 절대 경로(https://...)면 그대로 사용
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  // 예전처럼 "/product-images/..." 처럼 상대 경로면 API_BASE 붙여서 사용
+  return `${API_BASE}${url}`
+})
 
 const inventorySummary = ref(null)
 const movements = ref([])

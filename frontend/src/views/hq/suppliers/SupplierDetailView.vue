@@ -45,7 +45,7 @@
         placeholder="제품명/코드 검색..."
         @keyup.enter="handleSearch"
       />
-      <button @click="handleSearch">검색</button>
+      <button class="search-btn" @click="handleSearch">검색</button>
 
       <div class="table-wrap">
         <table class="products-table">
@@ -262,7 +262,46 @@ const handleSearch = () => {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-bottom: 12px;
+  outline: none;
 }
+
+/* 검색 버튼 */
+.search-btn {
+  margin-left: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #6b46ff;
+  background: #6b46ff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.search-btn:hover {
+  background: #5a3ae0;
+  box-shadow: 0 2px 6px rgba(107, 70, 255, 0.25);
+}
+
+.search-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(107, 70, 255, 0.2);
+}
+
+.search-btn:disabled {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .empty-data {
   text-align: center;
   padding: 20px 8px;

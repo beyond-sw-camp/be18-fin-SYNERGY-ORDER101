@@ -33,7 +33,7 @@
           placeholder="상품명 검색..."
           @keyup.enter="handleSearch"
         />
-        <button @click="handleSearch">검색</button>
+        <button class="search-btn" @click="handleSearch">검색</button>
       </div>
 
       <h3 class="card-title">모든 상품</h3>
@@ -336,5 +336,55 @@ onMounted(async () => {
   background: #fff;
   cursor: pointer;
   line-height: 1;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* input과 버튼 사이 간격 */
+  max-width: 360px; /* 전체 검색바 가로 폭 */
+}
+
+.search {
+  flex: 1 1 auto; /* 남는 공간 다 쓰기 */
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+/* 검색 버튼 */
+.search-btn {
+  flex: 0 0 80px; /* ✅ 버튼 폭 고정 (원하면 70~100px 사이로 조절) */
+  padding: 8px 0; /* 위아래만 패딩 → 폭은 flex가 결정 */
+  border-radius: 8px;
+  border: 1px solid #6b46ff;
+  background: #6b46ff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.search-btn:hover {
+  background: #5a3ae0;
+  box-shadow: 0 2px 6px rgba(107, 70, 255, 0.25);
+}
+
+.search-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(107, 70, 255, 0.2);
+}
+
+.search-btn:disabled {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 </style>
