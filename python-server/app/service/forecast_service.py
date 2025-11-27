@@ -47,12 +47,6 @@ def _build_product_map(conn, product_codes: list[str]) -> dict[str, int]:
 
 
 def run_forecast_pipeline(target_week: date | str) -> int:
-    """
-    - predictions.csv 에서 target_week 예측을 읽고
-    - product_id 매핑 후
-    - demand_forecast 에 삭제 없이 UPSERT
-      (기존 row 있으면 y_pred / snapshot_at / updated_at 만 갱신)
-    """
 
     if isinstance(target_week, str):
         target_week = date.fromisoformat(target_week)
@@ -64,7 +58,7 @@ def run_forecast_pipeline(target_week: date | str) -> int:
         print(f"[FORECAST] no predictions found for week={target_week}")
         return 0
 
-    for col in ["sku_id", "y_pred"]:
+    for col in ["sku_id", "y_pred", "product_code"]:
         if col not in week_df.columns:
             raise ValueError(f"predictions.csv 에 '{col}' 컬럼이 없습니다.")
 
@@ -74,8 +68,24 @@ def run_forecast_pipeline(target_week: date | str) -> int:
         code_to_id = _build_product_map(conn, sku_list)
 
         insert_sql = """
-        INSERT INTO demand_forecast (product_id, target_week, y_pred, snapshot_at, updated_at)
-        VALUES (%(product_id)s, %(target_week)s, %(y_pred)s, NOW(), NOW())
+        INSERT INTO demand_forecast (
+            warehouse_id,
+            store_id,
+            product_id,
+            target_week,
+            y_pred,
+            snapshot_at,
+            updated_at
+        )
+        VALUES (
+            1,
+            1,
+            %(product_id)s,
+            %(target_week)s,
+            %(y_pred)s,
+            NOW(),
+            NOW()
+        )
         ON DUPLICATE KEY UPDATE
             y_pred      = VALUES(y_pred),
             snapshot_at = NOW(),
@@ -83,19 +93,28 @@ def run_forecast_pipeline(target_week: date | str) -> int:
         """
 
         inserted = 0
+
         with conn.cursor() as cur:
             for _, row in week_df.iterrows():
+
+                # (1) y_pred = 0이면 저장하지 않음
+                ypred = float(row["y_pred"])
+                if ypred == 0:
+                    continue
+
+                # (2) product_id 매핑
                 code = str(row["product_code"])
                 product_id = code_to_id.get(code)
                 if product_id is None:
                     continue
 
+                # (3) INSERT / UPSERT
                 cur.execute(
                     insert_sql,
                     {
                         "product_id": product_id,
                         "target_week": target_week,
-                        "y_pred": float(row["y_pred"]),
+                        "y_pred": ypred,
                     },
                 )
                 inserted += 1
@@ -106,3 +125,4 @@ def run_forecast_pipeline(target_week: date | str) -> int:
         f"[FORECAST] upserted {inserted} rows into demand_forecast for week={target_week}"
     )
     return inserted
+
