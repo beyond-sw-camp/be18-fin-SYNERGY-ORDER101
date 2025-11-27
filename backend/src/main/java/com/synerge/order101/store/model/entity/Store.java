@@ -54,4 +54,9 @@ public class Store {
         this.isActive = active;
     }
 
+    // allow updating storeCode after entity is persisted
+    public void updateStoreCode(String storeCode) {
+        this.storeCode = storeCode;
+    }
+
 }

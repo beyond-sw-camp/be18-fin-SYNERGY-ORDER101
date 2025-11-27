@@ -75,8 +75,9 @@ public class StoreServiceImpl implements StoreService {
             wh = warehouseRepository.findById(req.getDefaultWarehouseId()).orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
         }
 
+        // initially persist with a placeholder storeCode (DB requires non-null)
         Store s = Store.builder()
-                .storeCode(req.getStoreCode())
+                .storeCode("")
                 .storeName(req.getStoreName())
                 .address(req.getAddress())
                 .contactNumber(req.getContactNumber())
@@ -86,15 +87,20 @@ public class StoreServiceImpl implements StoreService {
 
         Store saved = storeRepository.save(s);
 
+        // generate storeCode based on the generated storeId, e.g. ST011
+        String generatedCode = String.format("ST%03d", saved.getStoreId());
+        saved.updateStoreCode(generatedCode);
+        Store updated = storeRepository.save(saved);
+
         return StoreRes.builder()
-                .storeId(saved.getStoreId())
-                .storeCode(saved.getStoreCode())
-                .storeName(saved.getStoreName())
-                .address(saved.getAddress())
-                .contactNumber(saved.getContactNumber())
-                .defaultWarehouseId(saved.getDefaultWarehouse() != null ? saved.getDefaultWarehouse().getWarehouseId() : null)
-                .isActive(saved.isActive())
-                .createdAt(saved.getCreatedAt())
+                .storeId(updated.getStoreId())
+                .storeCode(updated.getStoreCode())
+                .storeName(updated.getStoreName())
+                .address(updated.getAddress())
+                .contactNumber(updated.getContactNumber())
+                .defaultWarehouseId(updated.getDefaultWarehouse() != null ? updated.getDefaultWarehouse().getWarehouseId() : null)
+                .isActive(updated.isActive())
+                .createdAt(updated.getCreatedAt())
                 .build();
     }
 
