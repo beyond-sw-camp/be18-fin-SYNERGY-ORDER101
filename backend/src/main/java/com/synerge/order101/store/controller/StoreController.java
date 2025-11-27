@@ -29,6 +29,16 @@ public class StoreController {
         return ResponseEntity.ok(body);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<ItemsResponseDto<StoreListRes>> searchStores(
+            Pageable pageable,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false, name = "store_name") String storeName
+    ) {
+        ItemsResponseDto<StoreListRes> body = storeService.searchStores(pageable, address, storeName);
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping
     public ResponseEntity<BaseResponseDto<StoreRes>> createStore(@RequestBody  StoreCreateReq request) {
         StoreRes res = storeService.createStore(request);
@@ -41,11 +51,21 @@ public class StoreController {
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, res));
     }
 
-    @PutMapping("/{storeId}/status")
-    public ResponseEntity<BaseResponseDto<String>> updateStatus(@PathVariable Long storeId,
-                                                                 @RequestBody  StoreStatusUpdateReq req) {
-        storeService.updateStatus(storeId, req.getIsActive());
-        return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, "가맹점 상태가 변경되었습니다."));
+    @PatchMapping("/{storeId}/toggle-active")
+    public ResponseEntity<BaseResponseDto<StoreRes>> toggleStoreActive(@PathVariable Long storeId) {
+        // 읽어서 현재 상태 반전 후 업데이트
+        StoreRes current = storeService.getStore(storeId);
+        Boolean currActive = current.getIsActive();
+        boolean newActive = currActive == null || !currActive;
+        storeService.updateStatus(storeId, newActive);
+        StoreRes updated = storeService.getStore(storeId);
+        return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, updated));
+    }
+
+    @GetMapping("/addresses")
+    public ResponseEntity<ItemsResponseDto<String>> getDistinctAddresses() {
+        ItemsResponseDto<String> body = storeService.getDistinctAddresses();
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping("/{storeId}/inventory")

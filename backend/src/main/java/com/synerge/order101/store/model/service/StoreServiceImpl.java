@@ -209,4 +209,52 @@ public class StoreServiceImpl implements StoreService {
                 .updatedAt(saved.getUpdatedAt())
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ItemsResponseDto<String> getDistinctAddresses() {
+        List<String> addresses = storeRepository.findDistinctAddresses();
+        int totalCount = addresses.size();
+        // 페이지 번호는 1로 고정
+        return new ItemsResponseDto<>(HttpStatus.OK, addresses, 1, totalCount);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ItemsResponseDto<StoreListRes> searchStores(Pageable pageable, String address, String storeName) {
+        // 기본 정렬 적용
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Store> resultPage;
+        boolean hasAddress = address != null && !address.isBlank();
+        boolean hasStoreName = storeName != null && !storeName.isBlank();
+
+        if (hasAddress && hasStoreName) {
+            resultPage = storeRepository.findByAddressAndStoreNameContainingIgnoreCase(address, storeName, effective);
+        } else if (hasAddress) {
+            resultPage = storeRepository.findByAddress(address, effective);
+        } else if (hasStoreName) {
+            resultPage = storeRepository.findByStoreNameContainingIgnoreCase(storeName, effective);
+        } else {
+            resultPage = storeRepository.findAll(effective);
+        }
+
+        List<StoreListRes> items = resultPage.getContent().stream()
+                .map(s -> StoreListRes.builder()
+                        .storeId(s.getStoreId())
+                        .storeCode(s.getStoreCode())
+                        .storeName(s.getStoreName())
+                        .address(s.getAddress())
+                        .contactNumber(s.getContactNumber())
+                        .isActive(s.isActive())
+                        .createdAt(s.getCreatedAt())
+                        .build())
+                .toList();
+
+        int totalCount = (int) resultPage.getTotalElements();
+        int responsePage = effective.getPageNumber() + 1;
+        return new ItemsResponseDto<>(HttpStatus.OK, items, responsePage, totalCount);
+    }
 }

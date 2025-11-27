@@ -18,4 +18,8 @@ public interface StoreService {
     StoreInventoryListRes createStoreInventory(Long storeId, StoreInventoryCreateReq req);
 
     StoreInventoryListRes updateStoreInventory(Long storeId, Long productId, StoreInventoryUpdateReq req);
+
+    ItemsResponseDto<String> getDistinctAddresses();
+
+    ItemsResponseDto<StoreListRes> searchStores(Pageable pageable, String address, String storeName);
 }
