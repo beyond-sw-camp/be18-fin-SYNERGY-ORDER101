@@ -9,7 +9,7 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
     // 검색 조건
     fromDate: searchParams.fromDate || null,
     toDate: searchParams.toDate || null,
-    storeId: searchParams.storeId || null, // 가맹점 ID
+    vendorId: searchParams.storeId || null, // 가맹점 ID
     statuses: searchParams.statuses || null,
     searchText: searchParams.searchText || null,
 

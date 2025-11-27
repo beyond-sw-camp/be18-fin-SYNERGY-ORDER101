@@ -36,6 +36,7 @@ const SmartOrderListViewView = () => import('../views/hq/orders/SmartOrderListVi
 const SmartOrderDetailView = () => import('../views/hq/orders/SmartOrderDetailView.vue')
 const DemandForecastView = () => import('../views/hq/dashboard/DemandForecastView.vue')
 const StoreOrderCreateView = () => import('../views/store/purchase/StoreOrderCreateView.vue')
+const StoreOrderDashboardView = () => import('../views/hq/dashboard/StoreOrderDashboardView.vue')
 
 const hqRoutes = [
   {
@@ -218,6 +219,12 @@ const hqRoutes = [
     name: 'hq-forecast',
     component: DemandForecastView,
     meta: { title: '수요 예측' }
+  },
+  {
+    path: '/hq/dashboard/order',
+    name: 'hq-dashboard-order',
+    component: StoreOrderDashboardView,
+    meta: { title: '주문 대시보드' },
   },
 ]
 
