@@ -5,6 +5,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
     state: () => ({
         items: [],
         details: [],
+        selectedPurchase: null,
         page: 1,
         numOfRows: 5,
         totalCount: 0,
@@ -45,10 +46,29 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                 this.loading = true
 
                 const response = await axios.get(`/api/v1/purchase-orders/auto/${purchaseId}`)
-                this.details = response.data.items
+                const data = response.data
+
+                if (data.items && data.items.length > 0) {
+                    const detail = data.items[0]
+
+                    // purchaseItems만 details에 바인딩
+                    this.details = detail.purchaseItems
+
+                    // 만약 header 정보를 별도 사용하고 싶으면 추후 추가
+                    this.selectedPurchase = {
+                        purchaseId: detail.purchaseId,
+                        poNo: detail.poNo,
+                        supplierName: detail.supplierName,
+                        requestedAt: detail.requestedAt
+                    }
+
+                } else {
+                    this.details = []
+                }
 
             } catch (e) {
                 console.error("자동발주 상세 조회 실패:", e)
+                this.details = []
             } finally {
                 this.loading = false
             }

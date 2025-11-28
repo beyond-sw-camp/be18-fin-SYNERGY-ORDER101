@@ -61,12 +61,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import OrderStatusSelect from '@/components/OrderStatusSelect.vue';
 import { useAutoOrderStore } from '@/stores/order/autoOrderStore';
 
 const autoOrderStore = useAutoOrderStore()
+const router = useRouter()
 
 const filters = ref({ q: '', status: '전체' })
 
@@ -87,7 +89,7 @@ function statusClass(s) {
 }
 
 function openApproval(row) {
-  router.push({ name: 'hq-orders-approval-detail', params: { id: row.id } })
+  router.push({ name: 'hq-orders-auto-detail', params: { purchaseId: row.purchaseId } })
 }
 </script>
 

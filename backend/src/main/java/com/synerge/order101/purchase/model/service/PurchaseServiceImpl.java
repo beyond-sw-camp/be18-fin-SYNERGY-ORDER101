@@ -251,6 +251,7 @@ public class PurchaseServiceImpl implements PurchaseService {
 
 
     }
+
     // 자동발주 목록 조회
     @Override
     @Transactional(readOnly = true)
