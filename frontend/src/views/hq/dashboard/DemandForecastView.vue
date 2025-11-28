@@ -8,7 +8,7 @@
       <div class="card chart-card">
         <div class="card-header">
           <h2>예측 vs 실제 수요</h2>
-          <p class="subtitle">월별 예측 수요와 실제 수요 비교</p>
+          <p class="subtitle">최근 1년간 월별 예측 수요와 실제 수요 비교</p>
         </div>
         <div class="card-body">
           <canvas ref="lineChartRef"></canvas>
@@ -39,13 +39,13 @@
             <tr>
               <th>SKU</th>
               <th>상품명</th>
-              <th>예측</th>
-              <th>실제</th>
+              <th>최근 예측</th>
+              <th>최근 수요</th>
               <th>오차율(MAPE)</th>
-              <th>권장 주문량</th>
               <th>차트</th>
             </tr>
-          </thead>
+          </thead>     
+
 
           <tbody>
             <tr v-for="row in detailRows" :key="row.sku">
@@ -58,19 +58,14 @@
                   {{ formatPercent(row.metric) }}
                 </span>
               </td>
-              <td>
-                <span v-if="row.recommendedOrderQty > 0" class="chip-outline">
-                  {{ row.recommendedOrderQty }}
-                </span>
-                <span v-else class="chip-outline muted">-</span>
-              </td>
-              <td>
+              <td class="center">
                 <button class="icon-button" @click="openSkuChart(row)">
                   <span class="material-icons-outlined">insights</span>
                 </button>
               </td>
             </tr>
           </tbody>
+
         </table>
       </div>
     </section>
@@ -115,7 +110,7 @@ Chart.register(
   Legend
 );
 
-const TARGET_WEEK = "2025-01-13";
+const TARGET_WEEK = "2025-12-15";
 
 const loading = ref(false);
 const error = ref("");
@@ -195,10 +190,20 @@ function renderCharts() {
       ],
     },
     options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { position: "top" } },
-        scales: { y: { beginAtZero: false } },
-    },
+      responsive: true,
+      maintainAspectRatio: false,
+      tension: 0.4,   
+      plugins: { legend: { position: "top" } },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 12,   
+            maxRotation: 0,
+          }
+        },
+        y: { beginAtZero: false }
+      }
+    }
   });
 
   // --- bar chart ---
@@ -281,7 +286,22 @@ onBeforeUnmount(() => {
 .forecast-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.forecast-table td:first-child,
+.forecast-table th:first-child {
   text-align: left;
+}
+
+.forecast-table td:nth-child(2),
+.forecast-table th:nth-child(2) {
+  text-align: left;
+}
+
+
+.center {
+  text-align: center;
 }
 
 .chip {

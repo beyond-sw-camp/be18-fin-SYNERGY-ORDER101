@@ -42,14 +42,47 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
                 demandForecastRepository.findByTargetWeekBetween(from, to);
 
         // 1) Timeseries (좌측 그래프)
-        List<TimeSeriesPointResponseDto> timeseries = dfList.stream()
-                .sorted(Comparator.comparing(DemandForecast::getTargetWeek))
-                .map(df -> TimeSeriesPointResponseDto.builder()
-                        .date(df.getTargetWeek().toString())
-                        .forecast(df.getYPred())
-                        .actual(df.getActualOrderQty()) // 미래면 자동 null
-                        .build())
-                .toList();
+        Map<LocalDate, List<DemandForecast>> groupedByWeek = dfList.stream()
+                .collect(Collectors.groupingBy(DemandForecast::getTargetWeek));
+
+        List<TimeSeriesPointResponseDto> timeseries =
+                groupedByWeek.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .map(entry -> {
+                            LocalDate week = entry.getKey();
+                            List<DemandForecast> rows = entry.getValue();
+
+                            int totalPred = (int) Math.round(
+                                    rows.stream()
+                                            .map(DemandForecast::getYPred)
+                                            .filter(v -> v != null)
+                                            .mapToDouble(v -> v)
+                                            .sum()
+                            );
+
+
+                            List<Integer> actualList = rows.stream()
+                                    .map(DemandForecast::getActualOrderQty)
+                                    .filter(v -> v != null)
+                                    .toList();
+
+                            Integer totalActual = actualList.isEmpty()
+                                    ? null
+                                    : actualList.stream().mapToInt(v -> v).sum();
+
+                            if (totalActual == null) {
+                                return null;
+                            }
+
+                            return TimeSeriesPointResponseDto.builder()
+                                    .date(week.toString())
+                                    .forecast((double) totalPred)
+                                    .actual(totalActual)
+                                    .build();
+                        })
+                        .filter(dto -> dto != null)
+                        .toList();
+
 
 
 
@@ -65,22 +98,25 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
                         Collectors.mapping(Map.Entry::getValue, Collectors.toList())
                 ));
 
-        List<CategoryMetricResponseDto> categoryMetrics = grouped.entrySet().stream()
-                .map(entry -> {
-                    double avgMAPE = entry.getValue().stream()
-                            .filter(df -> df.getActualOrderQty() != null)
-                            .mapToDouble(df ->
-                                    safeMAPE(df.getActualOrderQty(), df.getYPred()))
-                            .average()
-                            .orElse(0.0);
+        List<CategoryMetricResponseDto> categoryMetrics =
+                grouped.entrySet().stream()
+                        .map(entry -> {
 
-                    return CategoryMetricResponseDto.builder()
-                            .category(entry.getKey())
-                            .metric(avgMAPE)
-                            .build();
-                })
-                .sorted(Comparator.comparing(CategoryMetricResponseDto::getCategory))
-                .toList();
+                            double avgMAPE = entry.getValue().stream()
+                                    .filter(df -> df.getActualOrderQty() != null && df.getActualOrderQty() > 0)
+                                    .filter(df -> df.getYPred() != null)
+                                    .mapToDouble(df -> safeMAPE(df.getActualOrderQty(), df.getYPred()))
+                                    .average()
+                                    .orElse(Double.NaN);
+
+                            return CategoryMetricResponseDto.builder()
+                                    .category(entry.getKey())
+                                    .metric(Double.isNaN(avgMAPE) ? null : avgMAPE)
+                                    .build();
+                        })
+                        .filter(c -> c.getMetric() != null)
+                        .sorted(Comparator.comparing(CategoryMetricResponseDto::getCategory))
+                        .toList();
 
 
 
@@ -88,8 +124,23 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
         LocalDate fromWeek = targetWeek.withDayOfMonth(1);
         LocalDate toWeek = targetWeek.withDayOfMonth(1).plusMonths(1).minusDays(1);
 
+//        List<DemandForecast> latest =
+//                demandForecastRepository.findByTargetWeekBetween(fromWeek, toWeek);
+        // 이번 달 데이터 중 가장 최신 날짜 구하기
+        LocalDate maxActualWeek = demandForecastRepository
+                .findByTargetWeekBetween(fromWeek, toWeek)
+                .stream()
+                .filter(df -> df.getActualOrderQty() != null)
+                .map(DemandForecast::getTargetWeek)
+                .max(LocalDate::compareTo)
+                .orElse(null);
+
+        // 최신 주차 데이터만 필터링
         List<DemandForecast> latest =
-                demandForecastRepository.findByTargetWeekBetween(fromWeek, toWeek);
+                demandForecastRepository.findByTargetWeekBetween(fromWeek, toWeek)
+                        .stream()
+                        .filter(df -> df.getTargetWeek().equals(maxActualWeek))
+                        .toList();
 
 
         List<ProductDetailRowResponseDto> details = latest.stream()
@@ -99,6 +150,7 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
                             .orElse(null);
 
                     return ProductDetailRowResponseDto.builder()
+                            .productId(p.getProductId())
                             .sku(p.getProductCode())
                             .name(p.getProductName())
                             .forecast(df.getYPred())
@@ -119,6 +171,27 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
                 .build();
     }
 
+//    @Override
+//    public List<TimeSeriesPointResponseDto> getProductSeries(Long productId, LocalDate targetWeek) {
+//
+//        LocalDate from = targetWeek.minusMonths(11).withDayOfMonth(1);
+//        LocalDate to = targetWeek.plusMonths(1).withDayOfMonth(1)
+//                .plusMonths(1).minusDays(1);
+//
+//        List<DemandForecast> dfList =
+//                demandForecastRepository.findWithProductAndCategoryByTargetWeekBetween(
+//                        from, to
+//                );
+//
+//        return dfList.stream()
+//                .sorted(Comparator.comparing(DemandForecast::getTargetWeek))
+//                .map(df -> TimeSeriesPointResponseDto.builder()
+//                        .date(df.getTargetWeek().toString())
+//                        .forecast(df.getYPred() == null ? null : df.getYPred().doubleValue())
+//                        .actual(df.getActualOrderQty())
+//                        .build())
+//                .toList();
+//    }
     @Override
     public List<TimeSeriesPointResponseDto> getProductSeries(Long productId, LocalDate targetWeek) {
 
@@ -127,23 +200,54 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
                 .plusMonths(1).minusDays(1);
 
         List<DemandForecast> dfList =
-                demandForecastRepository.findWithProductAndCategoryByTargetWeekBetween(
-                        from, to
-                );
+                demandForecastRepository.findWithProductAndCategoryByTargetWeekBetween(from, to)
+                        .stream()
+                        .filter(df -> df.getProduct().getProductId().equals(productId))
+                        .toList();
 
-        return dfList.stream()
-                .sorted(Comparator.comparing(DemandForecast::getTargetWeek))
-                .map(df -> TimeSeriesPointResponseDto.builder()
-                        .date(df.getTargetWeek().toString())
-                        .forecast(df.getYPred())
-                        .actual(df.getActualOrderQty())
-                        .build())
+        // 1) 주차 기준 그룹화
+        Map<LocalDate, List<DemandForecast>> grouped =
+                dfList.stream().collect(Collectors.groupingBy(DemandForecast::getTargetWeek));
+
+        // 2) 주차별 1개 포인트 만들기
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> {
+                    LocalDate week = entry.getKey();
+                    List<DemandForecast> rows = entry.getValue();
+
+                    // 예측(평균)
+                    Double pred = rows.stream()
+                            .map(DemandForecast::getYPred)
+                            .filter(v -> v != null)
+                            .mapToDouble(v -> v)
+                            .average()
+                            .orElse(Double.NaN);
+
+                    // 실제(합계)
+                    Integer actual = rows.stream()
+                            .map(DemandForecast::getActualOrderQty)
+                            .filter(v -> v != null)
+                            .mapToInt(v -> v)
+                            .sum();
+
+                    // 실제가 없으면 포인트 제거
+                    if (actual == 0) return null;
+
+                    return TimeSeriesPointResponseDto.builder()
+                            .date(week.toString())
+                            .forecast(Double.isNaN(pred) ? null : pred)
+                            .actual(actual)
+                            .build();
+                })
+                .filter(dto -> dto != null)
                 .toList();
     }
 
 
 
-    // 카테고리 중분류 추출 (대/중/소 자동 처리)
+
+    // 카테고리 중분류 추출
     private String extractMiddleCategoryName(ProductCategory category) {
 
         if (category == null) return null;
@@ -165,9 +269,9 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
 
 
     // 안전한 MAPE 계산 (actual null 가능)
-    private Double safeMAPE(Integer actual, Integer forecast) {
+    private double safeMAPE(Integer actual, Integer forecast) {
         if (actual == null || actual == 0 || forecast == null) {
-            return null;
+            return Double.NaN;
         }
         return Math.abs((actual - forecast) / (double) actual);
     }

@@ -1,5 +1,6 @@
 package com.synerge.order101.ai.scheduler;
 
+import com.synerge.order101.ai.model.service.AiTrainingDataService;
 import com.synerge.order101.ai.model.service.DemandForecastService;
 import com.synerge.order101.ai.model.service.SmartOrderService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,8 @@ import java.time.LocalDate;
 public class AiScheduler {
     private final DemandForecastService demandForecastService;
     private final SmartOrderService smartOrderService;
+    private final AiTrainingDataService aiTrainingDataService;
+
 
     // 한달에 한번 재학습
     //매달 1일 새벽 02:00으로 모델 재학습 트리거
@@ -37,8 +40,35 @@ public class AiScheduler {
 
         log.info("[AI] Weekly smart order generation start. targetWeek={}", nextWeekMonday);
 
-        // 이미 Python 예측이 끝났다고 가정하고 smart_order 생성
-        // 실제로는 이 스케줄보다 더 앞서 예측 작업이 돌게 해야함
+        int count = smartOrderService.cancelPreviousAutoDrafts();
+        log.info("[AI] Cancelled old smart orders. count={}", count);
+
+
         smartOrderService.generateSmartOrders(nextWeekMonday);
     }
+
+    @Scheduled(cron = "0 0 1 ? * MON")
+    public void weeklyForecastGenerate() {
+        LocalDate today = LocalDate.now();
+        // 다음 주 월요일
+        LocalDate nextWeekMonday = today.plusWeeks(1).with(java.time.DayOfWeek.MONDAY);
+
+        log.info("[AI] Weekly forecast generation start. targetWeek={}", nextWeekMonday);
+
+        // 이미 구현된 서비스 메서드 사용 (새 API 필요 없음)
+        demandForecastService.triggerForecast(nextWeekMonday);
+
+        log.info("[AI] Weekly forecast generation requested to Python. targetWeek={}", nextWeekMonday);
+    }
+
+    @Scheduled(cron = "0 0 1 1 * ?")
+    public void monthlySyncActualSales() {
+        LocalDate now = LocalDate.now();
+        LocalDate start = now.minusMonths(1).withDayOfMonth(1);
+        LocalDate end = now.withDayOfMonth(1).minusDays(1);
+
+        log.info("[AI] Monthly actual sales sync start: {} ~ {}", start, end);
+        aiTrainingDataService.sendMonthlyActualSales(start, end);
+    }
+
 }

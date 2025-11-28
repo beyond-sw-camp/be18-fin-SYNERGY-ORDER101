@@ -49,6 +49,12 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     private final NotificationService notificationService;
     private static final DateTimeFormatter PO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
+    @Override
+    @Transactional
+    public int cancelPreviousAutoDrafts() {
+        return smartOrderRepository.cancelAllAutoDrafts();
+    }
+
     //AI가 스마트 발주 초안 작성
     @Transactional
     public List<SmartOrderResponseDto> generateSmartOrders(LocalDate targetWeek) {
@@ -108,6 +114,10 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                     long rawOrder = (long) targetStock - onHand - inTransit;
                     int recommendedOrderQty = (rawOrder > 0) ? (int) rawOrder : 0;
 
+                    if (recommendedOrderQty <= 0) {
+                        return null;
+                    }
+
 
                     SmartOrder so = SmartOrder.builder()
                             .supplier(mapping.getSupplier())
@@ -124,6 +134,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
 
                     return so;
                 })
+                .filter(Objects::nonNull)
                 .map(smartOrderRepository::save)
                 .toList();
 
@@ -157,7 +168,6 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                 .toList();
     }
 
-
     // 스마트 발주 목록 조회
     public List<SmartOrderResponseDto> getSmartOrders(
             OrderStatus status, LocalDate from, LocalDate to
@@ -167,7 +177,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         boolean hasStatus = (status != null);
         boolean hasRange = (from != null && to != null);
 
-        // 💡 날짜 범위의 끝(to)을 포함하기 위해 to에 하루를 더합니다.
+        // 날짜 범위의 끝(to)을 포함하기 위해 to에 하루를 더합니다.
         LocalDate endDateInclusive = (hasRange) ? to.plusDays(1) : null;
 
         if (hasStatus && hasRange) {
