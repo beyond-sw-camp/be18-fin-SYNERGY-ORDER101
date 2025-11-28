@@ -37,8 +37,10 @@ public class AiScheduler {
 
         log.info("[AI] Weekly smart order generation start. targetWeek={}", nextWeekMonday);
 
-        // 이미 Python 예측이 끝났다고 가정하고 smart_order 생성
-        // 실제로는 이 스케줄보다 더 앞서 예측 작업이 돌게 해야함
+        int count = smartOrderService.cancelPreviousAutoDrafts();
+        log.info("[AI] Cancelled old smart orders. count={}", count);
+
+
         smartOrderService.generateSmartOrders(nextWeekMonday);
     }
 

@@ -49,6 +49,12 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     private final NotificationService notificationService;
     private static final DateTimeFormatter PO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
+    @Override
+    @Transactional
+    public int cancelPreviousAutoDrafts() {
+        return smartOrderRepository.cancelAllAutoDrafts();
+    }
+
     //AI가 스마트 발주 초안 작성
     @Transactional
     public List<SmartOrderResponseDto> generateSmartOrders(LocalDate targetWeek) {
