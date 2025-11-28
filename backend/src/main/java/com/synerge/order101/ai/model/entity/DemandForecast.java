@@ -64,7 +64,7 @@ public class DemandForecast {
     @Column(name = "target_week", nullable = false)
     private LocalDate targetWeek;
 
-    @Column(name = "y_pred", nullable = false)
+    @Column(name = "y_pred")
     private Integer yPred;
 
     @Column(name = "actual_order_qty")
