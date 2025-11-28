@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProductDetailRowResponseDto {
+    private Long productId;
     private String sku;
     private String name;
     private Integer forecast;

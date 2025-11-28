@@ -8,7 +8,7 @@
       <div class="card chart-card">
         <div class="card-header">
           <h2>예측 vs 실제 수요</h2>
-          <p class="subtitle">월별 예측 수요와 실제 수요 비교</p>
+          <p class="subtitle">최근 1년간 월별 예측 수요와 실제 수요 비교</p>
         </div>
         <div class="card-body">
           <canvas ref="lineChartRef"></canvas>
@@ -39,10 +39,9 @@
             <tr>
               <th>SKU</th>
               <th>상품명</th>
-              <th>예측</th>
-              <th>실제</th>
+              <th>최근 예측</th>
+              <th>최근 수요</th>
               <th>오차율(MAPE)</th>
-              <th>권장 주문량</th>
               <th>차트</th>
             </tr>
           </thead>
