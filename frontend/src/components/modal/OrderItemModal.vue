@@ -53,7 +53,7 @@
                 </th>
                 <th>SKU</th>
                 <th>제품명</th>
-                <th>단가</th>
+                <th>가격</th>
                 <th>재고</th>
                 <th>리드 타임</th>
               </tr>
@@ -93,6 +93,7 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
 // Money 컴포넌트가 사용되었으므로, 실제 프로젝트에서 임포트해야 합니다.
 // import Money from '@/components/Money.vue' 
 
@@ -146,11 +147,11 @@ const isAllSelected = computed(() => {
 function normalizeProduct(p) {
   return {
     productId: p.productId || p.id,
-    sku: p.productCode || p.sku,
-    name: p.productName || p.name,
+    sku: p.productCode || p.sku || p.code,
+    name: p.productName || p.name || p.product_name,
     price: Number(p.price || p.unitPrice || 0),
-    stock: p.stockQuantity, // 재고 필드 추가 (필요 시)
-    lead: Number(p.leadTimeDays || 1),
+    stock: p.stockQuantity ?? p.stock ?? null,
+    lead: Number(p.leadTimeDays || p.lead_time_days || 1),
     _raw: p
   }
 }
@@ -164,28 +165,28 @@ async function fetchProducts() {
   loading.value = true
   error.value = null
 
-  // 1. API URL 결정
-  let apiUrl = filters.supplierId ? `/api/v1/suppliers/${filters.supplierId}` : '/api/v1/products'
-
-  // 2. Axios 요청 파라미터 구성
-  const requestParams = {
-    page: 1,
-    numOfRows: 100,
-    // 필터 값 추가 (null/빈 문자열은 Axios가 자동으로 제외)
-    largeCategoryId: filters.largeCategoryId,
-    mediumCategoryId: filters.mediumCategoryId,
-    smallCategoryId: filters.smallCategoryId,
-    keyword: filters.keyword.trim() || undefined // 빈 문자열은 제외
-  }
-
   try {
-    const res = await axios.get(apiUrl, {
-      params: requestParams
-    }).then(response => response.data)
+    let productlist = []
 
-    // 응답 형태 처리: res.items[0].products 또는 res.products 형태 등을 고려하여 조정
-    // 현재 코드는 res.items[0].products를 가정하고 있으므로 그대로 유지
-    const productlist = res.items?.[0]?.products || res.products || []
+    if (filters.supplierId) {
+      // 공급사 상세 조회로 품목 가져오기
+      const detail = await getSupplierDetail(filters.supplierId)
+      // 예상 구조: detail.items[0].products 또는 detail.products
+      productlist = detail.items?.[0]?.products || detail.products || []
+    } else {
+      // 공급사 미지정 시 기존 제품 목록 API 사용 (필요 시 유지)
+      const res = await axios.get('/api/v1/products', {
+        params: {
+          page: 1,
+          numOfRows: 100,
+          largeCategoryId: filters.largeCategoryId,
+          mediumCategoryId: filters.mediumCategoryId,
+          smallCategoryId: filters.smallCategoryId,
+          keyword: filters.keyword.trim() || undefined
+        }
+      }).then(r => r.data)
+      productlist = res.items?.[0]?.products || res.products || []
+    }
 
     // items.value에 정규화된 상품 목록 저장
     items.value = productlist.map(normalizeProduct)

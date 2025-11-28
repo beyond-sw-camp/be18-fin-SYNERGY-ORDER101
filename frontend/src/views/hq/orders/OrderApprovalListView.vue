@@ -37,7 +37,8 @@
               <td class="center">{{ row.orderType }}</td>
 
               <td class="center" @click.stop>
-                <PurchaseApprovalActions :po-id="row.id" @success="handleProcessSuccess" />
+                <PurchaseApprovalActions :po-id="row.id" :source-type="row.sourceType"
+                  :smart-order-ids="row.smartOrderIds" @success="handleProcessSuccess" />
               </td>
             </tr>
             <tr v-if="rows.length === 0">
@@ -46,20 +47,76 @@
           </tbody>
         </table>
       </div>
+
+      <div class="pagination">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+          &laquo;
+        </button>
+        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+          &lsaquo;
+        </button>
+
+        <div class="pages">
+          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
+            {{ p }}
+          </button>
+        </div>
+
+        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+          &rsaquo;
+        </button>
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+          &raquo;
+        </button>
+      </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
-import { getPurchases, updatePurchaseStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { getPurchases, updatePurchaseStatus, updateSmartOrderStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 
 const perPage = ref(10)
 const page = ref(1)
+const totalPagesFromBackend = ref(0)
+
+// 총 페이지 수
+const totalPages = computed(() => totalPagesFromBackend.value || 1)
+
+// 표시할 페이지 번호 계산 (최대 5개)
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2
+  const pages = []
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    if (start === 1) {
+      end = Math.min(5, total)
+    }
+    if (end === total) {
+      start = Math.max(1, total - 4)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
 
 onMounted(() => {
   // 초기 데이터 로드 등 필요한 작업 수행
@@ -72,13 +129,18 @@ function handleProcessSuccess() {
 }
 
 const searchPurchases = async () => {
-  // // 발주 목록을 다시 불러오는 함수
+  // 발주 목록을 다시 불러오는 함수
   const data = await getPurchases(
-    (page.value - 1) * perPage.value,
+    page.value - 1,
     perPage.value,
     '',
-    'SUBMITTED'
+    'SUBMITTED',
+    null,
+    null,
+    null
   );
+
+  totalPagesFromBackend.value = data.totalPages || 1
 
   rows.value = (data.content || []).map(item => ({
     id: item.purchaseId,
@@ -88,14 +150,20 @@ const searchPurchases = async () => {
     amount: item.totalAmount,
     requestedAt: item.requestedAt,
     status: mapPurchaseStatus(item.status),
-    orderType: mapPurchaseStatus(item.orderType)
+    orderType: mapPurchaseStatus(item.orderType),
+    sourceType: item.sourceType,
+    smartOrderIds: item.smartOrderIds // 스마트 발주인 경우 ID 배열
   }));
-
 }
 
 const router = useRouter()
 
 const rows = ref([])
+
+function goPage(p) {
+  page.value = p
+  searchPurchases()
+}
 
 function openDetail(row) {
   // navigate to approval detail page for this PO
@@ -211,5 +279,58 @@ function statusClass(s) {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 20px;
+  margin-top: 16px;
+}
+
+.page-nav {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.page-nav:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.page-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pages {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.pages button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 36px;
+}
+
+.pages button:hover:not(.active) {
+  background: #f3f4f6;
+}
+
+.pages button.active {
+  background: #111827;
+  color: white;
 }
 </style>

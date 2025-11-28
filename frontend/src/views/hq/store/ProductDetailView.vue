@@ -6,9 +6,6 @@
         <!-- 보기 모드 -->
         <template v-if="!isEditMode">
           <button class="btn-edit" @click="startEdit">편집</button>
-          <button class="btn-delete" :disabled="isDeleting" @click="handleDelete">
-            {{ isDeleting ? '삭제 중...' : '삭제' }}
-          </button>
         </template>
 
         <!-- 수정 모드 -->
@@ -296,34 +293,6 @@ const errorMsg = ref('')
 const isLoading = ref(false)
 const isEditMode = ref(false)
 
-const handleDelete = async () => {
-  if (!product.value) return
-
-  if (isEditMode.value) {
-    alert('수정 중에는 삭제할 수 없습니다. 취소 후 삭제해주세요.')
-    return
-  }
-
-  const ok = window.confirm(
-    `'${product.value.productName}' 상품을 정말 삭제할까요?\n삭제하면 복구할 수 없습니다.`,
-  )
-  if (!ok) return
-
-  isDeleting.value = true
-  try {
-    await deleteProduct(productId)
-    alert('상품이 삭제되었습니다.')
-
-    router.push({ name: 'hq-products-list' })
-  } catch (e) {
-    console.error(e)
-
-    // 백단에서 message 내려주면 그거 노출
-  } finally {
-    isDeleting.value = false
-  }
-}
-
 const editForm = ref({
   productCode: '',
   productName: '',
@@ -438,9 +407,18 @@ const product = ref(null)
 
 const API_BASE = axios.defaults.baseURL || 'http://localhost:8080'
 
-const imageSrc = computed(() =>
-  product.value?.imageUrl ? `${API_BASE}${product.value.imageUrl}` : null,
-)
+const imageSrc = computed(() => {
+  const url = product.value?.imageUrl
+  if (!url) return null
+
+  // S3 같이 절대 경로(https://...)면 그대로 사용
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  // 예전처럼 "/product-images/..." 처럼 상대 경로면 API_BASE 붙여서 사용
+  return `${API_BASE}${url}`
+})
 
 const inventorySummary = ref(null)
 const movements = ref([])

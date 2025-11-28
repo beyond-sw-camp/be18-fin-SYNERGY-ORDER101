@@ -1,6 +1,6 @@
 <template>
   <div class="order-approval">
-    <div class="page-inner" v-if="!loading">
+    <div class="page-inner" v-if="!loading"> 
       <div class="left-col">
         <h2 class="title">스마트 발주 상세</h2>
 
@@ -37,8 +37,10 @@
               <tr>
                 <th>상품 코드</th>
                 <th>상품명</th>
+                <th class="numeric">단가</th>
                 <th class="numeric">예측량</th>
                 <th class="numeric">추천 발주량</th>
+                <th class="numeric">금액</th> 
                 <th class="center">작성자</th>
               </tr>
             </thead>
@@ -46,6 +48,7 @@
               <tr v-for="(row, idx) in detail.items" :key="row.smartOrderId + '-' + idx">
                 <td>{{ row.productCode }}</td>
                 <td>{{ row.productName }}</td>
+                <td class="numeric">{{ formatCurrency(row.unitPrice) }}</td>
                 <td class="numeric">{{ row.forecastQty?.toLocaleString() ?? '-' }}</td>
                 <td class="numeric">
                   <input
@@ -54,6 +57,9 @@
                     class="qty-input"
                     v-model.number="row.recommendedOrderQty"
                   />
+                </td>
+                <td class="numeric">
+                  {{ formatCurrency(row.unitPrice * (row.recommendedOrderQty || 0)) }}
                 </td>
                 <td class="center">
                   <span
@@ -85,16 +91,21 @@
       <!-- 우측: 요약 카드 -->
       <aside class="right-col">
         <div class="summary card">
-          <h4>발주 금액(수량) 요약</h4>
+          <h4>발주 금액 요약</h4>
 
           <div class="summary-row">
             <span>총 예측량</span>
-            <span class="numeric">{{ totalForecastQty.toLocaleString() }}</span>
+            <span class="numeric">{{ totalForecastQty.toLocaleString() }} 개</span>
           </div>
 
           <div class="summary-row">
-            <span>총 추천 발주량</span>
-            <span class="numeric">{{ totalRecommendedQty.toLocaleString() }}</span>
+            <span>총 추천 발주 수량</span>
+            <span class="numeric">{{ totalRecommendedQty.toLocaleString() }} 개</span>
+          </div>
+
+          <div class="summary-row">
+            <span>총 추천 발주 금액</span>
+            <span class="numeric">{{ formatCurrency(totalAmount) }}</span>
           </div>
         </div>
       </aside>
@@ -142,6 +153,14 @@ const totalRecommendedQty = computed(() =>
   detail.items.reduce((sum, r) => sum + (r.recommendedOrderQty || 0), 0)
 )
 
+const totalAmount = computed(() =>
+  detail.items.reduce((sum, r) => {
+    const price = Number(r.unitPrice || 0)
+    const qty = Number(r.recommendedOrderQty || 0)
+    return sum + price * qty
+  }, 0)
+)
+
 // 전체 상태 / 제출 여부
 const overallStatus = computed(() => detail.status)
 const isSubmitted = computed(() => overallStatus.value === 'SUBMITTED')
@@ -175,6 +194,7 @@ async function fetchDetail () {
       productName: item.productName,
       forecastQty: item.forecastQty,
       recommendedOrderQty: item.recommendedOrderQty,
+      unitPrice: Number(item.unitPrice || 0), 
       originalRecommendedQty: item.recommendedOrderQty,
     }))
   } catch (e) {
@@ -184,6 +204,11 @@ async function fetchDetail () {
   } finally {
     loading.value = false
   }
+}
+
+function formatCurrency (value) {
+  const num = Number(value || 0)
+  return num.toLocaleString('ko-KR') + '원'
 }
 
 // 작성자 표시 (SYSTEM / USER)

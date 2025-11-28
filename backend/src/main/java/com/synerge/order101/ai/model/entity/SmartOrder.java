@@ -91,6 +91,9 @@ public class SmartOrder {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "po_number", length = 50, nullable = false)
+    private String poNumber;
+
 
 
     public void updateRecommendedQty(Integer newRecommendedQty){

@@ -1,9 +1,14 @@
 <template>
+  <!-- 
+    ⚠️ DEPRECATED: 이 컴포넌트는 더 이상 사용되지 않습니다.
+    대신 PurchaseCreateView.vue를 사용하세요.
+    BaseOrderCreateView를 상속받아 재사용 가능하게 리팩토링되었습니다.
+  -->
   <div class="order-create">
     <div class="page-inner">
       <!-- 1. 좌측 칼럼 (상세 정보 및 품목 목록) -->
       <div class="left-col">
-        <h2 class="title">발주 생성</h2>
+        <h2 class="title">발주 생성 (DEPRECATED)</h2>
 
         <!-- 발주 세부 정보 카드 -->
         <section class="card">

@@ -37,16 +37,16 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import FilterDropdown from './FilterDropdown.vue';
-import FilterDateRange from './FilterDateRange.vue';
-import FilterSearchInput from './FilterSearchInput.vue';
+import FilterDropdown from '../../../base/FilterDropdown.vue';
+import FilterDateRange from '../../../base/FilterDateRange.vue';
+import FilterSearchInput from '../../../base/FilterSearchInput.vue';
 import { getPastDateString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
 
 const initialFilters = {
     scope: 'ALL',
     vendorId: 'ALL',
-    vendorType: 'FRANCHISE', // 'FRANCHISE' | 'SUPPLIER'
+    vendorType: 'ALL', // 'ALL' | 'FRANCHISE' | 'SUPPLIER'
     vendorName: '전체',
     startDate: getPastDateString(30),
     endDate: new Date().toISOString().slice(0, 10),

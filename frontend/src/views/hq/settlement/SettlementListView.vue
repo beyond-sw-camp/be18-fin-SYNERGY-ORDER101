@@ -163,17 +163,9 @@ async function handleSearch(filters) {
       searchText: filters.keyword || null
     };
 
-    console.log('📤 요청 파라미터:', params);
 
     // ✅ 단일 API 호출 (Spring Page 객체 반환)
     const pageData = await getSettlements(params);
-
-    console.log('📦 API 응답:', {
-      totalElements: pageData.totalElements,
-      totalPages: pageData.totalPages,
-      contentSize: pageData.content?.length,
-      content: pageData.content
-    });
 
     // ✅ 테이블 데이터 변환
     rows.value = pageData.content.map(settlement => ({
@@ -190,7 +182,6 @@ async function handleSearch(filters) {
       created: formatDateTimeMinute(settlement.createdAt)
     }));
 
-    console.log('✅ 변환된 데이터:', rows.value);
 
   } catch (error) {
     console.error('❌ 데이터 로드 실패:', error);

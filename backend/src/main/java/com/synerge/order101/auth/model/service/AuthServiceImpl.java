@@ -57,13 +57,19 @@ public class AuthServiceImpl implements AuthService {
         // AccessToken 생성
         String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRole());
 
+        // Store가 null일 수 있으므로 안전하게 처리
+        Long storeId = null;
+        if (user.getStore() != null) {
+            storeId = user.getStore().getStoreId();
+        }
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .userId(user.getUserId())
                 .type("Bearer")
                 .name(user.getName())
                 .phone(user.getPhone())
-                .storeId(user.getStore().getStoreId())
+                .storeId(storeId)
                 .issuedAt(jwtUtil.getIssuedAt(accessToken))
                 .expiresAt(jwtUtil.getExpiration(accessToken))
                 .role(user.getRole())
