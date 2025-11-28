@@ -44,7 +44,8 @@
               <th>오차율(MAPE)</th>
               <th>차트</th>
             </tr>
-          </thead>
+          </thead>     
+
 
           <tbody>
             <tr v-for="row in detailRows" :key="row.sku">
@@ -57,19 +58,14 @@
                   {{ formatPercent(row.metric) }}
                 </span>
               </td>
-              <td>
-                <span v-if="row.recommendedOrderQty > 0" class="chip-outline">
-                  {{ row.recommendedOrderQty }}
-                </span>
-                <span v-else class="chip-outline muted">-</span>
-              </td>
-              <td>
+              <td class="center">
                 <button class="icon-button" @click="openSkuChart(row)">
                   <span class="material-icons-outlined">insights</span>
                 </button>
               </td>
             </tr>
           </tbody>
+
         </table>
       </div>
     </section>
@@ -290,7 +286,22 @@ onBeforeUnmount(() => {
 .forecast-table td {
   padding: 10px 12px;
   border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.forecast-table td:first-child,
+.forecast-table th:first-child {
   text-align: left;
+}
+
+.forecast-table td:nth-child(2),
+.forecast-table th:nth-child(2) {
+  text-align: left;
+}
+
+
+.center {
+  text-align: center;
 }
 
 .chip {
