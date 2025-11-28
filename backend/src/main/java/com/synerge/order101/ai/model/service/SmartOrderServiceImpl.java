@@ -108,6 +108,10 @@ public class SmartOrderServiceImpl implements SmartOrderService{
                     long rawOrder = (long) targetStock - onHand - inTransit;
                     int recommendedOrderQty = (rawOrder > 0) ? (int) rawOrder : 0;
 
+                    if (recommendedOrderQty <= 0) {
+                        return null;
+                    }
+
 
                     SmartOrder so = SmartOrder.builder()
                             .supplier(mapping.getSupplier())
@@ -124,6 +128,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
 
                     return so;
                 })
+                .filter(Objects::nonNull)
                 .map(smartOrderRepository::save)
                 .toList();
 
