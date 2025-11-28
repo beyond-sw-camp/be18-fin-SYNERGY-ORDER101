@@ -1,165 +1,428 @@
-<template>
-  <div class="franchise-registration">
-    <h2 class="page-title">신규 매장 등록</h2>
-
-    <div class="form-grid">
-      <section class="card">
-        <h3 class="card-title">기본 정보</h3>
-        <div class="form-row">
-          <label>매장 이름</label>
-          <input v-model="form.name" placeholder="매장 이름을 입력하세요" class="input" />
-        </div>
-
-        <div class="form-row">
-          <label>사업자등록번호</label>
-          <input
-            v-model="form.businessNo"
-            placeholder="사업자등록번호를 입력하세요"
-            class="input"
-          />
-        </div>
-
-        <div class="form-row">
-          <label>주소</label>
-          <input v-model="form.address" placeholder="주소를 검색하세요" class="input" />
-        </div>
-
-        <div class="form-row">
-          <label>가맹점 ID</label>
-          <input v-model="form.franchiseId" placeholder="가맹점 ID" class="input" />
-        </div>
-      </section>
-
-      <section class="card">
-        <h3 class="card-title">운영 설정</h3>
-
-        <div class="form-row">
-          <label>운영 시간</label>
-          <input v-model="form.hours" placeholder="예: 09:00 - 22:00" class="input" />
-        </div>
-
-        <div class="form-row">
-          <label>할인 정책</label>
-          <textarea
-            v-model="form.discountPolicy"
-            placeholder="매장의 할인 정책을 입력하세요."
-            class="textarea"
-          ></textarea>
-        </div>
-
-        <div class="form-row checkbox-row">
-          <label><input type="checkbox" v-model="form.aiAutoOrder" /> AI 자동 주문 활성화</label>
-        </div>
-      </section>
-    </div>
-
-    <div class="actions">
-      <button class="btn-cancel" @click="onCancel">취소</button>
-      <button class="btn-save" @click="onSave">저장</button>
-    </div>
-  </div>
-</template>
-
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed, ref } from 'vue'
+import apiClient from '@/components/api'
+import router from '@/router'
+import WarehouseSearchModal from '@/components/modal/WarehouseSearchModal.vue'
 
 const form = reactive({
-  name: '',
-  businessNo: '',
+  storeName: '',
   address: '',
-  franchiseId: '',
-  hours: '',
-  discountPolicy: '',
-  aiAutoOrder: false,
+  contactNumber: '',
+  defaultWarehouseId: '',
 })
 
-function onSave() {
-  // basic client-side validation
-  if (!form.name || !form.franchiseId) {
-    alert('매장 이름과 가맹점 ID를 입력해주세요.')
-    return
-  }
-  // TODO: send to API
-  console.log('Saving franchise:', { ...form })
-  alert('저장되었습니다 (샘플 동작).')
+const errors = reactive({
+  storeName: '',
+  address: '',
+  contactNumber: '',
+  defaultWarehouseId: '',
+})
+
+const showWareHouseModal = ref(false)
+const selectedWareHouse = ref(null)
+
+function onWareHouseSelect(result) {
+  console.log('Warehouse selected:', result)
+  selectedWareHouse.value = result
+  // Check for both possible property names
+  form.defaultWarehouseId = result.warehouseId || result.id || ''
+  showWareHouseModal.value = false
 }
 
-function onCancel() {
-  // Reset form or navigate away
-  form.name = ''
-  form.businessNo = ''
+function openWareHouseModal() {
+  showWareHouseModal.value = true
+}
+
+function clearWareHouseSelection() {
+  form.defaultWarehouseId = ''
+  selectedWareHouse.value = null
+}
+
+const canSubmit = computed(() => {
+  if (!form.storeName) return false
+  if (!form.address) return false
+  if (!form.contactNumber) return false
+  if (!form.defaultWarehouseId) return false
+  return true
+})
+
+const handleSubmit = async () => {
+  console.log('handleSubmit called')
+
+  // basic validation
+  errors.storeName = ''
+  errors.address = ''
+  errors.contactNumber = ''
+  errors.defaultWarehouseId = ''
+
+  if (!form.storeName) {
+    errors.storeName = '이름을 입력하세요.'
+    return
+  }
+  if (!form.address) {
+    errors.address = '주소를 입력하세요.'
+    return
+  }
+  if (!form.contactNumber) {
+    errors.contactNumber = '연락처를 입력하세요.'
+    return
+  }
+  if (!form.defaultWarehouseId) {
+    errors.defaultWarehouseId = '기본 창고를 선택하세요.'
+    return
+  }
+
+  const payload = {
+    storeName: form.storeName,
+    address: form.address,
+    contactNumber: form.contactNumber,
+    defaultWarehouseId: form.defaultWarehouseId,
+  }
+
+  console.log('Submitting payload:', payload)
+  try {
+    const resp = await apiClient.post('/api/v1/stores', payload)
+    console.log('store registered', resp.data)
+    window.alert('가맹점을 등록하였습니다.')
+    handleReset()
+    router.push({ name: 'hq-dashboard' })
+  } catch (e) {
+    console.error('registration failed', e)
+    console.error('error response:', e.response)
+    // try to surface server errors
+    const errorMsg = e.response?.data?.message || e.message || '등록에 실패했습니다.'
+    window.alert(errorMsg)
+  }
+}
+
+const handleReset = () => {
+  form.storeName = ''
   form.address = ''
-  form.franchiseId = ''
-  form.hours = ''
-  form.discountPolicy = ''
-  form.aiAutoOrder = false
+  form.contactNumber = ''
+  form.defaultWarehouseId = ''
+  errors.storeName = ''
+  errors.address = ''
+  errors.contactNumber = ''
+  errors.defaultWarehouseId = ''
 }
 </script>
 
+<template>
+  <div class="user-registration">
+    <header>
+      <p class="eyebrow">가맹점 관리</p>
+      <h1>가맹점 등록</h1>
+      <p class="subtitle">새로운 가맹점을 등록하세요.</p>
+    </header>
+
+    <section class="form-wrapper">
+      <form class="form-card" @submit.prevent="handleSubmit">
+        <div class="field">
+          <label for="storeName">가맹점명</label>
+          <div class="input-wrapper">
+            <span class="leading-icon">✉️</span>
+            <input
+              id="storeName"
+              v-model="form.storeName"
+              type="text"
+              placeholder="가맹점명을 입력하세요"
+            />
+          </div>
+          <div v-if="errors.storeName" style="color: #ef4444; font-size: 13px">
+            {{ errors.storeName }}
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="address">주소</label>
+          <div class="input-wrapper">
+            <span class="leading-icon">👤</span>
+            <input
+              id="address"
+              v-model="form.address"
+              type="text"
+              placeholder="주소를 입력하세요"
+            />
+          </div>
+          <div v-if="errors.address" style="color: #ef4444; font-size: 13px">
+            {{ errors.address }}
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="contactNumber">연락처</label>
+          <div class="input-wrapper">
+            <span class="leading-icon">📞</span>
+            <input
+              id="contactNumber"
+              v-model="form.contactNumber"
+              type="text"
+              placeholder="010-0000-0000"
+            />
+          </div>
+          <div v-if="errors.contactNumber" style="color: #ef4444; font-size: 13px">
+            {{ errors.contactNumber }}
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="defaultWarehouseId">창고 선택</label>
+          <div class="input-wrapper" style="gap: 8px">
+            <span class="leading-icon">🏬</span>
+            <input
+              id="defaultWarehouseId"
+              :value="selectedWareHouse ? selectedWareHouse.name : form.defaultWarehouseId"
+              type="text"
+              readonly
+              placeholder="창고를 선택하세요"
+            />
+            <button
+              type="button"
+              class="ghost btn-compact"
+              @click.prevent="openWareHouseModal"
+              aria-label="창고 선택"
+            >
+              <svg viewBox="0 0 24 24" fill="none" class="btn-icon" aria-hidden>
+                <path
+                  d="M21 21l-4.35-4.35"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect
+                  x="3"
+                  y="4"
+                  width="12"
+                  height="12"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                />
+                <path d="M7 8h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              </svg>
+              <span>창고 선택</span>
+            </button>
+            <button
+              v-if="form.defaultWarehouseId"
+              type="button"
+              class="ghost btn-compact btn-clear"
+              @click.prevent="clearWareHouseSelection"
+              aria-label="선택 삭제"
+            >
+              <svg viewBox="0 0 24 24" fill="none" class="btn-icon" aria-hidden>
+                <path
+                  d="M18 6L6 18"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M6 6l12 12"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <span>지우기</span>
+            </button>
+          </div>
+          <div v-if="errors.defaultWarehouseId" style="color: #ef4444; font-size: 13px">
+            {{ errors.defaultWarehouseId }}
+          </div>
+        </div>
+
+        <!-- warehouse search modal -->
+        <WarehouseSearchModal
+          v-if="showWareHouseModal"
+          @close="showWareHouseModal = false"
+          @select="onWareHouseSelect"
+        />
+
+        <div class="form-actions">
+          <button type="button" class="ghost" @click="handleReset">초기화</button>
+          <button type="submit" class="primary" :disabled="!canSubmit">저장</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</template>
+
 <style scoped>
-.page-title {
-  font-size: 22px;
-  margin-bottom: 18px;
-}
-.form-grid {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-}
-.card {
-  flex: 1;
-  background: #fff;
-  border: 1px solid #eef2f7;
-  padding: 20px;
-  border-radius: 8px;
-}
-.card-title {
-  font-size: 16px;
-  margin-bottom: 12px;
-}
-.form-row {
+.user-registration {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 24px;
 }
-.input,
-.textarea {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+
+.eyebrow {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
 }
-.textarea {
-  min-height: 120px;
-  resize: vertical;
+
+h1 {
+  font-size: 26px;
+  font-weight: 700;
 }
-.checkbox-row {
+
+.subtitle {
+  color: #6b7280;
+}
+
+.form-wrapper {
+  /* center the card horizontally and give room on the left for the sidebar */
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 40px 0;
+}
+
+.form-card {
+  background-color: #fff;
+  border-radius: 20px;
+  padding: 40px;
+  border: 1px solid #f1f3f6;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+  width: 680px; /* fixed card width like the design */
+  max-width: calc(100% - 48px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field label,
+.field legend {
+  font-weight: 600;
+  color: #111827;
+}
+
+.required {
+  color: #f87171;
+}
+
+.radio-group {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  display: flex;
   align-items: center;
+  gap: 6px;
+  font-weight: 500;
 }
-.actions {
-  margin-top: 18px;
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background-color: #fff;
+  gap: 8px;
+}
+
+.leading-icon {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+input[type='text'],
+input[type='password'] {
+  border: none;
+  flex: 1;
+  font-size: 15px;
+  background: transparent;
+  outline: none;
+}
+
+.form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: 12px;
 }
-.btn-save {
-  background: #6b46ff;
+
+.form-actions button {
+  min-width: 96px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.form-actions .ghost {
+  border-color: #e5e7eb;
+  background-color: #fff;
+}
+
+.form-actions .primary {
+  background-color: #6b63f6;
   color: #fff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 8px;
+  border-color: #6b63f6;
 }
-.btn-cancel {
+
+/* Compact button used inside input fields (select / clear) */
+.btn-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
   background: #fff;
-  border: 1px solid #e5e7eb;
-  padding: 10px 14px;
-  border-radius: 8px;
+  border: 1px solid #e6e9ef;
+  color: #374151;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    transform 0.06s;
+}
+.btn-compact:hover {
+  background: #f8fafc;
+  border-color: #dfe7ff;
+  transform: translateY(-1px);
+}
+.btn-compact:active {
+  transform: translateY(0);
+}
+.btn-compact .btn-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.9;
+}
+.btn-clear {
+  border-color: #f3e6e6;
+  color: #b91c1c;
+}
+.btn-clear:hover {
+  background: #fff5f5;
+}
+
+.vendor-item.inactive {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 1024px) {
-  .form-grid {
-    flex-direction: column;
+  .form-card {
+    width: 100%;
+    padding: 28px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
   }
 }
 </style>

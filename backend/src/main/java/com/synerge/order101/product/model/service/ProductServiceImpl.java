@@ -1,5 +1,9 @@
 package com.synerge.order101.product.model.service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.inbound.model.repository.InboundDetailRepository;
@@ -29,6 +33,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +45,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,7 +67,14 @@ public class ProductServiceImpl implements ProductService {
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final SupplierRepository supplierRepository;
     private final ProductSupplierRepository productSupplierRepository;
+
+    private final AmazonS3 amazonS3;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
     private static final String UPLOAD_ROOT = "uploads";
+
     @Override
     public ProductCreateRes create(ProductCreateReq request, MultipartFile imageFile) {
 
@@ -230,7 +244,7 @@ public class ProductServiceImpl implements ProductService {
                                                         Long mediumCategoryId, Long smallCategoryId) {
         int pageIndex = Math.max(0, page - 1);
 
-        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Product> productPage = productRepository.findAll((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -309,21 +323,28 @@ public class ProductServiceImpl implements ProductService {
         }
 
         try {
-            Path uploadDir = Paths.get(System.getProperty("user.dir"),
-                    UPLOAD_ROOT,
-                    "product-images");
-            if(!Files.exists(uploadDir)) {
-                Files.createDirectories(uploadDir);
-            }
-
             String originalName = imageFile.getOriginalFilename();
             String ext = StringUtils.getFilenameExtension(originalName);
             String fileName = "product-" + UUID.randomUUID() + (ext != null ? "." + ext : "");
 
-            Path target = uploadDir.resolve(fileName);
-            imageFile.transferTo(target.toFile());
+            String key = "product-images/" + fileName;
 
-            return "/product-images/" + fileName;
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(imageFile.getSize());
+            metadata.setContentType(imageFile.getContentType());
+
+            try (InputStream inputStream = imageFile.getInputStream()) {
+                PutObjectRequest putObjectRequest = new PutObjectRequest(
+                        bucket,
+                        key,
+                        inputStream,
+                        metadata
+                );
+
+                amazonS3.putObject(putObjectRequest);
+            }
+
+            return amazonS3.getUrl(bucket, key).toString();
         } catch (IOException e) {
             throw new CustomException(ProductErrorCode.IMAGE_UPLOAD_FAIL);
         }
@@ -334,11 +355,28 @@ public class ProductServiceImpl implements ProductService {
             return;
         }
 
-        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-            return;
-        }
-
         try {
+
+            if(imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+                if(!imageUrl.contains(bucket)) {
+                    return;
+                }
+
+                URI uri = URI.create(imageUrl);
+                String path = uri.getPath();
+                if(path == null || path.isBlank()) {
+                    return;
+                }
+
+                String key = path.startsWith("/") ? path.substring(1) : path;
+
+                if(key.startsWith(bucket + "/")) {
+                    key = key.substring(bucket.length() + 1);
+                }
+
+                amazonS3.deleteObject(bucket, key);
+                return;
+            }
             String fileName = Paths.get(imageUrl).getFileName().toString();
             Path filePath = Paths.get(System.getProperty("user.dir"),
                     UPLOAD_ROOT,
@@ -349,6 +387,9 @@ public class ProductServiceImpl implements ProductService {
                 Files.delete(filePath);
             }
         } catch (IOException | java.nio.file.InvalidPathException e) {
+            throw new CustomException(ProductErrorCode.IMAGE_UPLOAD_FAIL);
+        } catch (com.amazonaws.services.s3.model.AmazonS3Exception e) {
+            // S3에 없으면(404) 그냥 넘어가도 되고, 지금은 일단 예외로 올려도 됨
             throw new CustomException(ProductErrorCode.IMAGE_UPLOAD_FAIL);
         }
     }

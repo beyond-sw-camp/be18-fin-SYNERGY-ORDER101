@@ -1,50 +1,104 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-const users = ref([
-  {
-    email: 'john.doe@example.com',
-    name: '존 도우',
-    role: '가맹점주',
-    status: '활성',
-    joined: '2023-01-15',
-    expiry: 'N/A',
-  },
-  {
-    email: 'alex.wong@example.com',
-    name: '알렉스 웡',
-    role: '본사 직원',
-    status: '활성',
-    joined: '2022-11-20',
-    expiry: 'N/A',
-  },
-  {
-    email: 'sarah.lee@example.com',
-    name: '사라 리',
-    role: '본사 관리자',
-    status: '비활성화',
-    joined: '2023-05-10',
-    expiry: '2023-06-10',
-  },
-  {
-    email: 'mike.ross@example.com',
-    name: '마이크 로스',
-    role: '가맹점주',
-    status: '활성',
-    joined: '2023-08-01',
-    expiry: 'N/A',
-  },
-])
+const users = ref([])
+const loading = ref(false)
+const error = ref('')
+
+// localStatus for optimistic UI updates before server API is wired
+const localStatus = new Map()
+
+function fmtDate(iso) {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toISOString().slice(0, 10)
+}
+
+async function loadUsers(page = 0, size = 20) {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await axios.get('http://localhost:8080/api/v1/users', { params: { page, size } })
+    const data = res.data || {}
+    // According to your API, users are in data.content
+    const list = Array.isArray(data.content) ? data.content : Array.isArray(data) ? data : []
+    users.value = list
+
+    // initialize local status from isActive
+    users.value.forEach((u) => {
+      localStatus.set(u.userId, u.isActive ? '활성' : '비활성화')
+    })
+  } catch (err) {
+    console.error('loadUsers error', err)
+    error.value = err.response?.data?.message || err.message || '사용자 목록을 불러오지 못했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => loadUsers())
+
+function getStatus(user) {
+  return localStatus.get(user.userId) ?? (user.isActive ? '활성' : '비활성화')
+}
+
+async function toggleStatus(user) {
+  const cur = getStatus(user)
+  const next = cur === '활성' ? '비활성화' : '활성'
+
+  const confirmMsg = next === '활성' ? '활성화 하시겠습니까?' : '비활성화 하시겠습니까?'
+  if (!window.confirm(confirmMsg)) return
+
+  // optimistic update
+  const prev = cur
+  localStatus.set(user.userId, next)
+
+  try {
+    const url = `http://localhost:8080/api/v1/users/${user.userId}/toggle-active`
+    // server expects PATCH without body in your spec; adjust if body required
+    const res = await axios.patch(url)
+
+    // server returns: { code, message, items: [ user ] }
+    const data = res.data || {}
+    const updatedUser =
+      Array.isArray(data.items) && data.items.length > 0
+        ? data.items[0]
+        : Array.isArray(data) && data.length > 0
+          ? data[0]
+          : data
+
+    if (updatedUser && typeof updatedUser.isActive === 'boolean') {
+      localStatus.set(user.userId, updatedUser.isActive ? '활성' : '비활성화')
+      const idx = users.value.findIndex((u) => u.userId === user.userId)
+      if (idx !== -1) users.value[idx].isActive = updatedUser.isActive
+    }
+
+    // server record updated — refresh list to keep local data consistent
+    await loadUsers()
+  } catch (err) {
+    // rollback optimistic update
+    localStatus.set(user.userId, prev)
+    const msg = err.response?.data?.message || err.message || '상태 변경에 실패했습니다.'
+    // show a simple alert for now
+    window.alert(msg)
+    console.error('toggleStatus error', err)
+  }
+}
 </script>
 
 <template>
   <div class="users-list">
     <header class="page-header">
-      <h1>사용자 관리</h1>
+      <h1>사용자 목록</h1>
     </header>
 
     <section class="table-card">
       <div class="table-wrap">
+        <div v-if="loading" style="padding: 16px">로딩 중...</div>
+        <div v-else-if="error" style="padding: 16px; color: #b91c1c">{{ error }}</div>
+
         <table class="users-table">
           <thead>
             <tr>
@@ -53,23 +107,30 @@ const users = ref([
               <th>역할</th>
               <th>상태</th>
               <th>가입 날짜</th>
-              <th>만료 날짜</th>
+
               <th>동작</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users" :key="user.email">
+            <tr v-if="!loading && users.length === 0">
+              <td colspan="7" style="text-align: center; padding: 20px; color: #6b7280">
+                사용자가 없습니다.
+              </td>
+            </tr>
+            <tr v-for="user in users" :key="user.userId">
               <td class="mono">{{ user.email }}</td>
               <td>{{ user.name }}</td>
               <td>{{ user.role }}</td>
               <td>
-                <span :class="['status-badge', user.status === '활성' ? 'active' : 'inactive']">{{
-                  user.status
-                }}</span>
+                <span :class="['status-badge', getStatus(user) === '활성' ? 'active' : 'inactive']">
+                  {{ getStatus(user) === '활성' ? '활성' : '비활성화' }}
+                </span>
               </td>
-              <td>{{ user.joined }}</td>
-              <td>{{ user.expiry }}</td>
-              <td class="actions"><button class="more">⋯</button></td>
+              <td>{{ fmtDate(user.createdAt) }}</td>
+
+              <td class="actions">
+                <button class="more" @click="toggleStatus(user)">⋯</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -84,7 +145,7 @@ const users = ref([
 }
 .page-header h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
 }
 .table-card {
   background: #fff;
@@ -101,13 +162,13 @@ const users = ref([
 }
 .users-table thead th {
   text-align: left;
-  padding: 14px;
+  padding: 18px;
   background: #fbfbfd;
   color: #6b7280;
   font-weight: 600;
 }
 .users-table tbody td {
-  padding: 18px 14px;
+  padding: 28px 18px;
   border-top: 1px solid #f3f4f6;
   vertical-align: middle;
 }
@@ -118,8 +179,9 @@ const users = ref([
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;
 }
 .status-badge {
-  display: inline-block;
-  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
   border-radius: 999px;
   font-weight: 700;
   font-size: 12px;
@@ -130,7 +192,17 @@ const users = ref([
 }
 .status-badge.inactive {
   background: #f3f4f6;
-  color: #9ca3af;
+  color: #7c3aed;
+  position: relative;
+}
+.status-badge.inactive::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff7ab6;
+  margin-right: 6px;
 }
 .actions {
   text-align: center;

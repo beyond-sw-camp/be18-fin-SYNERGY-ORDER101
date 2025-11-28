@@ -123,7 +123,14 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new CustomException(OrderErrorCode.ORDER_NOT_FOUND));
 
-        StoreOrder order = new StoreOrder(store, warehouse, user, request.getRemark());
+        StoreOrder order = StoreOrder
+                .builder()
+                .store(store)
+                .warehouse(warehouse)
+                .user(user)
+                .orderStatus(OrderStatus.SUBMITTED)
+                .remark(request.getRemark())
+                .build();
         StoreOrder savedOrder = storeOrderRepository.save(order);
 
         // create and persist details

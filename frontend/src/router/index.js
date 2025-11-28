@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import StoreListView from '@/views/hq/franchise/StoreListView.vue'
 const DashboardView = () => import('../views/DashboardView.vue')
 const PagePlaceholder = () => import('../views/PagePlaceholder.vue')
 const OrderCreateView = () => import('../views/hq/orders/OrderCreateView.vue')
@@ -35,6 +36,8 @@ const ProductDetailView = () => import('../views/hq/store/ProductDetailView.vue'
 const SmartOrderListViewView = () => import('../views/hq/orders/SmartOrderListView.vue')
 const SmartOrderDetailView = () => import('../views/hq/orders/SmartOrderDetailView.vue')
 const DemandForecastView = () => import('../views/hq/dashboard/DemandForecastView.vue')
+const StoreOrderCreateView = () => import('../views/store/purchase/StoreOrderCreateView.vue')
+const StoreOrderDashboardView = () => import('../views/hq/dashboard/StoreOrderDashboardView.vue')
 
 const hqRoutes = [
   {
@@ -154,7 +157,7 @@ const hqRoutes = [
   {
     path: '/hq/franchise/list',
     name: 'hq-franchise-list',
-    component: FranchiseListView,
+    component: StoreListView,
     meta: { title: '가맹점 목록' },
   },
   {
@@ -194,30 +197,36 @@ const hqRoutes = [
     meta: { title: '배송 관리' },
   },
   {
-  path: '/hq/smart-orders',
-  name: 'hq-smart-orders',
-  component: SmartOrderListViewView,
-  meta: { title: '스마트 발주 현황' },
-},
-{
-  path: '/hq/smart-orders/:supplierId/:targetWeek',
-  name: 'hq-smart-order-detail',
-  component: SmartOrderDetailView,
-  meta: { title: '스마트 발주 상세' },
-  props: true,
-},
-{
-  path: '/hq/dashboard/forecast',
-  name: 'hq-dashboard-forecast',
-  component: DemandForecastView,
-  meta: { title: '수요 예측 보고서' },
-},
-{
-  path: '/hq/dashboard/forecast',
-  name: 'hq-forecast',
-  component: DemandForecastView,
-  meta: { title: '수요 예측' }
-},
+    path: '/hq/smart-orders',
+    name: 'hq-smart-orders',
+    component: SmartOrderListViewView,
+    meta: { title: '스마트 발주 현황' },
+  },
+  {
+    path: '/hq/smart-orders/:supplierId/:targetWeek',
+    name: 'hq-smart-order-detail',
+    component: SmartOrderDetailView,
+    meta: { title: '스마트 발주 상세' },
+    props: true,
+  },
+  {
+    path: '/hq/dashboard/forecast',
+    name: 'hq-dashboard-forecast',
+    component: DemandForecastView,
+    meta: { title: '수요 예측 보고서' },
+  },
+  {
+    path: '/hq/dashboard/forecast',
+    name: 'hq-forecast',
+    component: DemandForecastView,
+    meta: { title: '수요 예측' }
+  },
+  {
+    path: '/hq/dashboard/order',
+    name: 'hq-dashboard-order',
+    component: StoreOrderDashboardView,
+    meta: { title: '주문 대시보드' },
+  },
 ]
 
 const storeRoutes = [
@@ -230,7 +239,7 @@ const storeRoutes = [
   {
     path: '/store/purchase/create',
     name: 'store-purchase-create',
-    component: PagePlaceholder,
+    component: StoreOrderCreateView,
     meta: { title: '발주 생성' },
   },
   {

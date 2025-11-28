@@ -2,7 +2,7 @@
   <div class="modal-backdrop" @click.self="close">
     <div class="modal">
       <header class="modal-header">
-        <h3>품목 추가</h3>
+        <h3>{{ title }}</h3>
         <button class="close-btn" @click="close">×</button>
       </header>
 
@@ -53,9 +53,9 @@
                 </th>
                 <th>SKU</th>
                 <th>제품명</th>
-                <th>가격</th>
-                <th>재고</th>
-                <th>리드 타임</th>
+                <th v-if="showPrice">{{ priceLabel }}</th>
+                <th v-if="showStock">재고</th>
+                <th v-if="showLeadTime">리드 타임</th>
               </tr>
             </thead>
             <tbody>
@@ -63,14 +63,14 @@
                 <td><input type="checkbox" v-model="selectedMap[item.sku]" /></td>
                 <td><code class="sku">{{ item.sku }}</code></td>
                 <td>{{ item.name }}</td>
-                <td class="numeric">
+                <td v-if="showPrice" class="numeric">
                   <Money :value="item.price" />
                 </td>
-                <td class="numeric">{{ item.stock?.toLocaleString() ?? '-' }}</td>
-                <td class="numeric">{{ item.lead }}일</td>
+                <td v-if="showStock" class="numeric">{{ item.stock?.toLocaleString() ?? '-' }}</td>
+                <td v-if="showLeadTime" class="numeric">{{ item.lead }}일</td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="6" class="empty-state">검색 결과가 없습니다.</td>
+                <td :colspan="3 + (showPrice ? 1 : 0) + (showStock ? 1 : 0) + (showLeadTime ? 1 : 0)" class="empty-state">검색 결과가 없습니다.</td>
               </tr>
             </tbody>
           </table>
@@ -93,16 +93,44 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
-// Money 컴포넌트가 사용되었으므로, 실제 프로젝트에서 임포트해야 합니다.
-// import Money from '@/components/Money.vue' 
+import Money from '@/components/global/Money.vue'
 
 const emit = defineEmits(['close', 'add'])
 
 const props = defineProps({
-  initialSupplierId: {
-    type: [String, Number],
-    default: null
+  title: {
+    type: String,
+    default: '품목 추가'
+  },
+  // 상품 목록을 로드하는 함수 (외부에서 주입)
+  fetchProductsFn: {
+    type: Function,
+    required: true
+  },
+  // 추가적인 필터 파라미터 (공급사 ID 등)
+  additionalFilters: {
+    type: Object,
+    default: () => ({})
+  },
+  // 단가 칸럼 표시 여부
+  showPrice: {
+    type: Boolean,
+    default: true
+  },
+  // 가격 칸럼 라벨 (단가 또는 가격)
+  priceLabel: {
+    type: String,
+    default: '단가'
+  },
+  // 재고 칸럼 표시 여부
+  showStock: {
+    type: Boolean,
+    default: true
+  },
+  // 리드타임 칸럼 표시 여부
+  showLeadTime: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -117,9 +145,8 @@ const largeCategories = ref([])
 const mediumCategories = ref([])
 const smallCategories = ref([])
 
-// 필터 상태 (props에서 받은 공급사 ID 초기값으로 사용)
+// 필터 상태
 const filters = reactive({
-  supplierId: props.initialSupplierId,
   largeCategoryId: null,
   mediumCategoryId: null,
   smallCategoryId: null,
@@ -136,7 +163,7 @@ const selectedCount = computed(() => {
 
 const isAllSelected = computed(() => {
   const productSkus = items.value.map(item => item.sku)
-  if (productSkus.length === 0) return false // 품목이 없으면 전체 선택도 아님
+  if (productSkus.length === 0) return false
 
   return productSkus.every(sku => selectedMap[sku])
 })
@@ -159,34 +186,23 @@ function normalizeProduct(p) {
 // --- API Calls (데이터 로드 함수) ---
 
 /**
- * 상품 목록을 API로부터 로드합니다.
+ * 상품 목록을 외부 주입 함수로부터 로드합니다.
  */
 async function fetchProducts() {
   loading.value = true
   error.value = null
 
   try {
-    let productlist = []
-
-    if (filters.supplierId) {
-      // 공급사 상세 조회로 품목 가져오기
-      const detail = await getSupplierDetail(filters.supplierId)
-      // 예상 구조: detail.items[0].products 또는 detail.products
-      productlist = detail.items?.[0]?.products || detail.products || []
-    } else {
-      // 공급사 미지정 시 기존 제품 목록 API 사용 (필요 시 유지)
-      const res = await axios.get('/api/v1/products', {
-        params: {
-          page: 1,
-          numOfRows: 100,
-          largeCategoryId: filters.largeCategoryId,
-          mediumCategoryId: filters.mediumCategoryId,
-          smallCategoryId: filters.smallCategoryId,
-          keyword: filters.keyword.trim() || undefined
-        }
-      }).then(r => r.data)
-      productlist = res.items?.[0]?.products || res.products || []
+    // 필터와 추가 파라미터를 합쳐서 전달
+    const params = {
+      ...props.additionalFilters,
+      largeCategoryId: filters.largeCategoryId,
+      mediumCategoryId: filters.mediumCategoryId,
+      smallCategoryId: filters.smallCategoryId,
+      keyword: filters.keyword.trim() || undefined
     }
+
+    const productlist = await props.fetchProductsFn(params)
 
     // items.value에 정규화된 상품 목록 저장
     items.value = productlist.map(normalizeProduct)
@@ -201,7 +217,7 @@ async function fetchProducts() {
 }
 
 /**
- * 대/중/소 카테고리를 로드하는 함수들 (유지)
+ * 대/중/소 카테고리를 로드하는 함수들
  */
 async function loadLargeCategories() {
   try {
@@ -269,7 +285,6 @@ function toggleSelectAll(e) {
 
 // 선택된 품목 추가 및 모달 닫기
 function addSelected() {
-  // selectedMap을 기반으로 실제 선택된 품목 객체만 필터링
   const selected = items.value.filter(i => selectedMap[i.sku])
 
   if (!selected.length) {
@@ -277,11 +292,7 @@ function addSelected() {
     return
   }
 
-  // 부모 컴포넌트에 선택된 품목 배열을 전달
   emit('add', selected)
-
-  // 선택 상태 초기화 (옵션) 및 모달 닫기
-  // Object.keys(selectedMap).forEach(k => { selectedMap[k] = false }) // 필요한 경우 주석 해제
   close()
 }
 
@@ -292,16 +303,12 @@ function close() {
 
 // --- Lifecycle Hook ---
 onMounted(async () => {
-  // 카테고리 로드 및 상품 목록 로드는 비동기로 병렬 처리 가능
   await loadLargeCategories()
-
-  // 초기 상품 목록 로드
   fetchProducts()
 })
 </script>
 
 <style scoped>
-/* CSS 부분은 변경 없이 원본 스타일을 유지합니다. */
 .modal-backdrop {
   position: fixed;
   inset: 0;

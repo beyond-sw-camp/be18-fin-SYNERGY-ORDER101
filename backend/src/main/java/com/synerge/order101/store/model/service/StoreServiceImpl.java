@@ -36,15 +36,17 @@ public class StoreServiceImpl implements StoreService {
 
     @Override
     @Transactional(readOnly = true)
-    public ItemsResponseDto<StoreListRes> getStores(int page, int numOfRows, String keyword) {
-        int pageIndex = Math.max(0, page - 1);
-        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public ItemsResponseDto<StoreListRes> getStores(Pageable pageable, String keyword) {
+        // 기본 정렬이 없으면 createdAt DESC를 기본으로 적용
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Store> resultPage;
         if (keyword != null && !keyword.isBlank()) {
-            resultPage = storeRepository.findByStoreNameContainingIgnoreCase(keyword, pageable);
+            resultPage = storeRepository.findByStoreNameContainingIgnoreCase(keyword, effective);
         } else {
-            resultPage = storeRepository.findAll(pageable);
+            resultPage = storeRepository.findAll(effective);
         }
 
         List<StoreListRes> items = resultPage.getContent().stream()
@@ -60,7 +62,9 @@ public class StoreServiceImpl implements StoreService {
                 .toList();
 
         int totalCount = (int) resultPage.getTotalElements();
-        return new ItemsResponseDto<>(HttpStatus.OK, items, page, totalCount);
+        // 클라이언트에서 사용하던 1-based 페이지 번호 유지
+        int responsePage = effective.getPageNumber() + 1;
+        return new ItemsResponseDto<>(HttpStatus.OK, items, responsePage, totalCount);
     }
 
     @Override
@@ -71,8 +75,9 @@ public class StoreServiceImpl implements StoreService {
             wh = warehouseRepository.findById(req.getDefaultWarehouseId()).orElseThrow(() -> new CustomException(StoreErrorCode.STORE_NOT_FOUND));
         }
 
+        // initially persist with a placeholder storeCode (DB requires non-null)
         Store s = Store.builder()
-                .storeCode(req.getStoreCode())
+                .storeCode("")
                 .storeName(req.getStoreName())
                 .address(req.getAddress())
                 .contactNumber(req.getContactNumber())
@@ -82,15 +87,20 @@ public class StoreServiceImpl implements StoreService {
 
         Store saved = storeRepository.save(s);
 
+        // generate storeCode based on the generated storeId, e.g. ST011
+        String generatedCode = String.format("ST%03d", saved.getStoreId());
+        saved.updateStoreCode(generatedCode);
+        Store updated = storeRepository.save(saved);
+
         return StoreRes.builder()
-                .storeId(saved.getStoreId())
-                .storeCode(saved.getStoreCode())
-                .storeName(saved.getStoreName())
-                .address(saved.getAddress())
-                .contactNumber(saved.getContactNumber())
-                .defaultWarehouseId(saved.getDefaultWarehouse() != null ? saved.getDefaultWarehouse().getWarehouseId() : null)
-                .isActive(saved.isActive())
-                .createdAt(saved.getCreatedAt())
+                .storeId(updated.getStoreId())
+                .storeCode(updated.getStoreCode())
+                .storeName(updated.getStoreName())
+                .address(updated.getAddress())
+                .contactNumber(updated.getContactNumber())
+                .defaultWarehouseId(updated.getDefaultWarehouse() != null ? updated.getDefaultWarehouse().getWarehouseId() : null)
+                .isActive(updated.isActive())
+                .createdAt(updated.getCreatedAt())
                 .build();
     }
 
@@ -204,5 +214,53 @@ public class StoreServiceImpl implements StoreService {
                 .safetyQty(saved.getSafetyQuantity())
                 .updatedAt(saved.getUpdatedAt())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ItemsResponseDto<String> getDistinctAddresses() {
+        List<String> addresses = storeRepository.findDistinctAddresses();
+        int totalCount = addresses.size();
+        // 페이지 번호는 1로 고정
+        return new ItemsResponseDto<>(HttpStatus.OK, addresses, 1, totalCount);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ItemsResponseDto<StoreListRes> searchStores(Pageable pageable, String address, String storeName) {
+        // 기본 정렬 적용
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Store> resultPage;
+        boolean hasAddress = address != null && !address.isBlank();
+        boolean hasStoreName = storeName != null && !storeName.isBlank();
+
+        if (hasAddress && hasStoreName) {
+            resultPage = storeRepository.findByAddressAndStoreNameContainingIgnoreCase(address, storeName, effective);
+        } else if (hasAddress) {
+            resultPage = storeRepository.findByAddress(address, effective);
+        } else if (hasStoreName) {
+            resultPage = storeRepository.findByStoreNameContainingIgnoreCase(storeName, effective);
+        } else {
+            resultPage = storeRepository.findAll(effective);
+        }
+
+        List<StoreListRes> items = resultPage.getContent().stream()
+                .map(s -> StoreListRes.builder()
+                        .storeId(s.getStoreId())
+                        .storeCode(s.getStoreCode())
+                        .storeName(s.getStoreName())
+                        .address(s.getAddress())
+                        .contactNumber(s.getContactNumber())
+                        .isActive(s.isActive())
+                        .createdAt(s.getCreatedAt())
+                        .build())
+                .toList();
+
+        int totalCount = (int) resultPage.getTotalElements();
+        int responsePage = effective.getPageNumber() + 1;
+        return new ItemsResponseDto<>(HttpStatus.OK, items, responsePage, totalCount);
     }
 }
