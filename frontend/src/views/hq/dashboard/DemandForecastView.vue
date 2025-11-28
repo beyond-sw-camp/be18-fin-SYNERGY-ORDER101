@@ -195,10 +195,20 @@ function renderCharts() {
       ],
     },
     options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { position: "top" } },
-        scales: { y: { beginAtZero: false } },
-    },
+      responsive: true,
+      maintainAspectRatio: false,
+      tension: 0.4,   
+      plugins: { legend: { position: "top" } },
+      scales: {
+        x: {
+          ticks: {
+            maxTicksLimit: 12,   
+            maxRotation: 0,
+          }
+        },
+        y: { beginAtZero: false }
+      }
+    }
   });
 
   // --- bar chart ---
