@@ -1,5 +1,6 @@
 package com.synerge.order101.ai.scheduler;
 
+import com.synerge.order101.ai.model.service.AiTrainingDataService;
 import com.synerge.order101.ai.model.service.DemandForecastService;
 import com.synerge.order101.ai.model.service.SmartOrderService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,8 @@ import java.time.LocalDate;
 public class AiScheduler {
     private final DemandForecastService demandForecastService;
     private final SmartOrderService smartOrderService;
+    private final AiTrainingDataService aiTrainingDataService;
+
 
     // 한달에 한번 재학습
     //매달 1일 새벽 02:00으로 모델 재학습 트리거
@@ -57,4 +60,15 @@ public class AiScheduler {
 
         log.info("[AI] Weekly forecast generation requested to Python. targetWeek={}", nextWeekMonday);
     }
+
+    @Scheduled(cron = "0 0 1 1 * ?")
+    public void monthlySyncActualSales() {
+        LocalDate now = LocalDate.now();
+        LocalDate start = now.minusMonths(1).withDayOfMonth(1);
+        LocalDate end = now.withDayOfMonth(1).minusDays(1);
+
+        log.info("[AI] Monthly actual sales sync start: {} ~ {}", start, end);
+        aiTrainingDataService.sendMonthlyActualSales(start, end);
+    }
+
 }

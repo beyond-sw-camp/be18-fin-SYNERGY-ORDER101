@@ -2,13 +2,14 @@ import subprocess
 from pathlib import Path
 from datetime import date
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Body
 from .schemas import ForecastTriggerResponse, RetrainResponse
 from .service.forecast_service import run_forecast_pipeline
 from .service.train_service import retrain_model
 from app.ops.make_product_master_from_sku import main as build_master
 from app.service.product_loader import load_product_master_once
 from .service.train_service import retrain_model, ensure_artifacts_exist, run_full_pipeline
+from typing import List
 
 BASE = Path(__file__).resolve().parent
 
@@ -30,19 +31,6 @@ def startup_tasks():
     except Exception as e:
         print(f"[ERROR] ensure_artifacts_exist() failed: {e}")
 
-    # try:
-    #     print("[STARTUP] load product_master_load.csv into DB...")
-    #     load_product_master_once()
-    # except Exception as e:
-    #     print(f"[ERROR] load_product_master_once() failed: {e}")
-
-    # try:
-    #     print("[STARTUP] ensure AI artifacts exist (features / model etc.)...")
-    #     ensure_artifacts_exist()
-    # except Exception as e:
-    #     # 어떤 일이 있어도 서버 시작 자체는 막지 않는다.
-    #     print(f"[ERROR] ensure_artifacts_exist() failed: {e}")
-
 
 
 @app.get("/api/v1/ai/train")
@@ -60,7 +48,14 @@ def run_full_pipeline_endpoint():
     }
 
 
-
+@app.post("/internal/ai/add-actual-sales")
+def add_actual_sales(data: List[dict] = Body(...)):
+    try:
+        from app.service.sales_append_service import append_actual_sales
+        append_actual_sales(data)
+        return {"status": "ok", "rows": len(data)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
