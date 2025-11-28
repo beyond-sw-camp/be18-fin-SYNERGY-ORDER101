@@ -6,7 +6,7 @@ from app.db import get_connection
 OUT = Path(__file__).resolve().parents[1] / "data_pipeline" / "warehouse_inventory.csv"
 
 WAREHOUSE_ID = 1
-LEDGER_START_ID = 700000
+LEDGER_START_ID = 1
 
 def main():
     with get_connection() as conn:
@@ -35,7 +35,7 @@ def main():
     ])
 
     df.to_csv(OUT, index=False, encoding="utf-8-sig")
-    print(f"[OK] warehouse_inventory.csv 생성 완료 → {OUT}")
+    print(f"[OK] warehouse_inventory.csv 생성 완료 : {OUT}")
 
 if __name__ == "__main__":
     main()

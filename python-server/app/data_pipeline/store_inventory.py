@@ -13,7 +13,7 @@ def main():
             cur.execute("SELECT product_id FROM product")
             products = [row["product_id"] for row in cur.fetchall()]
 
-    print(f"➡ total products in DB: {len(products)}")
+    print(f"total products in DB: {len(products)}")
 
     rows = []
     for pid in products:
@@ -26,7 +26,7 @@ def main():
     ])
 
     df.to_csv(OUT, index=False, encoding="utf-8-sig")
-    print(f"[OK] store_inventory.csv 생성 완료 → {OUT}")
+    print(f"[OK] store_inventory.csv 생성 완료 : {OUT}")
 
 if __name__ == "__main__":
     main()
