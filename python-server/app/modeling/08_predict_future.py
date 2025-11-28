@@ -31,86 +31,72 @@ def _add_time_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
-    # ---- 모델 + feature 리스트 로딩 ----
     model = joblib.load(MODEL_PATH)
     with open(FEATURES_PATH, "r", encoding="utf-8") as f:
         features_used = json.load(f)
 
-    # ---- Feature 데이터 로드 ----
     fea = pd.read_csv(FEA, parse_dates=["target_date"])
     fea["target_date"] = _to_week_start_monday(fea["target_date"])
     fea = fea.sort_values(KEYS + ["target_date"])
 
-    # ---- 마지막 주 확인 ----
     last_dt = fea["target_date"].max()
     start = last_dt + pd.offsets.Week(weekday=0)
     future_dates = pd.date_range(start, periods=HORIZON_WEEKS, freq=FORECAST_FREQ)
 
-    # ---- lag/ma 컬럼 리스트 ----
     lag_cols = [c for c in fea.columns if c.startswith("lag_")]
     ma_cols  = [c for c in fea.columns if c.startswith("ma_")]
 
-    # ---- SKU별 최근 60주 버퍼 만들기 ----
     base = (
         fea.groupby(KEYS)
-           .tail(60)[["target_date", "actual_order_qty", *KEYS, 
-                    "product_code", 
-                    *lag_cols, *ma_cols,
-                    "avg_temp_c", "cdd", "hdd", "precip_mm",
-                    "heat_wave", "cold_wave", "year", "weekofyear", "month",
-                    "sin_week", "cos_week", "msrp_krw", "base_share"]]
-            .copy()
+           .tail(60)[[
+                "target_date", "actual_order_qty", *KEYS,
+                "product_code",
+                *lag_cols, *ma_cols,
+                "avg_temp_c", "cdd", "hdd", "precip_mm",
+                "heat_wave", "cold_wave",
+                "year", "weekofyear", "month",
+                "sin_week", "cos_week", "msrp_krw", "base_share"
+            ]]
+           .copy()
     )
 
     forecasts = []
 
-    # ---- SKU별 예측 진행 ----
     for grp, hist in base.groupby(KEYS):
         hist = hist.sort_values("target_date").copy()
-
         product_code = hist["product_code"].iloc[-1]
-
-        # future roll-forward용 버퍼
         buf = hist[["target_date", "actual_order_qty"]].copy()
 
-        # 미래 주차 반복
         for dt in future_dates:
             row = {k: v for k, v in zip(KEYS, grp)}
-            row["product_code"] = product_code 
+            row["product_code"] = product_code
             row["target_date"] = dt
 
             temp = pd.DataFrame([row])
             temp = _add_time_features(temp)
 
-            # ---- lag 값 채우기 ----
             for c in lag_cols:
                 k = int(c.split("_")[1])
                 temp[c] = buf["actual_order_qty"].iloc[-k] if len(buf) >= k else 0.0
 
-            # ---- moving average 채우기 ----
             for c in ma_cols:
                 k = int(c.split("_")[1])
                 temp[c] = buf["actual_order_qty"].tail(k).mean() if len(buf) > 0 else 0.0
 
-            # ---- 날씨: 가장 최근값으로 유지 ----
             last_weather = hist[hist["target_date"] == hist["target_date"].max()].iloc[0]
             for c in ["avg_temp_c","cdd","hdd","precip_mm","heat_wave","cold_wave"]:
                 temp[c] = last_weather[c]
 
-            # ---- 상품 속성 그대로 유지 ----
             temp["msrp_krw"] = hist["msrp_krw"].iloc[-1]
             temp["base_share"] = hist["base_share"].iloc[-1]
 
-            # ---- 모델 입력 정렬 ----
             X = temp.reindex(columns=features_used, fill_value=0.0)
 
             y_pred = float(model.predict(X)[0])
             y_pred = max(0, y_pred)
 
-            # ---- 저장 ----
             forecasts.append({**row, "y_pred": round(y_pred)})
 
-            # ---- 버퍼 업데이트 ----
             buf = pd.concat(
                 [buf, pd.DataFrame([{"target_date": dt, "actual_order_qty": y_pred}])],
                 ignore_index=True
