@@ -115,7 +115,7 @@ Chart.register(
   Legend
 );
 
-const TARGET_WEEK = "2025-01-13";
+const TARGET_WEEK = "2025-12-15";
 
 const loading = ref(false);
 const error = ref("");

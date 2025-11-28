@@ -165,9 +165,9 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
 
 
     // 안전한 MAPE 계산 (actual null 가능)
-    private Double safeMAPE(Integer actual, Integer forecast) {
+    private double safeMAPE(Integer actual, Integer forecast) {
         if (actual == null || actual == 0 || forecast == null) {
-            return null;
+            return Double.NaN;
         }
         return Math.abs((actual - forecast) / (double) actual);
     }
