@@ -1,7 +1,9 @@
 import os
 from contextlib import contextmanager
-import pymysql
 from dotenv import load_dotenv
+import pymysql
+from sqlalchemy import create_engine
+from sqlalchemy.pool import QueuePool
 
 load_dotenv()
 
@@ -11,6 +13,21 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
+
+# SQLAlchemy 엔진 (pandas.read_sql() 공식 지원)
+DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+
+engine = create_engine(
+    DB_URL,
+    poolclass=QueuePool,
+    pool_size=10,
+    max_overflow=20,
+    pool_recycle=180,
+    pool_pre_ping=True,
+)
+
+
+# pymysql 커넥션 
 @contextmanager
 def get_connection():
     conn = pymysql.connect(
@@ -19,8 +36,8 @@ def get_connection():
         user=DB_USER,
         password=DB_PASSWORD,
         database=DB_NAME,
-        cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
+        cursorclass=pymysql.cursors.DictCursor,
     )
     try:
         yield conn
