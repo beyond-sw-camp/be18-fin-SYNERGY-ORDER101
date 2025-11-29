@@ -37,13 +37,15 @@ public class ShipmentService {
     public void updateShipmentStatus() {
         LocalDateTime now = LocalDateTime.now();
 
-        // 일단 테스트 용으로 15분 설정.
+        // 일단 테스트 용으로 3분 설정.
         int w2t = shipmentRepository.updateFromCreatedAt(
                 ShipmentStatus.WAITING, ShipmentStatus.IN_TRANSIT,
-                now.minusMinutes(15), now
+                now.minusMinutes(3), now
         );
 
         if (w2t > 0) {
+            entityManager.clear();
+
             List<Shipment> list = shipmentRepository.findByShipmentStatus(ShipmentStatus.IN_TRANSIT);
             for (Shipment sh : list) {
                 StoreOrder order = sh.getStoreOrder();
@@ -60,6 +62,8 @@ public class ShipmentService {
         );
 
         if (t2d > 0) {
+            entityManager.clear();
+
             List<Shipment> list = shipmentRepository.findByShipmentStatus(ShipmentStatus.DELIVERED);
             for (Shipment sh : list) {
                 StoreOrder order = sh.getStoreOrder();

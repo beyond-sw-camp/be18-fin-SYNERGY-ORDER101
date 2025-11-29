@@ -50,7 +50,7 @@ public class Shipment {
     private Boolean inTransitApplied = false;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = true)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

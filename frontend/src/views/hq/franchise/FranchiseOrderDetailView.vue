@@ -74,8 +74,7 @@
             </div>
           </div>
         </div>
-
-        <div class="track">
+        <div class="track" ref="trackRef">
           <div class="track-fill" :style="{ width: filledPercent + '%' }"></div>
         </div>
 
@@ -94,7 +93,6 @@
           <div class="status-title">{{ s.label }}</div>
           <div class="status-time">{{ s.time }}</div>
 
-
           <div v-if="s.key === 'SHIPPED'">
             <div class="status-desc">{{ trackingNumber }}</div>
           </div>
@@ -109,7 +107,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted } from "vue";
+import { reactive, computed, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import apiClient from "@/components/api";
 import Money from "@/components/global/Money.vue";
@@ -117,7 +115,6 @@ import { formatDateTimeMinute } from "@/components/global/Date.js";
 
 const route = useRoute();
 const orderId = route.params.id;
-
 
 const detail = reactive({
   orderNo: "",
@@ -128,7 +125,6 @@ const detail = reactive({
   items: [],
   logs: [],
 });
-
 
 const hasStatus = (st) => detail.logs.some((l) => l.status === st);
 
@@ -142,68 +138,59 @@ const findNote = (st) => {
   return log ? log.note : "";
 };
 
-
 const displayStatus = computed(() => {
   const ship = detail.shipmentStatus;
 
   if (ship === "DELIVERED") return "DELIVERED";
-  if (ship === "SHIPPED") return "SHIPPED";
+  if (ship === "IN_TRANSIT" || ship === "SHIPPED") return "SHIPPED";
   if (ship === "WAITING") return "WAITING";
-
   return "-";
 });
 
-
 const progressSteps = computed(() => [
-  {
-    key: "SUBMITTED",
-    label: "제출됨",
-    time: findTime("SUBMITTED"),
-    note: findNote("SUBMITTED"),
-  },
-  {
-    key: "WAITING",
-    label: "배송대기",
-    time: findTime("WAITING"),
-    note: findNote("WAITING"),
-  },
-  {
-    key: "SHIPPED",
-    label: "배송중",
-    time: findTime("SHIPPED"),
-    note: findNote("SHIPPED"),
-  },
-  {
-    key: "DELIVERED",
-    label: "배송완료",
-    time: findTime("DELIVERED"),
-    note: findNote("DELIVERED"),
-  },
+  { key: "SUBMITTED", label: "제출됨", time: findTime("SUBMITTED") },
+  { key: "WAITING", label: "배송대기", time: findTime("WAITING") },
+  { key: "SHIPPED", label: "배송중", time: findTime("SHIPPED") },
+  { key: "DELIVERED", label: "배송완료", time: findTime("DELIVERED") },
 ]);
 
-
 const currentStepIndex = computed(() => {
-  if (detail.shipmentStatus === "DELIVERED") return 3;
-  if (detail.shipmentStatus === "SHIPPED") return 2;
-  if (detail.shipmentStatus === "WAITING") return 1;
+  if (displayStatus.value === "DELIVERED") return 3;
+  if (displayStatus.value === "SHIPPED") return 2;
+  if (displayStatus.value === "WAITING") return 1;
   return 0;
+});
+
+const trackRef = ref(null);
+const trackWidth = ref(0);
+
+onMounted(() => {
+  trackWidth.value = trackRef.value?.offsetWidth || 0;
 });
 
 
 const filledPercent = computed(() => {
-  const total = progressSteps.value.length - 1;
-  return (currentStepIndex.value / total) * 100;
+  switch (displayStatus.value) {
+    case "WAITING":
+      return 37.5; // 배송대기
+    case "SHIPPED":
+      return 62.5; // 배송중
+    case "DELIVERED":
+      return 100; // 배송완료
+    default:
+      return 15; 
+  }
 });
 
 
 const trackingNumber = computed(() => {
-  if (!hasStatus("SHIPPED"))
+  if (!(displayStatus.value === "SHIPPED" || displayStatus.value === "DELIVERED")) {
     return "아직 배송이 진행되기 전이라 송장번호가 없습니다";
+  }
 
   const shipped = detail.logs.find((l) => l.status === "SHIPPED");
-  return shipped?.note || "-";
+  return shipped?.note ? `송장번호 : ${shipped.note}` : "-";
 });
-
 
 async function fetchDetail() {
   const res = await apiClient.get(`/api/v1/store-orders/detail/${orderId}`);
@@ -211,7 +198,16 @@ async function fetchDetail() {
 
   detail.orderNo = data.orderNo;
   detail.storeName = data.storeName;
-  detail.createdAt = formatDateTimeMinute(data.createdAt);
+
+  detail.logs =
+    data.progress?.map((p) => ({
+      status: p.key.toUpperCase(),
+      changedAt: p.time,
+      note: p.note,
+    })) || [];
+
+  detail.createdAt = findTime("SUBMITTED");
+
   detail.status = data.orderStatus;
   detail.shipmentStatus = data.shipmentStatus;
 
@@ -223,27 +219,16 @@ async function fetchDetail() {
       orderQty: it.qty,
       unitPrice: it.price,
     })) || [];
-
-  detail.logs =
-    data.progress?.map((p) => ({
-      status: p.key.toUpperCase(),
-      changedAt: p.time,
-      note: p.note,
-    })) || [];
 }
 
 onMounted(fetchDetail);
-
 
 const totalQty = computed(() =>
   detail.items.reduce((s, it) => s + (it.orderQty || 0), 0)
 );
 
 const totalAmount = computed(() =>
-  detail.items.reduce(
-    (s, it) => s + (it.orderQty || 0) * (it.unitPrice || 0),
-    0
-  )
+  detail.items.reduce((s, it) => s + (it.orderQty || 0) * (it.unitPrice || 0), 0)
 );
 
 const formatMoney = (v) => Number(v).toLocaleString() + "원";
@@ -281,31 +266,21 @@ const statusLabel = (s) =>
   flex: 1;
 }
 
-.card.info label {
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
 .card.info .value {
   font-size: 1.2rem;
   font-weight: 700;
   margin-top: 8px;
 }
 
-.status-chip {
-  background: #eee;
-  padding: 6px 10px;
-  border-radius: 12px;
-}
-
 .items-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .items-table th,
 .items-table td {
-  padding: 12px;
+  padding: 12px 8px;
   border-top: 1px solid #f3f4f6;
 }
 
@@ -313,25 +288,25 @@ const statusLabel = (s) =>
   text-align: right;
 }
 
-.no-data {
-  text-align: center;
-  padding: 20px;
-}
-
 .timeline {
+  display: grid;
+  grid-template-rows: auto 6px auto;
+  row-gap: 14px;
   padding: 28px 0;
 }
 
 .steps-icons {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  text-align: center;
 }
 
 .step-icon .icon {
-  width: 40px;
-  height: 40px;
-  border: 2px solid #ddd;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  border: 2px solid #ddd;
+  margin: 0 auto;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -339,38 +314,40 @@ const statusLabel = (s) =>
 
 .step-icon.active .icon {
   background: #6b46ff;
-  color: #fff;
   border-color: #6b46ff;
+  color: white;
 }
 
 .track {
+  position: relative;
   height: 6px;
   background: #eee;
   border-radius: 6px;
-  margin: 8px 0;
-  overflow: hidden;
 }
 
 .track-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
   height: 100%;
   background: #6b46ff;
+  border-radius: 6px;
 }
 
 .steps-labels {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  text-align: center;
 }
 
-.statuses {
-  margin-top: 16px;
+.steps-labels .sub {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #666;
 }
 
 .status-row {
   padding: 12px 0;
   border-top: 1px solid #eee;
-}
-
-.status-title {
-  font-weight: 700;
 }
 </style>
