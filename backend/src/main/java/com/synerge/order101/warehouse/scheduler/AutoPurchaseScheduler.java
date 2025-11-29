@@ -19,7 +19,7 @@ public class AutoPurchaseScheduler {
      *
      * CRON: 0 0 3 * * *  → 3:00 AM 매일 실행
      */
-    @Scheduled(cron = "0 41 17 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 12 * * *", zone = "Asia/Seoul")
     public void runDailyReplenishmentBatch() {
         log.info("▶ [자동발주 스케줄러] 실행 시작");
 
@@ -33,7 +33,7 @@ public class AutoPurchaseScheduler {
             log.info("2) 자동발주 트리거 완료");
 
         } catch (Exception e) {
-            log.error("❌ [자동발주 스케줄러] 오류 발생: {}", e.getMessage(), e);
+            log.error("[자동발주 스케줄러] 오류 발생: {}", e.getMessage(), e);
         }
 
         log.info("▶ [자동발주 스케줄러] 실행 종료");

@@ -23,6 +23,8 @@ public class AutoPurchaseDetailResponseDto {
 
     private LocalDateTime requestedAt;
 
+    private String status;
+
     private List<AutoPurchaseItemDto> purchaseItems;
 
     @Getter

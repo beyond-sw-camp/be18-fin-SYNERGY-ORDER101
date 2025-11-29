@@ -77,7 +77,8 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                         poNo: detail.poNo,
                         supplierName: detail.supplierName,
                         userName: detail.userName,
-                        requestedAt: detail.requestedAt
+                        requestedAt: detail.requestedAt,
+                        status: detail.status,
                     }
                 } else {
                     this.details = []
@@ -99,9 +100,9 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
 
         async submitAutoOrder(purchaseId, items) {
             try {
-                const res = await axios.put(`/api/v1/purchase-orders/auto/${purchaseId}/submit`, {
+                const res = await axios.patch(`/api/v1/purchase-orders/auto/${purchaseId}/submit`, {
                     items: items.map(i => ({
-                        purchaseDetailId: i.purchaseDetailId,
+                        purchaseOrderLineId: i.detailId,
                         productId: i.productId,
                         orderQty: i.orderQty
                     }))

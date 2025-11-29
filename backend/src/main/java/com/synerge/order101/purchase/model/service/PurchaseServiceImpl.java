@@ -284,6 +284,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
                 .requestedAt(purchase.getCreatedAt())
+                .status(purchase.getOrderStatus().name())
                 .purchaseItems(items)
                 .build();
     }

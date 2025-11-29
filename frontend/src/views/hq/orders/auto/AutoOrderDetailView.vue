@@ -38,11 +38,11 @@
                 <th>주문 수량</th>
                 <th>안전 재고</th>
                 <th>금액</th>
-                <th>작업</th>
+                <!-- <th>작업</th> -->
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in autoOrderStore.details" :key="row.detailId" :class="{ modified: row.isModified }">
+              <tr v-for="row in autoOrderStore.details" :key="row.purchaseDetailId" :class="{ modified: row.isModified }">
                 <td>{{ row.productCode }}</td>
                 <td>{{ row.productName }}</td>
                 <td class="numeric">
@@ -58,16 +58,15 @@
                     />
                     <span v-else>{{ row.orderQty }}</span>
                   </td>
-                <!-- <td class="numeric">{{ row.orderQty }}</td> -->
                 <td class="numeric">{{ row.safetyQty }}</td>
                 <td class="numeric">
                   <Money :value="row.unitPrice * row.orderQty" />
                 </td>
-                <td>
+                <!-- <td>
                   <button v-if="isDraft" class="btn-delete" @click="removeItem(row.detailId)">
                     삭제
                   </button>
-                </td>
+                </td> -->
               </tr>
               <tr v-if="autoOrderStore.details.length === 0">
                 <td colspan="6" class="empty">품목이 없습니다.</td>
@@ -75,13 +74,18 @@
             </tbody>
           </table>
         </section>
-        <div class="approval-actions-wrapper">
-          <PurchaseApprovalActions v-if="po.status === 'SUBMITTED'" />
-        </div>
-      </div>
 
-      <div class="actions-bottom" v-if="po.status === 'DRAFT_AUTO'">
-        <button class="btn-primary" @click="submit">제출</button>
+        <div class="approval-actions-wrapper" v-if="showApprovalActions">
+          <PurchaseApprovalActions />
+        </div>
+
+        <div class="actions-bottom" v-if="showSubmitButton">
+          <button class="btn primary" @click="submit">제출</button>
+        </div>
+<!-- 
+        <div class="actions-bottom" v-if="po.status === 'DRAFT_AUTO'">
+          <button class="btn primary" @click="submit">제출</button>
+        </div> -->
       </div>
 
       <aside class="right-col">
@@ -119,9 +123,10 @@ const router = useRouter()
 const poId = route.params.purchaseId
 
 const isDraft = computed(() => po.status === 'DRAFT_AUTO')
-const isSubmitted = computed(() => po.status === 'SUBMITTED')
 
-const showApprovalButtons = computed(() => po.status === 'SUBMITTED')
+const showApprovalActions = computed(() => po.status === 'SUBMITTED')
+const showSubmitButton = computed(() => po.status === 'DRAFT_AUTO')
+
 
 // PO 정보 영역
 const po = reactive({
@@ -254,6 +259,19 @@ const displayUserName = computed(() => {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+}
+.btn.primary {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
 }
 
 .btn-approve {
