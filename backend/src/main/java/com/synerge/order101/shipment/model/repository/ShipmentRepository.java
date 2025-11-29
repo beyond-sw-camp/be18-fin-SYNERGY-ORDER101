@@ -14,6 +14,7 @@ import java.util.List;
 
 @Repository
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
+    List<Shipment> findByShipmentStatus(ShipmentStatus status);
 
     List<Shipment> findByStoreOrder(StoreOrder storeOrder);
 

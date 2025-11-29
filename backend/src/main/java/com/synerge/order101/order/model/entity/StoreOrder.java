@@ -96,6 +96,10 @@ public class StoreOrder {
         return "OR" + datePart + randomNum;
     }
 
+    public void updateShipmentStatus(ShipmentStatus newStatus) {
+        this.shipmentStatus = newStatus;
+    }
+
     @PreUpdate
     void onUpdate() {
         updatedAt = LocalDateTime.now();
