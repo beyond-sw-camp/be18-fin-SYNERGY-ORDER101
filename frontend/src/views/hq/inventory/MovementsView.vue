@@ -74,6 +74,7 @@
       @change-page="(p) => handlePage(p)"
       @open-modal="(data) => openDetailModal('INBOUND', data)"
     />
+    
     <outbound-table 
       v-else
       :items="outboundStore.items"
@@ -369,8 +370,6 @@ async function resetFilters() {
   color: #6b7280;
   cursor: pointer;
 }
-
-
 .supplier-select {
   padding: 10px;
   border-radius: 8px;

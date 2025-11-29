@@ -4,16 +4,39 @@
       <h1>발주 관리</h1>
     </header>
 
-    <section class="card controls">
-      <div class="controls-row">
-        <input class="search" v-model="filters.q" placeholder="PO 번호, 공급업체 등으로 검색..." />
+    <div class="filter-card">
+      <div class="filter-row">
 
-        <div class="controls-right">
-          <OrderStatusSelect v-model="filters.status" />
-          <button class="btn" @click="search">조회</button>
+        <div class="filter-item">
+          <label>공급사</label>
+          <div class="supplier-select" @click="openSupplierModal">
+            <span v-if="selectedSupplierName">{{ selectedSupplierName }}</span>
+            <span v-else class="placeholder">공급사 선택</span>
+          </div>
+        </div>
+
+        <div class="filter-item">
+          <label>날짜 선택</label>
+          <flat-pickr
+            v-model="dateRange"
+            :config="dateConfig"
+            class="date-input"
+            placeholder="기간을 선택하세요"
+          />
+        </div>
+        <div class="filter-actions">
+          <button class="btn primary" @click="search">검색</button>
+          <button class="btn" @click="resetFilters">초기화</button>
         </div>
       </div>
-    </section>
+    </div>
+
+    <SupplierSearchModal
+      :isOpen="supplierModalOpen"
+      :selectedSupplier="selectedSupplier"
+      @update:isOpen="supplierModalOpen = $event"
+      @select="handleSupplierSelect"
+    />
 
     <section class="card list">
       <div class="table-wrap">
@@ -38,7 +61,9 @@
               </td>
               <td>{{ formatDateTimeMinute(row.requestedAt) }}</td>
               <td>
-                <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
+                <span :class="['chip', statusClass(row.status)]">
+                  {{ statusLabel(row.status) }}
+                </span>
               </td>
             </tr>
             <tr v-if="autoOrderStore.totalCount === 0">
@@ -50,7 +75,11 @@
 
       <div class="pagination">
         <div class="pages">
-          <button v-for="p in totalPages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
+          <button
+            v-for="p in autoOrderStore.totalPages"
+            :key="p"
+            :class="{ active: p === page }"
+            @click="goPage(p)">
             {{ p }}
           </button>
         </div>
@@ -64,32 +93,117 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute } from '@/components/global/Date';
-import OrderStatusSelect from '@/components/OrderStatusSelect.vue';
 import { useAutoOrderStore } from '@/stores/order/autoOrderStore';
 
-const autoOrderStore = useAutoOrderStore()
-const router = useRouter()
+import SupplierSearchModal from '@/components/modal/SupplierSearchModal.vue'
 
-const filters = ref({ q: '', status: '전체' })
+import flatPickr from 'vue-flatpickr-component'
+import "flatpickr/dist/flatpickr.css"
+
+const router = useRouter()
+const autoOrderStore = useAutoOrderStore()
 
 const page = ref(1)
-const rows = ref([])
+const isSearchMode = ref(false)
 
-// 시작시
+const supplierModalOpen = ref(false)
+const selectedSupplier = ref(null)
+const selectedSupplierName = ref('')
+
+const dateRange = ref(null)
+
+const searchParams = ref({
+  supplierId: null,
+  startDate: null,
+  endDate: null
+})
+
+const dateConfig = {
+  mode: 'range',
+  dateFormat: 'Y-m-d',
+  locale: {
+    rangeSeparator: ' ~ ',
+  },
+}
+
 onMounted(() => {
-  autoOrderStore.fetchAutoOrders({ page:1 })
-});
+  autoOrderStore.fetchAutoOrders({ page: 1 })
+})
 
-function statusClass(s) {
-  if (!s) return ''
-  if (s.includes('CONFIRMED')) return 's-accepted'
-  if (s.includes('SUBMITTED')) return 's-waiting'
-  if (s.includes('REJECTED')) return 's-rejected'
-  return ''
+function openSupplierModal() {
+  supplierModalOpen.value = true
+}
+
+function handleSupplierSelect(supplier) {
+  selectedSupplier.value = supplier
+  selectedSupplierName.value = supplier.supplierName
+}
+
+async function search() {
+  const [startDate, endDate] = dateRange.value?.split(' ~ ') ?? [null, null]
+  isSearchMode.value = true
+
+  searchParams.value = {
+    supplierId: selectedSupplier.value?.supplierId ?? null,
+    startDate,
+    endDate
+  }
+
+  await autoOrderStore.searchAutoOrders({
+    supplierId: selectedSupplier.value?.supplierId ?? null,
+    startDate,
+    endDate,
+    page: 1,
+    numOfRows: autoOrderStore.numOfRows
+  })
+}
+
+async function goPage(p) {
+  page.value = p
+
+  if (!isSearchMode.value) {
+    await autoOrderStore.fetchAutoOrders({ page: p })
+    return
+  }
+
+  await autoOrderStore.fetchAutoOrders({
+    ...searchParams.value,
+    page: p
+  })
+}
+
+async function resetFilters() {
+  selectedSupplier.value = null
+  selectedSupplierName.value = ''
+  dateRange.value = null
+  isSearchMode.value = false
+  searchParams.value = { supplierId: null, startDate: null, endDate: null }
+
+  await autoOrderStore.fetchAutoOrders({ page: 1 })
 }
 
 function openApproval(row) {
   router.push({ name: 'hq-orders-auto-detail', params: { purchaseId: row.purchaseId } })
+}
+
+function statusClass(s) {
+  if (!s) return ''
+  if (s === 'CONFIRMED') return 's-accepted'
+  if (s === 'SUBMITTED') return 's-waiting'
+  if (s === 'DRAFT_AUTO') return 's-draft'
+  if (s === 'REJECTED') return 's-rejected'
+  return ''
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case 'SUBMITTED': return '제출'
+    case 'CONFIRMED': return '승인'
+    case 'REJECTED': return '반려'
+    case 'CANCELLED': return '취소'
+    case 'DRAFT_AUTO': return '초안'
+    default: return status
+  }
 }
 </script>
 
@@ -176,6 +290,10 @@ function openApproval(row) {
   font-size: 13px;
 }
 
+.s-draft {
+  background: #7c3aed;
+}
+
 .s-accepted {
   background: #16a34a;
 }
@@ -224,5 +342,52 @@ function openApproval(row) {
 
 .clickable-row {
   cursor: pointer;
+}
+
+.filter-card {
+  background: #fff;
+  border: 1px solid #e9eef6;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+}
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.filter-item input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.filter-actions {
+  display: flex;
+  gap: 8px;
+}
+.supplier-select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+}
+.supplier-select .placeholder {
+  color: #9ca3af;
+}
+.date-input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+}
+.date-input:focus {
+  border-color: #6366f1;
 }
 </style>

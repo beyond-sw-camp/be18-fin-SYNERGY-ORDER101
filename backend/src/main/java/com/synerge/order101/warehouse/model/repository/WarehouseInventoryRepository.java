@@ -62,7 +62,7 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
     @Query("""
     SELECT new com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto(
         i.inventoryId, p.productCode, pc.categoryName, p.productName,
-        i.onHandQuantity, i.safetyQuantity
+        i.onHandQuantity, i.safetyQuantity, p.price
     )
     FROM WarehouseInventory i
     JOIN i.product p

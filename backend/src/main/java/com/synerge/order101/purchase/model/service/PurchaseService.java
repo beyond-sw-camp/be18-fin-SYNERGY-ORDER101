@@ -26,9 +26,11 @@ public interface PurchaseService {
     // 자동 발주 생성
     void createAutoPurchase();
 
-    List<AutoPurchaseListResponseDto> getAutoPurchases(OrderStatus status, Integer page, Integer size);
+    Page<AutoPurchaseListResponseDto> getAutoPurchases(Integer page, Integer size);
 
     AutoPurchaseDetailResponseDto getAutoPurchaseDetail(Long purchaseOrderId);
 
-    AutoPurchaseDetailResponseDto submitAutoPurchase(Long purchaseId, AutoPurchaseSubmitRequestDto request);
+    AutoPurchaseDetailResponseDto submitAutoPurchase(Long purchaseId, Long submitUserId, AutoPurchaseSubmitRequestDto request);
+
+    Page<AutoPurchaseListResponseDto> searchAutoPurchases(AutoPurchaseSearchRequestDto request);
 }

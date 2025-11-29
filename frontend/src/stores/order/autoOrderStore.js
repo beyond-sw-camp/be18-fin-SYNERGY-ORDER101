@@ -9,33 +9,54 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
         page: 1,
         numOfRows: 5,
         totalCount: 0,
-        status: null,        // SUBMITTED, DRAFT_AUTO 등
+        totalPages: 1,
         loading: false,
         error: null,
     }),
 
     actions: {
-        async fetchAutoOrders({ status = null, page = 1, numOfRows = 5 } = {}) {
+
+        async fetchAutoOrders({ page = 1, numOfRows = 5 } = {}) {
             try {
                 this.loading = true
 
-                const params = {
-                page,
-                numOfRows,
-                }
+                const res = await axios.get(`/api/v1/purchase-orders/auto`, {
+                    params: { page, numOfRows }
+                })
 
-                if (status) params.status = status   // status가 있을 때만 쿼리 주입
-
-                const response = await axios.get('/api/v1/purchase-orders/auto', { params })
-                const data = response.data
-
-                this.items = data.items
-                this.page = data.page
-                this.totalCount = data.totalCount
-                this.numOfRows = data.numOfRows
+                this.items = res.data.items
+                this.page = res.data.page
+                this.totalCount = res.data.totalCount
+                this.numOfRows = res.data.numOfRows
+                this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
 
             } catch (e) {
-                console.error("자동발주 목록 조회 실패", e)
+                console.error("자동발주 목록 조회 실패:", e)
+            } finally {
+                this.loading = false
+            }
+        },
+
+        async searchAutoOrders({ supplierId = null, startDate = null, endDate = null, page = 1, numOfRows = 5 }) {
+            try {
+                this.loading = true
+
+                const res = await axios.post(`/api/v1/purchase-orders/auto/search`, {
+                    supplierId,
+                    startDate,
+                    endDate,
+                    page,
+                    numOfRows
+                })
+
+                this.items = res.data.items
+                this.page = res.data.page
+                this.totalCount = res.data.totalCount
+                this.numOfRows = numOfRows
+                this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
+
+            } catch (e) {
+                console.error("자동발주 검색 실패:", e)
             } finally {
                 this.loading = false
             }
@@ -45,23 +66,19 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
             try {
                 this.loading = true
 
-                const response = await axios.get(`/api/v1/purchase-orders/auto/${purchaseId}`)
-                const data = response.data
+                const res = await axios.get(`/api/v1/purchase-orders/auto/${purchaseId}`)
+                const data = res.data
 
                 if (data.items && data.items.length > 0) {
                     const detail = data.items[0]
-
-                    // purchaseItems만 details에 바인딩
                     this.details = detail.purchaseItems
-
-                    // 만약 header 정보를 별도 사용하고 싶으면 추후 추가
                     this.selectedPurchase = {
                         purchaseId: detail.purchaseId,
                         poNo: detail.poNo,
                         supplierName: detail.supplierName,
+                        userName: detail.userName,
                         requestedAt: detail.requestedAt
                     }
-
                 } else {
                     this.details = []
                 }
@@ -74,24 +91,26 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
             }
         },
 
-        // // 페이지 이동 관련 메서드
-        // async setPage(newPage) {
-        //     this.page = newPage
-        //     await this.fetchAutoOrders({
-        //         status: this.status,
-        //         page: this.page,
-        //         numOfRows: this.numOfRows,
-        //     })
-        // },
-
         async setStatus(newStatus) {
             this.status = newStatus
-            this.page = 1           // 필터 변경 시 페이지 1로 초기화
-            await this.fetchAutoOrders({
-                status: this.status,
-                page: 1,
-                numOfRows: this.numOfRows,
-            })
-        }
+            this.page = 1
+            await this.fetchAutoOrders({ page: 1, numOfRows: this.numOfRows })
+        },
+
+        async submitAutoOrder(purchaseId, items) {
+            try {
+                const res = await axios.put(`/api/v1/purchase-orders/auto/${purchaseId}/submit`, {
+                    items: items.map(i => ({
+                        purchaseDetailId: i.purchaseDetailId,
+                        productId: i.productId,
+                        orderQty: i.orderQty
+                    }))
+                })
+                return res.data
+
+            } catch (e) {
+                console.error("자동발주 제출 실패:", e)
+            }
+        },
     }
 })

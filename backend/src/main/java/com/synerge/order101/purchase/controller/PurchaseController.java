@@ -1,5 +1,6 @@
 package com.synerge.order101.purchase.controller;
 
+import com.synerge.order101.auth.model.service.CustomUserDetails;
 import com.synerge.order101.common.dto.BaseResponseDto;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.dto.TradeSearchCondition;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -78,15 +80,14 @@ public class PurchaseController {
     // 자동 발주 목록 조회
     @GetMapping("/auto")
     public ResponseEntity<ItemsResponseDto<AutoPurchaseListResponseDto>> getAutoPurchases(
-            @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "5") Integer numOfRows
     ) {
 
-        List<AutoPurchaseListResponseDto> response = purchaseService.getAutoPurchases(status, page, numOfRows);
-        int totalCount = response.size();
+        Page<AutoPurchaseListResponseDto> response = purchaseService.getAutoPurchases(page, numOfRows);
+        int totalCount = (int) response.getTotalElements();
 
-        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, response, page, totalCount));
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, response.getContent(), page, totalCount));
     }
 
     // 자동 발주 상세 조회
@@ -101,11 +102,23 @@ public class PurchaseController {
     // 자동 발주 수정 & 제출
     @PatchMapping("/auto/{purchaseId}/submit")
     public ResponseEntity<BaseResponseDto<AutoPurchaseDetailResponseDto>> updateAutoPurchaseDetail(@PathVariable Long purchaseId,
-                                                                                                   @RequestBody AutoPurchaseSubmitRequestDto request) {
+                                                                                                   @RequestBody(required = false) AutoPurchaseSubmitRequestDto request,
+                                                                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        AutoPurchaseDetailResponseDto response = purchaseService.submitAutoPurchase(purchaseId, request);
+        Long userId = userDetails.getUser().getUserId();
+
+        AutoPurchaseDetailResponseDto response = purchaseService.submitAutoPurchase(purchaseId, userId, request);
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, response));
     }
 
+    @PostMapping("/auto/search")
+    public ResponseEntity<ItemsResponseDto<AutoPurchaseListResponseDto>> searchAutoPurchases(
+            @RequestBody AutoPurchaseSearchRequestDto request
+    ) {
+        Page<AutoPurchaseListResponseDto> response = purchaseService.searchAutoPurchases(request);
+        int totalCount = (int) response.getTotalElements();
+
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, response.getContent(), response.getNumber() + 1, totalCount));
+    }
 }

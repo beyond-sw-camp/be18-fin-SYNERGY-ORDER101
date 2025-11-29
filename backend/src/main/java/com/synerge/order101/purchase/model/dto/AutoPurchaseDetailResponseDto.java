@@ -19,6 +19,8 @@ public class AutoPurchaseDetailResponseDto {
 
     private String supplierName;
 
+    private String userName;
+
     private LocalDateTime requestedAt;
 
     private List<AutoPurchaseItemDto> purchaseItems;

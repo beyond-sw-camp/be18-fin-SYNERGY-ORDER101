@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { getStoreList } from '../api/store/StoreService'
+import { getFranchiseList } from '../api/store/StoreService'
 
 const MAX_VISIBLE_PAGES = 5
 
@@ -22,8 +22,8 @@ const internalSelectedStore = ref(props.selectedStore)
 const fetchStores = async (page = 1) => {
   isLoading.value = true
   try {
-    const data = await getStoreList(page, pageSize.value, keyword.value)
-    stores.value = data.stores
+    const data = await getFranchiseList(page, pageSize.value, keyword.value)
+    stores.value = data.franchises
     totalCount.value = data.totalCount
     currentPage.value = data.currentPage
   } catch (error) {
@@ -77,6 +77,7 @@ watch(
   (newVal) => {
     if (newVal) {
       internalSelectedStore.value = props.selectedStore
+      keyword.value = ''
       fetchStores(1)
     }
   }
@@ -117,8 +118,7 @@ watch(
               :key="store.storeId"
               :class="{
                 selected:
-                  internalSelectedStore &&
-                  internalSelectedStore.storeId === store.storeId
+                  internalSelectedStore?.storeId === store.storeId
               }"
               @click="selectStore(store)"
             >

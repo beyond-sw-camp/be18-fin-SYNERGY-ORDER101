@@ -42,18 +42,32 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in autoOrderStore.details" :key="row.detailId">
+              <tr v-for="row in autoOrderStore.details" :key="row.detailId" :class="{ modified: row.isModified }">
                 <td>{{ row.productCode }}</td>
                 <td>{{ row.productName }}</td>
                 <td class="numeric">
                   <Money :value="row.unitPrice" />
                 </td>
-                <td class="numeric">{{ row.orderQty }}</td>
+                  <td class="numeric">
+                    <input
+                      v-if="isDraft"
+                      type="number"
+                      v-model="row.orderQty"
+                      class="qty-input"
+                      @input="markModified(row)"
+                    />
+                    <span v-else>{{ row.orderQty }}</span>
+                  </td>
+                <!-- <td class="numeric">{{ row.orderQty }}</td> -->
                 <td class="numeric">{{ row.safetyQty }}</td>
                 <td class="numeric">
                   <Money :value="row.unitPrice * row.orderQty" />
                 </td>
-                <td></td>
+                <td>
+                  <button v-if="isDraft" class="btn-delete" @click="removeItem(row.detailId)">
+                    삭제
+                  </button>
+                </td>
               </tr>
               <tr v-if="autoOrderStore.details.length === 0">
                 <td colspan="6" class="empty">품목이 없습니다.</td>
@@ -62,8 +76,12 @@
           </table>
         </section>
         <div class="approval-actions-wrapper">
-          <PurchaseApprovalActions v-if="showApprovalButtons" :po-id="poId" @success="handleProcessSuccess" />
+          <PurchaseApprovalActions v-if="po.status === 'SUBMITTED'" />
         </div>
+      </div>
+
+      <div class="actions-bottom" v-if="po.status === 'DRAFT_AUTO'">
+        <button class="btn-primary" @click="submit">제출</button>
       </div>
 
       <aside class="right-col">
@@ -100,6 +118,11 @@ const route = useRoute()
 const router = useRouter()
 const poId = route.params.purchaseId
 
+const isDraft = computed(() => po.status === 'DRAFT_AUTO')
+const isSubmitted = computed(() => po.status === 'SUBMITTED')
+
+const showApprovalButtons = computed(() => po.status === 'SUBMITTED')
+
 // PO 정보 영역
 const po = reactive({
   purchaseId: null,
@@ -121,16 +144,11 @@ const fetchPurchaseDetail = async () => {
     purchaseId: autoOrderStore.selectedPurchase?.purchaseId,
     poNo: autoOrderStore.selectedPurchase?.poNo,
     supplierName: autoOrderStore.selectedPurchase?.supplierName,
-    userName: autoOrderStore.selectedPurchase?.userName,   // 요청자 이름 추가 필요시 DTO 수정 필요
+    userName: autoOrderStore.selectedPurchase?.userName,
     requestedAt: autoOrderStore.selectedPurchase?.requestedAt,
     status: autoOrderStore.selectedPurchase?.status,
   })
 }
-
-// 승인/반려 버튼 표시 여부
-const showApprovalButtons = computed(() => {
-  return po.status === 'SUBMITTED' || po.status === 'DRAFT_AUTO'
-})
 
 // 요약 금액 계산
 const subtotal = computed(() => {
@@ -138,6 +156,22 @@ const subtotal = computed(() => {
     sum + Number(r.unitPrice || 0) * Number(r.orderQty || 0)
   , 0)
 })
+
+// 변경감지용
+function markModified(row) {
+  row.isModified = true
+}
+
+// 품목 삭제
+function removeItem(detailId) {
+  autoOrderStore.details = autoOrderStore.details.filter(d => d.detailId !== detailId)
+}
+
+// 제출 API
+async function submit() {
+  await autoOrderStore.submitAutoOrder(po.purchaseId, autoOrderStore.details)
+  await fetchPurchaseDetail()
+}
 
 const total = computed(() => subtotal.value)
 
@@ -148,6 +182,13 @@ function handleProcessSuccess() {
 onMounted(() => {
   fetchPurchaseDetail()
 })
+
+// 담당자 변경
+const displayUserName = computed(() => {
+  if (po.status === 'DRAFT_AUTO') return 'AUTO'   // 초안 상태일 때
+  return po.userName || '-'                       // 제출 이후
+})
+
 </script>
 
 
@@ -275,5 +316,17 @@ onMounted(() => {
 .approval-actions-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 수정된 행 강조 */
+.modified {
+  background: #f3e8ff !important; /* 연보라 */
+  font-style: italic;
+}
+.qty-input {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #d7ccfc;
+  border-radius: 6px;
 }
 </style>
