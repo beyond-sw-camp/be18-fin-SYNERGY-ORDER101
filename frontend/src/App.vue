@@ -23,6 +23,7 @@ const adminSidebar = [
       { title: '발주서 생성', path: '/hq/orders/create' },
       { title: '일반 발주 현황', path: '/hq/orders/status' },
       { title: '스마트 발주 현황', path: '/hq/smart-orders' },
+      { title: '자동 발주 현황', path: '/hq/orders/auto/status' },
       { title: '발주 승인', path: '/hq/orders/approval' },
       { title: '공급사 관리', path: '/hq/orders/vendors' },
     ],

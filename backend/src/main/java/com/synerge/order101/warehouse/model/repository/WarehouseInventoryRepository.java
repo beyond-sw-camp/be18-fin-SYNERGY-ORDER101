@@ -2,7 +2,10 @@ package com.synerge.order101.warehouse.model.repository;
 
 
 import com.synerge.order101.product.model.entity.Product;
+import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,13 +17,25 @@ import java.util.Optional;
 @Repository
 public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInventory,Long> {
 
+    // 전체 리스트 조회
     @Query("""
-        SELECT wi
-        FROM WarehouseInventory wi
-        JOIN FETCH wi.product p
-        JOIN FETCH p.productCategory c
+        select wi
+        from WarehouseInventory wi
+        join fetch wi.product p
     """)
     List<WarehouseInventory> findAllWithProduct();
+
+    // 페이징 조회
+    @Query(value = """
+        select wi
+        from WarehouseInventory wi
+        join fetch wi.product p
+        """,
+                countQuery = """
+        select count(wi)
+        from WarehouseInventory wi
+    """)
+    Page<WarehouseInventory> findAllWithProduct(Pageable pageable);
 
     Optional<WarehouseInventory> findByProduct_ProductId(Long productId);
 
@@ -44,4 +59,21 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
 
     Optional<WarehouseInventory> findByProduct(Product product);
 
+    @Query("""
+    SELECT new com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto(
+        i.inventoryId, p.productCode, pc.categoryName, p.productName,
+        i.onHandQuantity, i.safetyQuantity, p.price
+    )
+    FROM WarehouseInventory i
+    JOIN i.product p
+    JOIN p.productCategory pc
+    WHERE (:largeCategoryId IS NULL OR pc.categoryLevel = 'LARGE' AND pc.productCategoryId = :largeCategoryId)
+      AND (:mediumCategoryId IS NULL OR pc.categoryLevel = 'MEDIUM' AND pc.productCategoryId = :mediumCategoryId)
+      AND (:smallCategoryId IS NULL OR pc.categoryLevel = 'SMALL' AND pc.productCategoryId = :smallCategoryId)
+""")
+    Page<InventoryResponseDto> searchInventory(Long largeCategoryId,
+                                               Long mediumCategoryId,
+                                               Long smallCategoryId,
+                                               Pageable pageable
+    );
 }

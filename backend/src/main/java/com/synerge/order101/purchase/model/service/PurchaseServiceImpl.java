@@ -239,28 +239,23 @@ public class PurchaseServiceImpl implements PurchaseService {
                     LocalDate.now(),
                     items
             );
+            System.out.println("자동발주 생성완료" + request.getOrderType() + request.getOrderStatus());
 
             createPurchase(request);
         }
 
 
     }
+
     // 자동발주 목록 조회
     @Override
     @Transactional(readOnly = true)
-    public List<AutoPurchaseListResponseDto> getAutoPurchases (OrderStatus status, Integer page, Integer size){
+    public Page<AutoPurchaseListResponseDto> getAutoPurchases (Integer page, Integer size){
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page - 1, size);
         Page<AutoPurchaseListResponseDto> pageResult;
 
-        if (status == null) {
-            pageResult = purchaseRepository.findAutoOrderAllStatus(pageable);
-        } else {
-            pageResult = purchaseRepository.findByAutoOrderStatus(status, pageable);
-        }
-        System.out.println(pageResult.getContent());
-
-        return pageResult.getContent();
+        return purchaseRepository.getAutoPurchases(pageable);
     }
 
     // 자동발주 상세 조회
@@ -289,13 +284,14 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
                 .requestedAt(purchase.getCreatedAt())
+                .status(purchase.getOrderStatus().name())
                 .purchaseItems(items)
                 .build();
     }
 
     @Override
     @Transactional
-    public AutoPurchaseDetailResponseDto submitAutoPurchase (Long purchaseId, AutoPurchaseSubmitRequestDto request){
+    public AutoPurchaseDetailResponseDto submitAutoPurchase (Long purchaseId, Long userId, AutoPurchaseSubmitRequestDto request){
 
 
         Purchase purchase = purchaseRepository.findById(purchaseId)
@@ -385,5 +381,23 @@ public class PurchaseServiceImpl implements PurchaseService {
         notificationService.notifyPurchaseCreatedToAllAdmins(purchase, admins);
 
         return getAutoPurchaseDetail(purchaseId);
+    }
+
+    // 자동발주 검색 필터링
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AutoPurchaseListResponseDto> searchAutoPurchases(AutoPurchaseSearchRequestDto request) {
+
+        LocalDateTime start = (request.getStartDate() != null) ? LocalDate.parse(request.getStartDate()).atStartOfDay() : null;
+        LocalDateTime end = (request.getEndDate() != null) ? LocalDate.parse(request.getEndDate()).atTime(23, 59, 59) : null;
+
+        Pageable pageable = PageRequest.of(request.getPage() - 1, request.getNumOfRows());
+
+        return purchaseRepository.searchAutoPurchases(
+                request.getSupplierId(),
+                start,
+                end,
+                pageable
+        );
     }
 }

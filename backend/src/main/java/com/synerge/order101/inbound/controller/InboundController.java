@@ -4,8 +4,10 @@ import com.synerge.order101.common.dto.BaseResponseDto;
 import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.inbound.model.dto.InboundDetailResponseDto;
 import com.synerge.order101.inbound.model.dto.InboundResponseDto;
+import com.synerge.order101.inbound.model.dto.InboundSearchRequestDto;
 import com.synerge.order101.inbound.model.service.InboundService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,13 +22,13 @@ public class InboundController {
 
     // 전체 입고 조회
     @GetMapping
-    public ResponseEntity<ItemsResponseDto<InboundResponseDto>> getInbounds(@RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "20") int size) {
+    public ResponseEntity<ItemsResponseDto<InboundResponseDto>> getInbounds(@RequestParam int page,
+                                                                            @RequestParam int numOfRows) {
 
-        List<InboundResponseDto> inboundList = inboundService.getInboundList(page, size);
-        int totalCount = inboundList.size();
+        Page<InboundResponseDto> inbound = inboundService.getInboundList(page, numOfRows);
+        int totalCount = (int) inbound.getTotalElements();
 
-        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inboundList, totalCount, page));
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inbound.getContent(), page, totalCount));
     }
 
     // 입고 상세 조회
@@ -36,5 +38,16 @@ public class InboundController {
         InboundDetailResponseDto inboundDetail = inboundService.getInboundDetail(inboundId);
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, inboundDetail));
+    }
+
+    // 검색 필터링
+    @PostMapping("/search")
+    public ResponseEntity<ItemsResponseDto<InboundResponseDto>> searchInboundList(
+            @RequestBody InboundSearchRequestDto request
+    ) {
+        Page<InboundResponseDto> inboundList = inboundService.searchInboundList(request);
+        int totalCount = (int) inboundList.getTotalElements();
+
+        return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, inboundList.getContent(), inboundList.getNumber() + 1, totalCount));
     }
 }

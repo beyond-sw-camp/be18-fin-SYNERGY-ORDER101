@@ -19,7 +19,7 @@ public class AutoPurchaseScheduler {
      *
      * CRON: 0 0 3 * * *  → 3:00 AM 매일 실행
      */
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 0 12 * * *", zone = "Asia/Seoul")
     public void runDailyReplenishmentBatch() {
         log.info("▶ [자동발주 스케줄러] 실행 시작");
 

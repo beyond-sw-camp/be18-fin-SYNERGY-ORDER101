@@ -4,14 +4,25 @@
 
     <div class="filter-card">
       <div class="filter-row">
-        <select class="select">
-          <option>중앙 창고</option>
-          <option>지점 A</option>
+        <select class="select" v-model="largeCategoryId">
+          <option value="">대분류</option>
+          <option v-for="c in largeCategories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
         </select>
-        <select class="select">
-          <option>카테고리</option>
-          <option>생활가전</option>
-          <option>주방가전</option>
+
+        <select class="select" v-model="mediumCategoryId" :disabled="mediumCategories.length === 0">
+          <option value="">중분류</option>
+          <option v-for="c in mediumCategories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+
+        <select class="select" v-model="smallCategoryId" :disabled="!smallCategories.length">
+          <option value="">소분류</option>
+          <option v-for="c in smallCategories" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
         </select>
       </div>
     </div>
@@ -25,42 +36,108 @@
             <th>카테고리</th>
             <th>상품명</th>
             <th>현 재고량</th>
-            <th>이동중 수량</th>
             <th>안전재고량</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in rows" :key="r.code">
-            <td>{{ r.code }}</td>
-            <td>{{ r.category }}</td>
-            <td>{{ r.name }}</td>
-            <td class="numeric">{{ r.qty }}</td>
-            <td class="numeric">{{ r.intransit }}</td>
-            <td class="numeric">{{ r.safety }}</td>
+          <tr v-for="r in inventoryStore.items" :key="r.warehouseInventoryId">
+            <td>{{ r.productCode }}</td>
+            <td>{{ r.productCategory }}</td>
+            <td>{{ r.productName }}</td>
+            <td class="numeric">{{ r.onHandQty }}</td>
+            <td class="numeric">{{ r.safetyQty }}</td>
           </tr>
         </tbody>
       </table>
+
+      <div class="pagination">
+        <button class="page-btn" @click="changePage(page - 1)" :disabled="page <= 1">
+          ‹ Previous
+        </button>
+
+        <div class="page-numbers">
+          <button v-for="p in pages" :key="p" class="page"
+            :class="['page-button', { active: page === p }]" @click="changePage(p)">
+            {{ p }}
+          </button>
+        </div>
+
+        <button class="page-btn" @click="changePage(page + 1)" :disabled="page >= totalPages">
+          Next ›
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed ,onMounted, watch } from 'vue'
+import { useInventoryStore } from '@/stores/inventory/inventoryStore'
+import { getTopCategories, getChildCategories } from '@/components/api/product/categoryService' 
 
-const rows = ref([
-  { code: '97205', category: '영상가전', name: 'TV', qty: 500, intransit: 2, safety: 99 },
-  { code: '73102', category: '영상가전', name: '스탠바이미', qty: 120, intransit: 67, safety: 96 },
-  { code: '78746', category: '주방가전', name: '식기세척기', qty: 30, intransit: 81, safety: 93 },
-  { code: '32202', category: '생활가전', name: '세탁기', qty: 280, intransit: 34, safety: 62 },
-  { code: '67202', category: '생활가전', name: '청소기', qty: 700, intransit: 45, safety: 56 },
-  { code: '94103', category: '생활가전', name: '드럼세탁기', qty: 150, intransit: 16, safety: 3 },
-  { code: '19123', category: '주방가전', name: '식기세척기', qty: 90, intransit: 97, safety: 89 },
-  { code: '02119', category: '주방가전', name: '전자레인지', qty: 200, intransit: 96, safety: 45 },
-  { code: '95814', category: '웨어러블', name: '애플워치', qty: 350, intransit: 37, safety: 21 },
-])
+const inventoryStore = useInventoryStore()
 
-function onImageError(event) {
-  event.target.src = 'https://via.placeholder.com/800x400?text=Stock+Diagram+Placeholder'
+// 카테고리 데이터
+const largeCategories = ref([])
+const mediumCategories = ref([])
+const smallCategories = ref([])
+
+const largeCategoryId = ref('')
+const mediumCategoryId = ref('')
+const smallCategoryId = ref('')
+
+const page = computed(() => inventoryStore.page)
+const totalPages = computed(() => Math.ceil(inventoryStore.totalCount / inventoryStore.numOfRows))
+
+// 페이지 번호 배열 생성
+const pages = computed(() => {
+  return Array.from({ length: totalPages.value }, (_, i) => i + 1)
+})
+
+onMounted(async () => {
+  largeCategories.value = await getTopCategories()
+  await fetchInventory(1)
+})
+
+const fetchInventory = async (page = 1) => {
+  await inventoryStore.fetchInventory({
+    page,
+    largeId: largeCategoryId.value || null,
+    mediumId: mediumCategoryId.value || null,
+    smallId: smallCategoryId.value || null
+  })
+}
+
+// ------- 카테고리 변경 감지 -------
+watch(largeCategoryId, async (newVal) => {
+  mediumCategoryId.value = ''
+  smallCategoryId.value = ''
+  mediumCategories.value = []
+  smallCategories.value = []
+
+  if (newVal) {
+    mediumCategories.value = await getChildCategories(Number(newVal))
+  }
+  fetchInventory(1)
+})
+
+watch(mediumCategoryId, async (newVal) => {
+  smallCategoryId.value = ''
+  smallCategories.value = []
+
+  if (newVal) {
+    smallCategories.value = await getChildCategories(Number(newVal))
+  }
+  fetchInventory(1)
+})
+
+watch(smallCategoryId, () => {
+  fetchInventory(1)
+})
+
+const changePage = async (p) => {
+  if (p < 1 || p > totalPages.value) return
+  await fetchInventory(p)
 }
 </script>
 
@@ -136,5 +213,33 @@ function onImageError(event) {
 }
 .numeric {
   text-align: left;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+}
+.page {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff;
+}
+.page.active {
+  border-color: #2563eb;
+  color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
+}
+.page.current {
+  background: #f3f4f6;
+}
+.page-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
 }
 </style>
