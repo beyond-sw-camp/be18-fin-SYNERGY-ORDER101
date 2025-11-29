@@ -7,19 +7,19 @@
     <section class="info-cards">
       <div class="card info">
         <label>주문 ID</label>
-        <div class="value">{{ order.id }}</div>
+        <div class="value">{{ detail.orderNo }}</div>
       </div>
       <div class="card info">
         <label>가맹점</label>
-        <div class="value">{{ order.store }}</div>
+        <div class="value">{{ detail.storeName }}</div>
       </div>
       <div class="card info">
         <label>생성 시간</label>
-        <div class="value">{{ order.createdAt }}</div>
+        <div class="value">{{ detail.createdAt }}</div>
       </div>
       <div class="card info">
-        <div><label>상태</label></div>
-        <div class="value status-chip">{{ statusLabel(order.status) }}</div>
+        <label>상태</label>
+        <div class="value status-chip">{{ statusLabel(displayStatus) }}</div>
       </div>
     </section>
 
@@ -30,57 +30,57 @@
           <tr>
             <th>SKU</th>
             <th>상품 이름</th>
-            <th>현재 재고</th>
-            <th>주문 수량</th>
+            <th class="numeric">현재 재고</th>
+            <th class="numeric">주문 수량</th>
             <th class="numeric">단가</th>
             <th class="numeric">총액</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="it in order.items" :key="it.sku">
-            <td>{{ it.sku }}</td>
-            <td>{{ it.name }}</td>
+          <tr v-for="it in detail.items" :key="it.productCode">
+            <td>{{ it.productCode }}</td>
+            <td>{{ it.productName }}</td>
             <td class="numeric">{{ it.stock }}</td>
-            <td class="numeric">{{ it.qty }}</td>
-            <td class="numeric"><Money :value="it.price" /></td>
-            <td class="numeric"><Money :value="it.price * it.qty" /></td>
+            <td class="numeric">{{ it.orderQty }}</td>
+            <td class="numeric"><Money :value="it.unitPrice" /></td>
+            <td class="numeric"><Money :value="it.unitPrice * it.orderQty" /></td>
+          </tr>
+
+          <tr v-if="detail.items.length === 0">
+            <td colspan="6" class="no-data">주문 아이템이 없습니다.</td>
           </tr>
         </tbody>
       </table>
 
       <div class="items-summary">
-        총 수량: {{ totalQty }} | 총 예상 가격: <strong>{{ formatMoney(totalPrice) }}</strong>
+        총 수량: {{ totalQty }} | 총 금액:
+        <strong>{{ formatMoney(totalAmount) }}</strong>
       </div>
     </section>
 
     <section class="card progress">
       <h3 class="card-title">주문 진행 상황</h3>
+
       <div class="timeline">
-        <!-- icons row -->
-        <div class="steps-icons" role="list">
+        <div class="steps-icons">
           <div
-            v-for="(s, idx) in orderProgress"
+            v-for="(s, idx) in progressSteps"
             :key="s.key + '-icon'"
             class="step-icon"
-            :class="{
-              active: s.done,
-              current: !s.done && orderProgress[idx - 1] && orderProgress[idx - 1].done,
-            }"
+            :class="{ active: idx <= currentStepIndex }"
           >
-            <div class="icon" aria-hidden>
-              <i :class="s.done ? 'pi pi-check' : 'pi pi-circle'" />
+            <div class="icon">
+              <i :class="idx <= currentStepIndex ? 'pi pi-check' : 'pi pi-circle'" />
             </div>
           </div>
         </div>
 
-        <!-- track sits under icons -->
-        <div class="track" aria-hidden>
+        <div class="track">
           <div class="track-fill" :style="{ width: filledPercent + '%' }"></div>
         </div>
 
-        <!-- labels row (aligned under icons) -->
-        <div class="steps-labels" role="list">
-          <div v-for="(s, idx) in orderProgress" :key="s.key + '-label'" class="step-label">
+        <div class="steps-labels">
+          <div v-for="s in progressSteps" :key="s.key + '-label'" class="step-label">
             <div class="label">
               {{ s.label }}
               <div class="sub">{{ s.time }}</div>
@@ -90,10 +90,18 @@
       </div>
 
       <div class="statuses">
-        <div v-for="s in orderProgress" :key="s.key" class="status-row">
+        <div v-for="s in progressSteps" :key="s.key" class="status-row">
           <div class="status-title">{{ s.label }}</div>
           <div class="status-time">{{ s.time }}</div>
-          <div class="status-desc" v-if="s.note">{{ s.note }}</div>
+
+
+          <div v-if="s.key === 'SHIPPED'">
+            <div class="status-desc">{{ trackingNumber }}</div>
+          </div>
+
+          <div v-else-if="s.note" class="status-desc">
+            {{ s.note }}
+          </div>
         </div>
       </div>
     </section>
@@ -101,251 +109,268 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import Money from '@/components/global/Money.vue'
+import { reactive, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import apiClient from "@/components/api";
+import Money from "@/components/global/Money.vue";
+import { formatDateTimeMinute } from "@/components/global/Date.js";
 
-const route = useRoute()
-const id = route.params.id || 'ORD-UNKNOWN'
+const route = useRoute();
+const orderId = route.params.id;
 
-// sample order data; replace with API fetch when available
-const order = reactive({
-  id: id,
-  store: '도매상점 본사점',
-  createdAt: '2023-10-26 10:30',
-  status: 'delivered',
-  items: [
-    { sku: 'SKU001', name: 'dd', stock: 1200, qty: 100, price: 5000 },
-    { sku: 'SKU002', name: 'ss', stock: 800, qty: 70, price: 7500 },
-    { sku: 'SKU003', name: 'dd', stock: 2500, qty: 150, price: 4000 },
-    { sku: 'SKU004', name: 'ss', stock: 500, qty: 30, price: 1500 },
-    { sku: 'SKU005', name: 'dd', stock: 900, qty: 0, price: 6000 },
-  ],
-})
 
-const totalQty = computed(() => order.items.reduce((s, it) => s + (it.qty || 0), 0))
-const totalPrice = computed(() =>
-  order.items.reduce((s, it) => s + (it.price || 0) * (it.qty || 0), 0),
-)
+const detail = reactive({
+  orderNo: "",
+  storeName: "",
+  createdAt: "",
+  status: "",
+  shipmentStatus: "",
+  items: [],
+  logs: [],
+});
 
-function formatMoney(v) {
-  return v == null ? '-' : Number(v).toLocaleString() + '원'
-}
 
-function statusLabel(s) {
-  switch (s) {
-    case 'submitted':
-      return 'SUBMITTED'
-    case 'confirmed':
-      return 'CONFIRMED'
-    case 'waiting':
-      return 'WAITING'
-    case 'shipped':
-      return 'SHIPPED'
-    case 'delivered':
-      return 'DELIVERED'
-    default:
-      return s
-  }
-}
+const hasStatus = (st) => detail.logs.some((l) => l.status === st);
 
-const orderProgress = [
-  { key: 'submitted', label: 'SUBMITTED', time: '2023-10-26 10:30', done: true },
-  { key: 'confirmed', label: 'CONFIRMED', time: '2023-10-26 14:15', done: true },
-  { key: 'waiting', label: 'WAITING', time: '2023-10-27 09:00', done: true },
+const findTime = (st) => {
+  const log = detail.logs.find((l) => l.status === st);
+  return log ? formatDateTimeMinute(log.changedAt) : "";
+};
+
+const findNote = (st) => {
+  const log = detail.logs.find((l) => l.status === st);
+  return log ? log.note : "";
+};
+
+
+const displayStatus = computed(() => {
+  const ship = detail.shipmentStatus;
+
+  if (ship === "DELIVERED") return "DELIVERED";
+  if (ship === "SHIPPED") return "SHIPPED";
+  if (ship === "WAITING") return "WAITING";
+
+  return "-";
+});
+
+
+const progressSteps = computed(() => [
   {
-    key: 'shipped',
-    label: 'SHIPPED',
-    time: '2023-10-27 16:45',
-    done: true,
-    note: '배송번호: DPD123456789',
+    key: "SUBMITTED",
+    label: "제출됨",
+    time: findTime("SUBMITTED"),
+    note: findNote("SUBMITTED"),
   },
-  { key: 'delivered', label: 'DELIVERED', time: '', done: false },
-]
+  {
+    key: "WAITING",
+    label: "배송대기",
+    time: findTime("WAITING"),
+    note: findNote("WAITING"),
+  },
+  {
+    key: "SHIPPED",
+    label: "배송중",
+    time: findTime("SHIPPED"),
+    note: findNote("SHIPPED"),
+  },
+  {
+    key: "DELIVERED",
+    label: "배송완료",
+    time: findTime("DELIVERED"),
+    note: findNote("DELIVERED"),
+  },
+]);
 
-const completedCount = computed(() => orderProgress.filter((s) => s.done).length)
+
+const currentStepIndex = computed(() => {
+  if (detail.shipmentStatus === "DELIVERED") return 3;
+  if (detail.shipmentStatus === "SHIPPED") return 2;
+  if (detail.shipmentStatus === "WAITING") return 1;
+  return 0;
+});
+
 
 const filledPercent = computed(() => {
-  const steps = orderProgress.length
-  if (!steps || completedCount.value === 0) return 0
-  // When first step is completed, fill to its position (0%).
-  // Fill to the last completed step's position across the track (0..100).
-  const lastIndex = completedCount.value - 1
-  const percent = (lastIndex / (steps - 1)) * 100
-  return Math.max(0, Math.min(100, percent))
-})
+  const total = progressSteps.value.length - 1;
+  return (currentStepIndex.value / total) * 100;
+});
+
+
+const trackingNumber = computed(() => {
+  if (!hasStatus("SHIPPED"))
+    return "아직 배송이 진행되기 전이라 송장번호가 없습니다";
+
+  const shipped = detail.logs.find((l) => l.status === "SHIPPED");
+  return shipped?.note || "-";
+});
+
+
+async function fetchDetail() {
+  const res = await apiClient.get(`/api/v1/store-orders/detail/${orderId}`);
+  const data = res.data;
+
+  detail.orderNo = data.orderNo;
+  detail.storeName = data.storeName;
+  detail.createdAt = formatDateTimeMinute(data.createdAt);
+  detail.status = data.orderStatus;
+  detail.shipmentStatus = data.shipmentStatus;
+
+  detail.items =
+    data.items?.map((it) => ({
+      productCode: it.sku,
+      productName: it.name,
+      stock: it.stock,
+      orderQty: it.qty,
+      unitPrice: it.price,
+    })) || [];
+
+  detail.logs =
+    data.progress?.map((p) => ({
+      status: p.key.toUpperCase(),
+      changedAt: p.time,
+      note: p.note,
+    })) || [];
+}
+
+onMounted(fetchDetail);
+
+
+const totalQty = computed(() =>
+  detail.items.reduce((s, it) => s + (it.orderQty || 0), 0)
+);
+
+const totalAmount = computed(() =>
+  detail.items.reduce(
+    (s, it) => s + (it.orderQty || 0) * (it.unitPrice || 0),
+    0
+  )
+);
+
+const formatMoney = (v) => Number(v).toLocaleString() + "원";
+
+const statusLabel = (s) =>
+  (
+    {
+      WAITING: "배송대기",
+      SHIPPED: "배송중",
+      DELIVERED: "배송완료",
+    }[s] || "-"
+  );
 </script>
 
 <style scoped>
 .page-shell {
   padding: 24px 32px;
 }
+
 .page-header {
   margin-bottom: 18px;
 }
+
 .info-cards {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
-  width: 100%;
-  box-sizing: border-box;
-  /* allow cards to share available width evenly */
-  align-items: stretch;
 }
+
 .card.info {
   padding: 16px;
   border-radius: 8px;
   border: 1px solid #eef2f7;
   background: #fff;
-  /* make each info card take equal portion of the row */
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1;
 }
+
 .card.info label {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #6b7280;
 }
+
 .card.info .value {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin-top: 8px;
 }
+
 .status-chip {
-  display: inline-block;
+  background: #eee;
   padding: 6px 10px;
   border-radius: 12px;
-  background: #e5e7eb;
 }
-.items .card-title,
-.progress .card-title {
-  margin-bottom: 8px;
-}
+
 .items-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 8px;
 }
+
 .items-table th,
 .items-table td {
   padding: 12px;
   border-top: 1px solid #f3f4f6;
-  text-align: left;
-}
-.items-table td.numeric {
-  text-align: right;
-}
-.items-summary {
-  text-align: right;
-  margin-top: 8px;
-  font-weight: 600;
-}
-.timeline {
-  position: relative;
-  padding: 28px 0 12px;
 }
 
-.timeline::before {
-  /* horizontal track */
-  content: '';
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 32px; /* center of icon row */
-  height: 6px;
-  background: linear-gradient(90deg, #eef2f7 0%, #eef2f7 100%);
-  border-radius: 6px;
-  z-index: 1;
+.numeric {
+  text-align: right;
 }
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+}
+
+.timeline {
+  padding: 28px 0;
+}
+
 .steps-icons {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  position: relative;
-  z-index: 3;
 }
 
-.track {
-  position: relative;
-  margin-top: 8px;
-  height: 6px;
-  background: #eef2f7;
-  border-radius: 6px;
-  overflow: hidden;
-}
-.track-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6b63f6, #6b46ff);
-  width: 0%;
-  transition: width 360ms ease;
-}
-
-.step-icon {
-  flex: 1 1 0;
+.step-icon .icon {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-.step-icon .icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  border: 2px solid #e6e9ee;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-  font-size: 16px;
-  color: #9ca3af;
-}
+
 .step-icon.active .icon {
-  background: linear-gradient(180deg, #6b63f6, #6b46ff);
+  background: #6b46ff;
   color: #fff;
-  border-color: transparent;
+  border-color: #6b46ff;
 }
-.step-icon.current .icon {
-  background: #fff;
-  border-color: #6b63f6;
-  color: #6b63f6;
+
+.track {
+  height: 6px;
+  background: #eee;
+  border-radius: 6px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.track-fill {
+  height: 100%;
+  background: #6b46ff;
 }
 
 .steps-labels {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 10px;
 }
-.step-label {
-  flex: 1 1 0;
-  display: flex;
-  justify-content: center;
-}
-.step-label .label {
-  font-size: 12px;
-  text-align: center;
-}
-.step-label .sub {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-top: 4px;
-}
+
 .statuses {
-  margin-top: 12px;
+  margin-top: 16px;
 }
+
 .status-row {
-  border-top: 1px solid #f3f4f6;
   padding: 12px 0;
+  border-top: 1px solid #eee;
 }
+
 .status-title {
   font-weight: 700;
-}
-.status-time {
-  color: #6b7280;
-  font-size: 12px;
-  margin-top: 6px;
-}
-.status-desc {
-  margin-top: 8px;
-  color: #374151;
 }
 </style>
