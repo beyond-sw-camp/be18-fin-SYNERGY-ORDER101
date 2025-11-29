@@ -20,4 +20,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     @Modifying
     @Query("update Notification n set n.readAt = :now where n.userId = :uid and n.readAt is null")
     int markAllReadByUserId(@Param("uid") Long uid, @Param("now") LocalDateTime now);
+
+    List<Notification> findAllByUserId(Long userId);
 }

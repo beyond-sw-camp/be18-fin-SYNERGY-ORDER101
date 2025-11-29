@@ -95,6 +95,8 @@ public class ProductServiceImpl implements ProductService {
             throw new CustomException(ProductErrorCode.LARGE_MEDIUM);
         }
 
+        String productCode = generateProductCode(small);
+
         String imageUrl = request.getImageUrl();
 
         if(imageFile != null && !imageFile.isEmpty()) {
@@ -102,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product product = Product.builder()
-                .productCode(request.getProductCode())
+                .productCode(productCode)
                 .productName(request.getProductName())
                 .status(Boolean.TRUE.equals(request.getStatus()))
                 .description(request.getDescription())
@@ -174,7 +176,6 @@ public class ProductServiceImpl implements ProductService {
         }
 
         product.update(
-                request.getProductCode(),
                 request.getProductName(),
                 request.getDescription(),
                 request.getPrice(),
@@ -392,6 +393,18 @@ public class ProductServiceImpl implements ProductService {
             // S3에 없으면(404) 그냥 넘어가도 되고, 지금은 일단 예외로 올려도 됨
             throw new CustomException(ProductErrorCode.IMAGE_UPLOAD_FAIL);
         }
+    }
+
+    private String generateProductCode(ProductCategory small) {
+        String smallIdPart = String.format("%02d", small.getProductCategoryId());
+
+        String uuidPart = UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 4)
+                .toUpperCase();
+
+        return "PRD-" + smallIdPart + "-" + small.getCategoryName() + "-" + uuidPart;
     }
 
 

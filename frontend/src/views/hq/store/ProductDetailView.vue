@@ -61,14 +61,12 @@
             </div>
 
             <!-- 상품코드 -->
+            <!-- 상품코드: 항상 읽기 전용 -->
             <div class="field">
               <label>상품 코드</label>
-              <template v-if="!isEditMode">
-                <div class="value">{{ product.productCode }}</div>
-              </template>
-              <template v-else>
-                <input class="value" v-model="editForm.productCode" />
-              </template>
+              <div class="value readonly">
+                {{ product.productCode }}
+              </div>
             </div>
 
             <!-- 카테고리 3단 셀렉트 -->

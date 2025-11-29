@@ -58,9 +58,8 @@ public class Product {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<ProductSupplier> productSupplier = new ArrayList<>();
 
-    public void update(String productCode, String productName, String description, BigDecimal price,
+    public void update(String productName, String description, BigDecimal price,
                        String imageUrl, Boolean status, ProductCategory productCategory) {
-        this.productCode = productCode;
         this.productName = productName;
         this.description = description;
         this.price = price;
