@@ -53,11 +53,13 @@ def main():
     # ---- SKU별 최근 60주 버퍼 만들기 ----
     base = (
         fea.groupby(KEYS)
-           .tail(60)[["target_date", "actual_order_qty", *KEYS, *lag_cols, *ma_cols,
-                     "avg_temp_c", "cdd", "hdd", "precip_mm",
-                     "heat_wave", "cold_wave", "year", "weekofyear", "month",
-                     "sin_week", "cos_week", "msrp_krw", "base_share"]]
-           .copy()
+           .tail(60)[["target_date", "actual_order_qty", *KEYS, 
+                    "product_code", 
+                    *lag_cols, *ma_cols,
+                    "avg_temp_c", "cdd", "hdd", "precip_mm",
+                    "heat_wave", "cold_wave", "year", "weekofyear", "month",
+                    "sin_week", "cos_week", "msrp_krw", "base_share"]]
+            .copy()
     )
 
     forecasts = []
@@ -66,12 +68,15 @@ def main():
     for grp, hist in base.groupby(KEYS):
         hist = hist.sort_values("target_date").copy()
 
+        product_code = hist["product_code"].iloc[-1]
+
         # future roll-forward용 버퍼
         buf = hist[["target_date", "actual_order_qty"]].copy()
 
         # 미래 주차 반복
         for dt in future_dates:
             row = {k: v for k, v in zip(KEYS, grp)}
+            row["product_code"] = product_code 
             row["target_date"] = dt
 
             temp = pd.DataFrame([row])

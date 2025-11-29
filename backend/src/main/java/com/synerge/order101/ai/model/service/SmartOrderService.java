@@ -18,6 +18,10 @@ public interface SmartOrderService {
     SmartOrderResponseDto submitSmartOrder(Long smartOrderId, SmartOrderUpdateRequestDto request);
     SmartOrderDashboardResponseDto getSmartOrderSummary(LocalDate targetWeek);
 
+    int cancelPreviousAutoDrafts();
+
+
+
 
 
 }

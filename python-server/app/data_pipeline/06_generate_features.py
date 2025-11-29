@@ -6,13 +6,13 @@
 
 import pandas as pd
 from pathlib import Path
+import numpy as np   # 위로 올려두면 더 안전하긴 함
 
 BASE = Path(__file__).resolve().parent
 SALES = BASE / "weekly_sales.csv"
 WEATHER = BASE / "external_weather_weekly.csv"
-SKU = BASE / "sku_catalog_ml_with_share.csv"
+SKU = BASE / "sku_catalog_ml_with_share.csv"   
 OUT = BASE / "features_all.csv"
-
 
 def add_lags(df, lags):
     for l in lags:
@@ -66,6 +66,7 @@ def main():
     # Reorder
     keep_cols = [
         "target_date", "warehouse_id", "store_id", "sku_id", "actual_order_qty",
+        "product_code", 
         "cat_low", "brand", "minor_option", "msrp_krw", "base_share",
         "avg_temp_c", "cdd", "hdd", "precip_mm", "heat_wave", "cold_wave",
         "year", "weekofyear", "month", "sin_week", "cos_week",

@@ -10,10 +10,21 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 SRC = BASE / "domain_sales_sku.csv"
 OUT = BASE / "weekly_sales.csv"
+EXTRA = BASE / "actual_sales_append.csv"
 
 def main():
     print("Loading domain_sales_sku...")
     df = pd.read_csv(SRC, parse_dates=["target_date"])
+
+    if EXTRA.exists():
+        print("Loading extra actual sales...")
+        extra = pd.read_csv(EXTRA, parse_dates=["target_date"])
+        extra = extra.rename(columns={
+            "product_id": "sku_id",
+            "actual_order_qty": "actual_order_qty",
+        })
+        extra_final = extra[["target_date", "sku_id", "actual_order_qty"]]
+        df2 = pd.concat([df2, extra_final], ignore_index=True)
 
     # 필요한 컬럼만 추출
     df2 = df[[

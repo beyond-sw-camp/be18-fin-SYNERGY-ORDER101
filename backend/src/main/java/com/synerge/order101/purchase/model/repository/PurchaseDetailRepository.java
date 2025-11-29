@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -31,4 +32,17 @@ public interface PurchaseDetailRepository extends JpaRepository<PurchaseDetail, 
           and p.orderStatus in ('SUBMITTED')
     """)
     Long sumOpenOrderQtyByProduct(@Param("product") Product product);
+
+    @Query("""
+        SELECT pd
+        FROM PurchaseDetail pd
+        JOIN pd.purchase p
+        WHERE p.orderStatus = 'SUBMITTED'
+          AND pd.createdAt BETWEEN :from AND :to
+    """)
+        List<PurchaseDetail> findSubmittedBetween(
+                @Param("from") LocalDateTime from,
+                @Param("to") LocalDateTime to
+        );
+
 }

@@ -9,6 +9,6 @@ import lombok.*;
 @Builder
 public class TimeSeriesPointResponseDto {
     private String date;
-    private Integer forecast;
+    private Double forecast;
     private Integer actual;
 }
