@@ -1,6 +1,7 @@
 package com.synerge.order101.shipment.model.repository;
 
 import com.synerge.order101.common.enums.ShipmentStatus;
+import com.synerge.order101.order.model.entity.StoreOrder;
 import com.synerge.order101.shipment.model.entity.Shipment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,6 +14,8 @@ import java.util.List;
 
 @Repository
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
+
+    List<Shipment> findByStoreOrder(StoreOrder storeOrder);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

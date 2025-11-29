@@ -3,6 +3,7 @@ package com.synerge.order101.order.controller;
 import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.order.model.dto.*;
+import com.synerge.order101.order.model.service.FranchiseOrderService;
 import com.synerge.order101.order.model.service.StoreOrderService;
 import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,16 @@ import java.util.List;
 public class StoreOrderController {
 
     private final StoreOrderService storeOrderService;
+    private final FranchiseOrderService franchiseOrderService;
+
+    @GetMapping("/detail/{orderId}")
+    public ResponseEntity<FranchiseOrderDetailResponseDto> getFranchiseOrderDetail(
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(franchiseOrderService.getFranchiseOrderDetail(orderId));
+
+    }
+
 
     /**
      * 1. 가맹점 주문 목록 조회 (GET /orders)

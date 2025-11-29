@@ -192,7 +192,6 @@ public class StoreOrderServiceImpl implements StoreOrderService {
                     .storeOrder(order)
                     .store(order.getStore())
                     .shipmentStatus(ShipmentStatus.WAITING)
-                    .createdAt(order.getCreatedAt())
                     .build();
 
             shipmentRepository.save(shipment);
