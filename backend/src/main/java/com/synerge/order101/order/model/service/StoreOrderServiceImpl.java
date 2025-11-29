@@ -2,6 +2,7 @@ package com.synerge.order101.order.model.service;
 
 import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
+import com.synerge.order101.common.enums.ShipmentStatus;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.notification.model.repository.NotificationRepository;
 import com.synerge.order101.notification.model.service.NotificationService;
@@ -19,6 +20,8 @@ import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import com.synerge.order101.settlement.event.StoreOrderSettlementReqEvent;
 import com.synerge.order101.settlement.model.dto.SettlementSummaryDto;
 import com.synerge.order101.settlement.model.entity.Settlement;
+import com.synerge.order101.shipment.model.entity.Shipment;
+import com.synerge.order101.shipment.model.repository.ShipmentRepository;
 import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.store.model.repository.StoreRepository;
 import com.synerge.order101.user.model.entity.Role;
@@ -27,6 +30,7 @@ import com.synerge.order101.user.model.repository.UserRepository;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import com.synerge.order101.warehouse.model.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +50,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreOrderServiceImpl implements StoreOrderService {
 
     private final StoreOrderRepository storeOrderRepository;
@@ -57,6 +62,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final WarehouseRepository warehouseRepository;
+    private final ShipmentRepository shipmentRepository;
 
     private final NotificationService notificationService;
 
@@ -180,6 +186,17 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         if (curStatus == OrderStatus.CONFIRMED) {
             // 주문 완료 이벤트 발행
             eventPublisher.publishEvent(new StoreOrderSettlementReqEvent(order));
+
+            //배송 대기 시작
+            Shipment shipment = Shipment.builder()
+                    .storeOrder(order)
+                    .store(order.getStore())
+                    .shipmentStatus(ShipmentStatus.WAITING)
+                    .build();
+
+            shipmentRepository.save(shipment);
+
+            log.info("Shipment(WAITING) created for storeOrderId={}", storeOrderId);
         }
 
         StoreOrderStatusLog log = StoreOrderStatusLog.builder()

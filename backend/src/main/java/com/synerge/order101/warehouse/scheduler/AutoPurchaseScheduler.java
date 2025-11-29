@@ -33,7 +33,7 @@ public class AutoPurchaseScheduler {
             log.info("2) 자동발주 트리거 완료");
 
         } catch (Exception e) {
-            log.error("❌ [자동발주 스케줄러] 오류 발생: {}", e.getMessage(), e);
+            log.error("[자동발주 스케줄러] 오류 발생: {}", e.getMessage(), e);
         }
 
         log.info("▶ [자동발주 스케줄러] 실행 종료");

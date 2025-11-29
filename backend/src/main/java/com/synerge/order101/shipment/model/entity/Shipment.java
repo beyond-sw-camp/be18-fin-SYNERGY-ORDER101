@@ -5,7 +5,10 @@ import com.synerge.order101.order.model.entity.StoreOrder;
 import com.synerge.order101.outbound.model.entity.Outbound;
 import com.synerge.order101.store.model.entity.Store;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,6 +17,9 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @Table(name = "shipment")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Shipment {
 
     @Id
@@ -44,7 +50,7 @@ public class Shipment {
     private Boolean inTransitApplied = false;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = true)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
