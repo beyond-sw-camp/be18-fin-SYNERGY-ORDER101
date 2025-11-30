@@ -3,7 +3,7 @@ import csv
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-OUT = BASE / "sku_catalog_ml.csv"   # ← ML 전용, DB용과 분리
+OUT = BASE / "sku_catalog_ml.csv"   
 
 random.seed(42)
 

@@ -63,4 +63,12 @@ public class NotificationController {
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, "삭제가 완료되었습니다."));
     }
+
+    @DeleteMapping
+    @Transactional
+    public ResponseEntity<BaseResponseDto<String>> deleteAll(@AuthenticationPrincipal User user) {
+        notificationService.deleteAllNotification(user);
+
+        return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, "모든 알림이 삭제되었습니다."));
+    }
 }

@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import StoreListView from '@/views/hq/franchise/StoreListView.vue'
 const DashboardView = () => import('../views/DashboardView.vue')
 const PagePlaceholder = () => import('../views/PagePlaceholder.vue')
 const OrderCreateView = () => import('../views/hq/orders/OrderCreateView.vue')
 const OrderStatusView = () => import('../views/hq/orders/OrderStatusView.vue')
+const AutoOrderStatusView = () => import('../views/hq/orders/auto/AutoOrderStatusView.vue')
+const AutoOrderDetailView = () => import('../views/hq/orders/auto/AutoOrderDetailView.vue')
 const OrderApprovalView = () => import('../views/hq/orders/OrderApprovalView.vue')
 const OrderApprovalListView = () => import('../views/hq/orders/OrderApprovalListView.vue')
 const UserRegistrationView = () => import('../views/hq/user/UserRegistrationView.vue')
@@ -49,19 +52,31 @@ const hqRoutes = [
     path: '/hq/orders/create',
     name: 'hq-orders-create',
     component: OrderCreateView,
-    meta: { title: '구매 주문 생성' },
+    meta: { title: '발주서 생성' },
   },
   {
     path: '/hq/orders/status',
     name: 'hq-orders-status',
     component: OrderStatusView,
-    meta: { title: '주문 현황' },
+    meta: { title: '일반 발주 현황' },
+  },
+  {
+    path: '/hq/orders/auto/status',
+    name: 'hq-orders-auto-status',
+    component: AutoOrderStatusView,
+    meta: { title: '자동 발주 현황' },
+  },
+  {
+    path: '/hq/orders/auto/status/:purchaseId',
+    name: 'hq-orders-auto-detail',
+    component: AutoOrderDetailView,
+    meta: { title: '자동 발주 상세' },
   },
   {
     path: '/hq/orders/approval',
     name: 'hq-orders-approval',
     component: OrderApprovalListView,
-    meta: { title: '주문 승인' },
+    meta: { title: '발주 승인' },
   },
   {
     path: '/hq/orders/approval/:id',
@@ -111,12 +126,6 @@ const hqRoutes = [
     component: ProductDetailView,
     meta: { title: '상품 상세' },
   },
-  {
-    path: '/hq/inventory/stock',
-    name: 'hq-inventory-stock',
-    component: PagePlaceholder,
-    meta: { title: '상품 목록' },
-  },
   // {
   //   path: '/hq/settlement/daily',
   //   name: 'hq-settlement-daily',
@@ -156,7 +165,7 @@ const hqRoutes = [
   {
     path: '/hq/franchise/list',
     name: 'hq-franchise-list',
-    component: FranchiseListView,
+    component: StoreListView,
     meta: { title: '가맹점 목록' },
   },
   {

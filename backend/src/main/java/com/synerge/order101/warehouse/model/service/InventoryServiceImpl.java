@@ -1,20 +1,16 @@
 package com.synerge.order101.warehouse.model.service;
 
-import com.synerge.order101.common.enums.OrderStatus;
-import com.synerge.order101.order.model.entity.StoreOrder;
 import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
-import com.synerge.order101.order.model.repository.StoreOrderRepository;
-import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
-import com.synerge.order101.product.model.repository.ProductRepository;
-import com.synerge.order101.product.model.repository.ProductSupplierRepository;
 import com.synerge.order101.purchase.model.dto.CalculatedAutoItem;
 import com.synerge.order101.purchase.model.entity.Purchase;
-import com.synerge.order101.purchase.model.repository.PurchaseRepository;
 import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,12 +26,11 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public List<InventoryResponseDto> getInventoryList() {
+    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId) {
 
-        return warehouseInventoryRepository.findAllWithProduct()
-                .stream()
-                .map(InventoryResponseDto::fromEntity)
-                .toList();
+        Pageable pageable = PageRequest.of(page - 1, numOfRows);  // page는 0부터 시작
+
+        return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, pageable);
     }
 
     // 출고 반영
@@ -68,6 +63,7 @@ public class InventoryServiceImpl implements InventoryService {
                 warehouseInventoryRepository.findAllWithProductAndSupplier();
 
         for (WarehouseInventory inv : inventoryList) {
+            System.out.println("주문량 확인 전: "+inv.getProduct().getProductId());
 
             Long productId = inv.getProduct().getProductId();
 
@@ -77,6 +73,8 @@ public class InventoryServiceImpl implements InventoryService {
             );
 
             if (sales.isEmpty()) continue;
+
+            System.out.println("주문량 확인 후:"+inv.getProduct().getProductId());
 
             // 최고판매량
             int dMax = sales.stream().mapToInt(i -> i).max().orElse(0);
@@ -112,6 +110,7 @@ public class InventoryServiceImpl implements InventoryService {
             Long productId = inv.getProduct().getProductId();
             int currentQty = inv.getOnHandQuantity();
             int safetyQty = inv.getSafetyQuantity();
+            System.out.println("currentQty: "+currentQty + " safetyQty: "+safetyQty);
 
             // 최근 30일 판매량 조회
             List<Integer> sales = storeOrderDetailRepository.findDailySalesQtySince(

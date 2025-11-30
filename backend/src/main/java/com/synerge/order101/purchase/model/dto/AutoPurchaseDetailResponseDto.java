@@ -19,7 +19,11 @@ public class AutoPurchaseDetailResponseDto {
 
     private String supplierName;
 
+    private String userName;
+
     private LocalDateTime requestedAt;
+
+    private String status;
 
     private List<AutoPurchaseItemDto> purchaseItems;
 
@@ -28,6 +32,7 @@ public class AutoPurchaseDetailResponseDto {
     @AllArgsConstructor
     public static class AutoPurchaseItemDto{
 
+        private Long detailId;
         private String productCode;
         private String productName;
         private BigDecimal unitPrice;
@@ -36,6 +41,8 @@ public class AutoPurchaseDetailResponseDto {
 
         public static AutoPurchaseItemDto fromEntity(PurchaseDetail detail, int safetyQty){
             return AutoPurchaseItemDto.builder()
+                    .detailId(detail.getPurchaseOrderLineId())
+                    .productCode(detail.getProduct().getProductCode())
                     .productName(detail.getProduct().getProductName())
                     .unitPrice(detail.getUnitPrice())
                     .orderQty(detail.getOrderQty())

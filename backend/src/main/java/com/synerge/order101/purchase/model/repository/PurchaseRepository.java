@@ -1,17 +1,16 @@
 package com.synerge.order101.purchase.model.repository;
 
-import aj.org.objectweb.asm.commons.Remapper;
-import com.synerge.order101.common.dto.ItemsResponseDto;
-import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.AutoPurchaseListResponseDto;
-import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
 
 @Repository
 public interface PurchaseRepository extends JpaRepository<Purchase, Long>, QuerydslPredicateExecutor<Purchase> , PurchaseRepositoryCustom{
@@ -44,8 +43,9 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long>, Query
         JOIN p.supplier s
         JOIN PurchaseDetail pd ON pd.purchase.purchaseId = p.purchaseId
         WHERE p.orderType = com.synerge.order101.purchase.model.entity.Purchase.OrderType.AUTO
+        GROUP BY p.purchaseId, p.poNo, s.supplierName, p.createdAt, p.orderStatus
     """)
-    Page<AutoPurchaseListResponseDto> findAutoOrderAllStatus(Pageable pageable);
+    Page<AutoPurchaseListResponseDto> getAutoPurchases(Pageable pageable);
 
     @Query("""
         SELECT new com.synerge.order101.purchase.model.dto.AutoPurchaseListResponseDto(
@@ -61,9 +61,16 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long>, Query
         JOIN p.supplier s
         JOIN PurchaseDetail pd ON pd.purchase.purchaseId = p.purchaseId
         WHERE p.orderType = com.synerge.order101.purchase.model.entity.Purchase.OrderType.AUTO
-          AND p.orderStatus = :status
+          AND (:supplierId IS NULL OR s.supplierId = :supplierId)
+          AND (:startDate IS NULL OR p.createdAt >= :startDate)
+          AND (:endDate IS NULL OR p.createdAt <= :endDate)
+        GROUP BY p.purchaseId, p.poNo, s.supplierName, p.createdAt, p.orderStatus
     """)
-    Page<AutoPurchaseListResponseDto> findByAutoOrderStatus(OrderStatus status, Pageable pageable);
-
+    Page<AutoPurchaseListResponseDto> searchAutoPurchases(
+            @Param("supplierId") Long supplierId,
+            @Param("startDate") LocalDateTime start,
+            @Param("endDate") LocalDateTime end,
+            Pageable pageable
+    );
 }
 

@@ -79,9 +79,6 @@ public class Purchase {
                 poDate = now;
         }
         poNo = this.generatePoNo();
-        orderStatus = OrderStatus.SUBMITTED;
-
-        this.createdAt = LocalDateTime.now();
     }
 
     public String generatePoNo() {
@@ -95,4 +92,9 @@ public class Purchase {
         this.orderStatus = newOrderStatus;
     }
 
+    public void submit(User submitUser, LocalDateTime time) {
+        this.user = submitUser;
+        this.createdAt = time;
+        this.orderStatus = OrderStatus.SUBMITTED;
+    }
 }

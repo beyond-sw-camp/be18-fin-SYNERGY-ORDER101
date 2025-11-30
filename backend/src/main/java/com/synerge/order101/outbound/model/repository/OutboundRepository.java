@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+
 @Repository
 public interface OutboundRepository extends JpaRepository<Outbound,Long> {
     @Query("""
@@ -23,4 +25,20 @@ public interface OutboundRepository extends JpaRepository<Outbound,Long> {
         """
     )
     Page<Object[]> findOutboundWithCounts(Pageable pageable);
+
+    @Query("""
+        SELECT o,
+               COUNT(d),
+               COALESCE(SUM(d.outboundQty), 0)
+        FROM Outbound o
+        LEFT JOIN OutboundDetail d ON o.outboundId = d.outbound.outboundId
+        WHERE (:storeId IS NULL OR o.store.storeId = :storeId)
+          AND (:start IS NULL OR :end IS NULL OR o.outboundDatetime BETWEEN :start AND :end)
+        GROUP BY o.outboundId
+    """)
+    Page<Object[]> searchOutbounds(Long storeId,
+                                   LocalDateTime start,
+                                   LocalDateTime end,
+                                   Pageable pageable);
+
 }

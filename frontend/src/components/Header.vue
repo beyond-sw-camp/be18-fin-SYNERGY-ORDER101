@@ -5,12 +5,16 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { useNotificationStore } from './api/notification/notification'
 import NotificationModal from './api/notification/NotificationModal.vue'
+import { computed } from 'vue'
 
 // use the provided flaticon image URL
 const notificationIcon = 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
 const notiStore = useNotificationStore()
 
 import logoUrl from '../assets/logo.png'
+
+const loading = computed(() => notiStore.loadingPage)
+const hasMore = computed(() => notiStore.hasMore)
 
 const props = defineProps({
   currentRole: { type: String, required: true },
@@ -82,6 +86,14 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', onDocumentClick)
   notiStore.disconnectSSE()
 })
+
+const handleLoadMore = () => {
+  notiStore.loadMore()
+}
+const handleClearAll = async () => {
+  if (!confirm('모든 알림을 삭제하시겠습니까?')) return
+  await notiStore.clearAll()
+}
 </script>
 
 <template>
@@ -115,7 +127,11 @@ onBeforeUnmount(() => {
             <div v-if="showNotiMenu" ref="notiMenuRef">
               <NotificationModal
                 :items="notiStore.notifications"
+                :loading="loading"
+                :hasMore="hasMore"
                 @delete="notiStore.deleteNotification"
+                @load-more="handleLoadMore"
+                @clear-all="handleClearAll"
               />
             </div>
           </div>

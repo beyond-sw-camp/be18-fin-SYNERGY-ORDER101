@@ -92,6 +92,17 @@ public class NotificationService {
         notificationRepository.delete(notification);
     }
 
+    @Transactional
+    public void deleteAllNotification(User user) {
+        if(user == null) {
+            throw new CustomException(CommonErrorCode.ACCESS_DENIED);
+        }
+        long userId = user.getUserId();
+        List<Notification> notifications = notificationRepository.findAllByUserId(userId);
+
+        notificationRepository.deleteAll(notifications);
+    }
+
     // 발주 컨펌 시 어드민들에게 승인 요청 알림(테스트 안함)
     @Transactional
     public void notifyPurchaseCreatedToAdmin(User admin, Purchase purchase) {
@@ -282,5 +293,6 @@ public class NotificationService {
             notificationSseService.send(String.valueOf(admin.getUserId()), notification);
         }
     }
+
 
 }

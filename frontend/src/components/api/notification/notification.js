@@ -13,7 +13,17 @@ export const useNotificationStore = defineStore('notification', {
     connected: false,
     bootstrapped: false,
     lastEventId: null,
+
+    page: 0, // 현재 서버 페이지 (0-based)
+    size: 20, // 한 번에 가져올 개수
+    totalCount: 0, // 서버에서 내려준 전체 개수
+    loadingPage: false, // 페이지 로딩중 여부
   }),
+
+  getters: {
+    // ✅ 더 불러올 게 남았는지 여부
+    hasMore: (s) => s.notifications.length < s.totalCount,
+  },
 
   actions: {
     async init() {
@@ -29,14 +39,31 @@ export const useNotificationStore = defineStore('notification', {
       this.connectSSE(token)
     },
 
-    async fetchNotifications(page = 0, size = 20) {
-      const { data } = await axios.get('/api/v1/notifications', { params: { page, size } })
+    async fetchNotifications(page = 0, size = this.size) {
+      if (this.loadingPage) return
+      this.loadingPage = true
 
-      const raw = data?.items?.content ?? data?.items ?? data?.content ?? data ?? []
+      try {
+        const { data } = await axios.get('/api/v1/notifications', { params: { page, size } })
 
-      const list = Array.isArray(raw) ? raw : (raw.content ?? raw.notifications ?? [])
+        const raw = data?.items?.content ?? data?.items ?? data?.content ?? data ?? []
 
-      this.notifications = page === 0 ? list : [...this.notifications, ...list]
+        const list = Array.isArray(raw) ? raw : (raw.content ?? raw.notifications ?? [])
+
+        this.notifications = page === 0 ? list : [...this.notifications, ...list]
+
+        this.page = data.page ?? page
+        this.totalCount = data.totalCount ?? this.totalCount
+        this.size = size
+      } finally {
+        this.loadingPage = false
+      }
+    },
+
+    async loadMore() {
+      if (this.loadingPage || !this.hasMore) return
+      const nextPage = this.page + 1
+      await this.fetchNotifications(nextPage, this.size)
     },
 
     async fetchUnreadCount() {
@@ -65,6 +92,8 @@ export const useNotificationStore = defineStore('notification', {
         this.notifications.unshift(payload)
 
         this.unreadCount += 1
+
+        this.totalCount += 1
       })
 
       es.onerror = () => {}
@@ -88,12 +117,23 @@ export const useNotificationStore = defineStore('notification', {
       this.notifications = this.notifications.filter(
         (n) => Number(n.notificationId ?? n.id) !== targetId,
       )
+      this.totalCount = Math.max(0, this.totalCount - 1)
+    },
+    async clearAll() {
+      await axios.delete('/api/v1/notifications')
+
+      this.notifications = []
+      this.unreadCount = 0
+      this.totalCount = 0 // 페이징 쓰고 있다면 이것도 0으로
+      this.page = 0
     },
 
     reset() {
       this.disconnectSSE()
       this.notifications = []
       this.unreadCount = 0
+      this.page = 0
+      this.totalCount = 0
     },
   },
 })

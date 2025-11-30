@@ -143,14 +143,28 @@ const submittedCount = computed(() =>
 
 onMounted(() => {
   const today = new Date()
-  endDate.value = today.toISOString().slice(0, 10)
 
+  // (1) 시작일 = 지난 11개월 전의 1일
   const start = new Date(today)
-  start.setDate(start.getDate() - 6)
+  start.setMonth(start.getMonth() - 11)
+  start.setDate(1)
   startDate.value = start.toISOString().slice(0, 10)
+
+  // (2) 다음주 월요일 계산
+  const nextWeek = new Date(today)
+  const day = nextWeek.getDay() // 0=일,1=월,...6=토
+  const diffToNextMonday = (8 - day) % 7 || 7
+  nextWeek.setDate(nextWeek.getDate() + diffToNextMonday)
+
+  // (3) 종료일 = (다음주 월요일 + 1개월)의 마지막 날
+  const end = new Date(nextWeek)
+  end.setMonth(end.getMonth() + 1)
+  end.setDate(0) // 그 달의 마지막 날짜
+  endDate.value = end.toISOString().slice(0, 10)
 
   fetchSmartOrders()
 })
+
 
 async function fetchSmartOrders () {
   try {

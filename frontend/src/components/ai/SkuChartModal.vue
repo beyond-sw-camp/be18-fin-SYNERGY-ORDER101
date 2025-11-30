@@ -57,8 +57,8 @@ async function loadChart() {
   const list = res.data;
 
   const labels = list.map((x) => x.date);
-  const fc = list.map((x) => x.forecast);
-  const ac = list.map((x) => x.actual);
+  const forecast = list.map((x) => x.forecast);
+  const actual = list.map((x) => x.actual);
 
   if (chartInstance) chartInstance.destroy();
 
@@ -67,9 +67,39 @@ async function loadChart() {
     data: {
       labels,
       datasets: [
-        { label: "예측", data: fc, borderWidth: 2 },
-        { label: "실제", data: ac, borderWidth: 2 },
+        {
+          label: "예측",
+          data: forecast,
+          borderColor: "#4169E1",
+          backgroundColor: "rgba(65,105,225,0.2)",
+          borderWidth: 2,
+          pointRadius: 0,        
+          tension: 0.3,          
+        },
+        {
+          label: "실제",
+          data: actual,
+          borderColor: "#DC143C",
+          backgroundColor: "rgba(220,20,60,0.2)",
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.3,
+        },
       ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: "#eee" },
+        },
+        x: {
+          grid: { display: false },
+          ticks: { maxRotation: 70, minRotation: 70 },
+        },
+      },
     },
   });
 }
@@ -88,7 +118,8 @@ onBeforeUnmount(() => chartInstance?.destroy());
   justify-content: center;
 }
 .modal {
-  width: 700px;
+  width: 900px;
+  height: 600px; 
   background: white;
   padding: 16px;
   border-radius: 12px;
@@ -105,5 +136,6 @@ onBeforeUnmount(() => chartInstance?.destroy());
 }
 .modal-body {
   margin-top: 16px;
+  height: 85%; 
 }
 </style>

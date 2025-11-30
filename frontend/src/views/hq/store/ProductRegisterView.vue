@@ -12,11 +12,6 @@
         </div>
 
         <div class="form-row">
-          <label>상품 코드</label>
-          <input v-model="form.productCode" placeholder="상품 코드를 입력하세요" class="input" />
-        </div>
-
-        <div class="form-row">
           <label>대분류</label>
           <select v-model.number="selectedLargeId" class="input" @change="onLargeChange">
             <option :value="null">선택</option>
@@ -127,7 +122,6 @@ const saving = ref(false)
 
 const form = reactive({
   productName: '',
-  productCode: '',
   price: 0,
   status: true,
   description: '',
@@ -197,7 +191,7 @@ const fetchSuppliers = async () => {
 }
 
 const onSave = async () => {
-  if (!form.productName || !form.productCode) {
+  if (!form.productName) {
     alert('제품명과 상품 코드는 필수입니다.')
     return
   }
@@ -207,7 +201,6 @@ const onSave = async () => {
   }
   const req = {
     productName: form.productName,
-    productCode: form.productCode,
     price: form.price,
     status: form.status,
     description: form.description,

@@ -2,48 +2,62 @@
   <div class="noti-modal">
     <div class="noti-modal-header">
       <div class="title">알림</div>
+
+      <button v-if="items.length > 0" class="btn-clear-all" @click="emit('clear-all')">
+        모두 삭제
+      </button>
     </div>
 
-    <div v-if="items.length === 0" class="noti-empty">알림이 없습니다.</div>
+    <div ref="scrollBox" class="noti-scroll" @scroll="onScroll">
+      <div v-if="items.length === 0" class="noti-empty">알림이 없습니다.</div>
 
-    <ul v-else class="noti-list">
-      <li v-for="n in items" :key="n.notificationId ?? n.id">
-        <div class="noti-item" :class="{ unread: !(n.readAt || n.isRead) }">
-          <div class="dot" v-if="!(n.readAt || n.isRead)"></div>
+      <ul v-else class="noti-list">
+        <li v-for="n in items" :key="n.notificationId ?? n.id">
+          <div class="noti-item" :class="{ unread: !(n.readAt || n.isRead) }">
+            <div class="dot" v-if="!(n.readAt || n.isRead)"></div>
 
-          <div class="body">
-            <div class="row">
-              <div class="noti-title">
-                {{ n.title || n.type || '알림' }}
+            <div class="body">
+              <div class="row">
+                <div class="noti-title">
+                  {{ n.title || n.type || '알림' }}
+                </div>
+                <div class="noti-time">
+                  {{ formatTime(n.createdAt || n.createdDate) }}
+                </div>
               </div>
-              <div class="noti-time">
-                {{ formatTime(n.createdAt || n.createdDate) }}
+              <div class="noti-content">
+                {{ n.message || n.content || n.body }}
               </div>
             </div>
-            <div class="noti-content">
-              {{ n.message || n.content || n.body }}
-            </div>
+
+            <button
+              class="delete"
+              @click="emit('delete', n.notificationId ?? n.id)"
+              aria-label="알림 삭제"
+            >
+              ×
+            </button>
           </div>
-
-          <button
-            class="delete"
-            @click="emit('delete', n.notificationId ?? n.id)"
-            aria-label="알림 삭제"
-          >
-            ×
-          </button>
-        </div>
-      </li>
-    </ul>
+        </li>
+      </ul>
+      <div v-if="loading" class="noti-loading">더 불러오는 중...</div>
+      <div v-else-if="!hasMore && items.length > 0" class="noti-end">모든 알림을 불러왔습니다.</div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
   items: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+  hasMore: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete', 'load-more', 'clear-all'])
+
+const scrollBox = ref(null)
 
 const formatTime = (v) => {
   if (!v) return ''
@@ -51,9 +65,34 @@ const formatTime = (v) => {
   if (isNaN(d.getTime())) return v
   return d.toLocaleString()
 }
+
+const onScroll = () => {
+  const el = scrollBox.value
+  if (!el || !props.hasMore || props.loading) return
+
+  const threshold = 40 // 바닥에서 40px 이내면 다음 페이지 요청
+  const reachedBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold
+
+  if (reachedBottom) {
+    emit('load-more')
+  }
+}
 </script>
 
 <style scoped>
+.noti-scroll {
+  max-height: 360px; /* 모달 높이 제한 */
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.noti-loading,
+.noti-end {
+  text-align: center;
+  padding: 8px 0 12px;
+  font-size: 13px;
+  color: #9ca3af;
+}
 .noti-modal {
   position: absolute;
   right: 0;
@@ -145,5 +184,17 @@ const formatTime = (v) => {
 }
 .delete:hover {
   color: #ef4444;
+}
+.btn-clear-all {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.btn-clear-all:hover {
+  color: #6b7280;
+  text-decoration: underline;
 }
 </style>

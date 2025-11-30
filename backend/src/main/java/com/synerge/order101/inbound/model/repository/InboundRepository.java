@@ -5,7 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
 
 @Repository
 public interface InboundRepository extends JpaRepository<Inbound,Long> {
@@ -24,4 +27,20 @@ public interface InboundRepository extends JpaRepository<Inbound,Long> {
         """
     )
     Page<Object[]> findInboundWithCounts(Pageable pageable);
+
+    @Query("""
+        SELECT i,
+               COUNT(d),
+               COALESCE(SUM(d.receivedQty), 0)
+        FROM Inbound i
+        LEFT JOIN InboundDetail d ON i.inboundId = d.inbound.inboundId
+        WHERE (:supplierId IS NULL OR i.supplier.supplierId = :supplierId)
+          AND (:start IS NULL OR i.inboundDatetime >= :start)
+          AND (:end IS NULL OR i.inboundDatetime <= :end)
+        GROUP BY i.inboundId
+    """)
+    Page<Object[]> searchInbounds(Long supplierId,
+                                  LocalDateTime start,
+                                  LocalDateTime end,
+                                  Pageable pageable);
 }
