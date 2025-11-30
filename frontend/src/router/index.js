@@ -38,6 +38,7 @@ const SmartOrderDetailView = () => import('../views/hq/orders/SmartOrderDetailVi
 const DemandForecastView = () => import('../views/hq/dashboard/DemandForecastView.vue')
 const StoreOrderCreateView = () => import('../views/store/purchase/StoreOrderCreateView.vue')
 const StoreOrderDashboardView = () => import('../views/hq/dashboard/StoreOrderDashboardView.vue')
+const SystemHomeView = () => import('../views/system/SystemHomeView.vue')
 
 const hqRoutes = [
   {
@@ -254,6 +255,12 @@ const storeRoutes = [
     component: PagePlaceholder,
     meta: { title: '정산 관리' },
   },
+  {
+  path: '/system',
+  name: 'system-home',
+  component: SystemHomeView,
+  meta: { title: '시스템 Test', requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
@@ -305,9 +312,13 @@ router.beforeEach(async (to, from, next) => {
         (authStore.userInfo.role ||
           authStore.userInfo.type ||
           (authStore.userInfo.roles && authStore.userInfo.roles[0]))
-      return role === 'STORE_ADMIN'
-        ? next({ name: 'store-dashboard' })
-        : next({ name: 'hq-dashboard' })
+      // return role === 'STORE_ADMIN'
+      //   ? next({ name: 'store-dashboard' })
+      //   : next({ name: 'hq-dashboard' })
+      if (role === 'SYSTEM') return next({ name: 'system-home' })
+      if (role === 'STORE_ADMIN') return next({ name: 'store-dashboard' })
+      return next({ name: 'hq-dashboard' })
+
     }
     return next()
   }
@@ -341,8 +352,13 @@ router.beforeEach(async (to, from, next) => {
 
   // redirect root/dashboard to role-specific dashboard
   if (to.path === '/' || to.name === 'dashboard') {
+    if (role === 'SYSTEM') return next({ name: 'system-home' })
     if (role === 'STORE_ADMIN') return next({ name: 'store-dashboard' })
     return next({ name: 'hq-dashboard' })
+  }
+
+  if (role === 'SYSTEM' && (to.path.startsWith('/hq') || to.path.startsWith('/store'))) {
+  return next({ name: 'system-home' })  
   }
 
   // enforce broad route namespace separation
