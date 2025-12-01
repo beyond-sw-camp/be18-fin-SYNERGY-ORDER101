@@ -2,32 +2,29 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo '--- INSTALL: Checking CodeBuild Environment ---'
-      - echo "REPOSITORY_NAME: $REPOSITORY_NAME"
+      - echo "--- INSTALL Checking CodeBuild Environment ---"
+      - echo "REPOSITORY_NAME $REPOSITORY_NAME"
 
   pre_build:
     commands:
-      - echo '--- PRE_BUILD: Logging in to Amazon ECR ---'
+      - echo "--- PRE_BUILD Logging in to Amazon ECR ---"
       - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-      # ECR 저장소 URI 및 이미지 태그 정의
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      
+
   build:
     commands:
-      - echo '--- BUILD: Building Docker Image ---'
-      # Docker build 실행 (backend/Dockerfile 사용, 빌드 컨텍스트는 backend/)
+      - echo "--- BUILD Building Docker Image ---"
       - docker build -t $REPOSITORY_URI:latest -f backend/Dockerfile backend/
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      
-      - echo '--- BUILD: Pushing to ECR ---'
+      - echo "--- BUILD Pushing to ECR ---"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo '--- POST_BUILD: Creating imagedefinitions.json for ECS deployment ---'
+      - echo "--- POST_BUILD Creating imagedefinitions.json ---"
       - printf '[{"name":"synergy-order101-backend","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
