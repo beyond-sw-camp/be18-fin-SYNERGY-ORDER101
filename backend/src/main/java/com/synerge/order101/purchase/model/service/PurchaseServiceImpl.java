@@ -291,7 +291,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
                 .userName(purchase.getUser().getName())
-                .requestedAt(purchase.getCreatedAt())
+                .requestedAt(purchase.getPoDate())
                 .status(purchase.getOrderStatus())
                 .purchaseItems(items)
                 .build();
@@ -381,7 +381,10 @@ public class PurchaseServiceImpl implements PurchaseService {
 
         purchaseDetailHistoryRepository.saveAll(historyList);
 
-        purchase.updateOrderStatus(OrderStatus.SUBMITTED);
+        User submitUser = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(PurchaseErrorCode.PURCHASE_CREATION_FAILED));
+
+        purchase.submit(submitUser, LocalDateTime.now());
 
         // 자동 발주 알림 (테스트 완)
         List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);

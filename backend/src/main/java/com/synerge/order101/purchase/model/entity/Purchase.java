@@ -65,6 +65,7 @@ public class Purchase {
     @Builder.Default
     private List<PurchaseDetail> purchaseDetails = new ArrayList<>();
 
+
     public enum OrderType {
         MANUAL,
         AUTO,
@@ -94,7 +95,7 @@ public class Purchase {
 
     public void submit(User submitUser, LocalDateTime time) {
         this.user = submitUser;
-        this.createdAt = time;
+        this.poDate = time;
         this.orderStatus = OrderStatus.SUBMITTED;
     }
 }

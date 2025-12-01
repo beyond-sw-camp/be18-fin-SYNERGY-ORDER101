@@ -21,7 +21,7 @@
           </div>
 
           <div class="form-row">
-            <label>생성일자</label>
+            <label>요청일자</label>
             <input class="input" :value="formatDateTimeMinute(po.requestedAt)" readonly />
           </div>
         </section>
