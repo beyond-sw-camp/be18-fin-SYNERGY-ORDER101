@@ -80,6 +80,7 @@ import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue';
 
 const filters = ref({
   status: 'ALL',
+  orderType: null,
   vendorId: null,
   startDate: getPastDateString(30),
   endDate: new Date().toISOString().slice(0, 10),
@@ -146,6 +147,7 @@ function handleSearch(filterData) {
   console.log('🔍 발주 필터 검색:', filterData)
   filters.value = {
     status: filterData.status !== 'ALL' ? filterData.status : null,
+    orderType: filterData.orderType !== 'ALL' ? filterData.orderType : null,
     vendorId: filterData.vendorId !== 'ALL' ? filterData.vendorId : null,
     startDate: filterData.startDate,
     endDate: filterData.endDate,
@@ -164,7 +166,7 @@ async function search() {
   try {
     console.log("검색 조건:", filters.value);
 
-    // 일반 발주 검색 조건 생성
+    // 일반 발주 검색 조건 생성 (타입은 프론트에서 필터링)
     const regularCond = {
       types: [],
       statuses: filters.value.status ? [filters.value.status] : [],
@@ -186,18 +188,46 @@ async function search() {
     totalElements.value = data.totalElements || 0
     totalPagesFromBackend.value = data.totalPages || 1
 
-    // 데이터 매핑
-    rows.value = (data.content || []).map(item => ({
-      id: item.purchaseId,
-      No: item.poNo,
-      vendor: item.supplierName,
-      requester: item.requesterName,
-      items: item.totalQty,
-      amount: item.totalAmount,
-      requestedAt: item.requestedAt,
-      status: mapPurchaseStatus(item.status),
-      orderType: mapPurchaseStatus(item.orderType)
-    }));
+    // 데이터 매핑 및 타입 결정
+    let mappedRows = (data.content || []).map(item => {
+      // 타입 결정: AUTO(자동), SMART(스마트), 그 외(일반)
+      let displayType = '일반'
+      if (item.orderType === 'AUTO') {
+        displayType = '자동'
+      } else if (item.orderType === 'SMART') {
+        displayType = '스마트'
+      }
+
+      return {
+        id: item.purchaseId,
+        No: item.poNo,
+        vendor: item.supplierName,
+        requester: item.requesterName,
+        items: item.totalQty,
+        amount: item.totalAmount,
+        requestedAt: item.requestedAt,
+        status: mapPurchaseStatus(item.status),
+        orderType: displayType,
+        rawOrderType: item.orderType // 필터링용 원본 타입
+      }
+    });
+
+    // 프론트엔드 타입 필터링
+    if (filters.value.orderType) {
+      mappedRows = mappedRows.filter(row => {
+        if (filters.value.orderType === 'AUTO') {
+          return row.rawOrderType === 'AUTO'
+        } else if (filters.value.orderType === 'SMART') {
+          return row.rawOrderType === 'SMART'
+        } else if (filters.value.orderType === 'MANUAL') {
+          // 일반: AUTO, SMART가 아닌 것
+          return row.rawOrderType !== 'AUTO' && row.rawOrderType !== 'SMART'
+        }
+        return true
+      })
+    }
+
+    rows.value = mappedRows;
 
   } catch (err) {
     console.error('발주 목록을 가져오는 중 오류 발생:', err);

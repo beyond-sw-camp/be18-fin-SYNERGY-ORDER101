@@ -75,12 +75,11 @@ const totalPagesFromBackend = ref(0)
 
 // 필터 상태
 const filters = ref({
-  storeId: '',
+  vendorId: '',
   startDate: getPastDateString(30),
   endDate: getTodayString(),
   keyword: '',
   statuses: 'SUBMITTED'
-
 })
 
 // 데이터
@@ -98,7 +97,14 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  filters.value = { ...filterData }
+  console.log('🔍 필터 검색:', filterData)
+  filters.value = {
+    vendorId: filterData.vendorId === null || filterData.vendorId === 'ALL' ? null : filterData.vendorId,
+    startDate: filterData.startDate,
+    endDate: filterData.endDate,
+    keyword: filterData.keyword,
+    statuses: 'SUBMITTED' // 승인 요청 목록은 항상 SUBMITTED만 조회
+  }
   currentPage.value = 1 // 검색 시 첫 페이지로 이동
   searchStoreOrders()
 }
@@ -108,7 +114,7 @@ const searchStoreOrders = async () => {
   try {
     // ✅ API 파라미터 구성 (Settlement과 동일한 패턴)
     const params = {
-      storeId: filters.value.storeId || null,
+      vendorId: filters.value.vendorId || null,
       fromDate: filters.value.startDate || null,
       toDate: filters.value.endDate || null,
       statuses: 'SUBMITTED',
