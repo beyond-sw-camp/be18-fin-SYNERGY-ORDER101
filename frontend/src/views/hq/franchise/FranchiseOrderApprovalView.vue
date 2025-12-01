@@ -13,26 +13,26 @@
         <table class="approval-table">
           <thead>
             <tr>
-              <th>주문 ID</th>
-              <th>가맹점</th>
-              <th>품목 수</th>
-              <th>총 수량</th>
-              <th class="numeric">예상 가격</th>
-              <th>생성 시간</th>
-              <th>승인</th>
+              <th class="center">주문 ID</th>
+              <th class="center">가맹점</th>
+              <th class="center">품목 수</th>
+              <th class="center">총 수량</th>
+              <th class="center">예상 가격</th>
+              <th class="center">생성 시간</th>
+              <th class="center">승인</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in filteredRows" :key="row.id" class="clickable-row" @click="openDetail(row)">
-              <td class="po">{{ row.No }}</td>
-              <td>{{ row.store }}</td>
-              <td class="numeric">{{ row.itemCount }}</td>
-              <td class="numeric">{{ row.totalQty }}</td>
-              <td class="numeric">
+              <td class="center po">{{ row.No }}</td>
+              <td class="center">{{ row.store }}</td>
+              <td class="center">{{ row.itemCount }}</td>
+              <td class="center">{{ row.totalQty }}</td>
+              <td class="right">
                 <Money :value="row.estimatedPrice" />
               </td>
-              <td>{{ formatDateTimeMinute(row.createdAt) }}</td>
-              <td class="actions">
+              <td class="center">{{ formatDateTimeMinute(row.createdAt) }}</td>
+              <td class="center actions">
                 <button class="btn-accept" @click.stop="approve(row)">승인</button>
                 <button class="btn-reject" @click.stop="reject(row)">반려</button>
               </td>
@@ -138,7 +138,7 @@ const searchStoreOrders = async () => {
       No: item.orderNo || item.storeOrderId,
       store: item.storeName,
       itemCount: item.itemCount || 0,
-      totalQty: item.totalQty || 0,
+      totalQty: item.totalQTY || 0,
       estimatedPrice: item.totalAmount || 0,
       createdAt: item.orderDate || item.createdAt,
       status: mapPurchaseStatus(item.orderStatus || item.status)
@@ -246,7 +246,13 @@ async function reject(row) {
   text-align: left;
 }
 
-.approval-table td.numeric {
+.approval-table td.center,
+.approval-table th.center {
+  text-align: center;
+}
+
+.approval-table td.right,
+.approval-table th.right {
   text-align: right;
 }
 
@@ -257,7 +263,7 @@ async function reject(row) {
 .actions {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .btn-accept {

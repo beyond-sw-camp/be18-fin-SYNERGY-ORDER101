@@ -13,26 +13,26 @@
         <table class="orders-table">
           <thead>
             <tr>
-              <th>주문 ID</th>
-              <th>가맹점</th>
-              <th>품목 수</th>
-              <th>총 수량</th>
-              <th class="numeric">예상 가격</th>
-              <th>생성 시간</th>
-              <th>상태</th>
+              <th class="center">주문 ID</th>
+              <th class="center">가맹점</th>
+              <th class="center">품목 수</th>
+              <th class="center">총 수량</th>
+              <th class="center">예상 가격</th>
+              <th class="center">생성 시간</th>
+              <th class="center">상태</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in filteredRows" :key="row.id" class="clickable-row" @click="openDetail(row)">
-              <td class="po">{{ row.No }}</td>
-              <td>{{ row.store }}</td>
-              <td class="numeric">{{ row.itemCount }}</td>
-              <td class="numeric">{{ row.totalQty }}</td>
-              <td class="numeric">
+              <td class="center po">{{ row.No }}</td>
+              <td class="center">{{ row.store }}</td>
+              <td class="center">{{ row.itemCount }}</td>
+              <td class="center">{{ row.totalQty }}</td>
+              <td class="right">
                 <Money :value="row.totalPrice" />
               </td>
-              <td>{{ row.createdAt }}</td>
-              <td>
+              <td class="center">{{ row.createdAt }}</td>
+              <td class="center">
                 <span :class="['chip', statusClass(row.status)]">{{
                   statusLabel(row.status)
                 }}</span>
@@ -224,7 +224,13 @@ function statusLabel(s) {
   text-align: left;
 }
 
-.orders-table td.numeric {
+.orders-table td.center,
+.orders-table th.center {
+  text-align: center;
+}
+
+.orders-table td.right,
+.orders-table th.right {
   text-align: right;
 }
 
