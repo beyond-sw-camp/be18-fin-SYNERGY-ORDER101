@@ -10,6 +10,8 @@ import com.synerge.order101.ai.model.entity.DemandForecast;
 import com.synerge.order101.ai.model.entity.SmartOrder;
 import com.synerge.order101.ai.model.repository.DemandForecastRepository;
 import com.synerge.order101.ai.model.repository.SmartOrderRepository;
+import org.springframework.cache.annotation.Cacheable;
+import com.synerge.order101.common.cache.CachedPerf;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.notification.model.service.NotificationService;
@@ -169,6 +171,9 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     }
 
     // 스마트 발주 목록 조회
+//    @Cacheable(value = "smartOrders",
+//            key = "{#status?.name(), #from, #to}")
+//    @CachedPerf("SmartOrderList")
     public List<SmartOrderResponseDto> getSmartOrders(
             OrderStatus status, LocalDate from, LocalDate to
     ) {

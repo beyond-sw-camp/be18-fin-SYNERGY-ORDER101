@@ -9,7 +9,8 @@ app/data_pipeline/*.json
 !app/data_pipeline/product_master_load.csv
 !app/data_pipeline/sample_domain_sales.csv
 !app/data_pipeline/sample_domain_sales_sku.csv
-
+!app/data_pipeline/category_weekly_sales.csv
+!app/data_pipeline/sku_catalog_ml_with_share.csv
 # caches
 __pycache__/
 *.pyc

@@ -1,18 +1,19 @@
 """
 06_generate_features.py
-- weekly_sales.csv + weather + sku_catalog_ml_with_share → features_all.csv
-- Lag, Moving Average, Time Features 생성
+- weekly_sales.csv + external_weather_weekly.csv + sku_catalog_ml_with_share.csv
+  → features_all.csv
 """
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
-import numpy as np   # 위로 올려두면 더 안전하긴 함
 
 BASE = Path(__file__).resolve().parent
 SALES = BASE / "weekly_sales.csv"
 WEATHER = BASE / "external_weather_weekly.csv"
-SKU = BASE / "sku_catalog_ml_with_share.csv"   
+SKU = BASE / "sku_catalog_ml_with_share.csv"
 OUT = BASE / "features_all.csv"
+
 
 def add_lags(df, lags):
     for l in lags:
@@ -22,24 +23,27 @@ def add_lags(df, lags):
 
 def add_moving_avg(df, windows):
     for w in windows:
-        df[f"ma_{w}"] = df.groupby("sku_id")["actual_order_qty"].shift(1).rolling(w).mean()
+        df[f"ma_{w}"] = (
+            df.groupby("sku_id")["actual_order_qty"]
+              .shift(1).rolling(w).mean()
+        )
     return df
 
 
 def main():
-    print("Loading weekly sales...")
+    print(f"Loading weekly sales from {SALES} ...")
     sales = pd.read_csv(SALES, parse_dates=["target_date"])
 
-    print("Loading weather...")
+    print(f"Loading weather from {WEATHER} ...")
     weather = pd.read_csv(WEATHER, parse_dates=["target_date"])
 
-    print("Loading SKU catalog with base share...")
+    print(f"Loading SKU catalog ML with share from {SKU} ...")
     sku = pd.read_csv(SKU)
 
-    # Merge SKU info
+    # SKU info merge
     sales = sales.merge(sku, on="sku_id", how="left")
 
-    # Merge weather
+    # weather merge
     sales = sales.merge(weather, on="target_date", how="left")
 
     # Time features
@@ -51,22 +55,17 @@ def main():
     sales["sin_week"] = np.sin(2 * np.pi * sales["weekofyear"] / 52)
     sales["cos_week"] = np.cos(2 * np.pi * sales["weekofyear"] / 52)
 
-    # Sort for proper lag generation
+    # Sort for lags
     sales = sales.sort_values(["sku_id", "target_date"])
 
-    # Add Lags
     sales = add_lags(sales, lags=[1, 2, 4, 8, 12])
-
-    # Add Moving Average
     sales = add_moving_avg(sales, windows=[4, 8, 12])
 
-    # Drop first few NA rows
     sales = sales.dropna().reset_index(drop=True)
 
-    # Reorder
     keep_cols = [
         "target_date", "warehouse_id", "store_id", "sku_id", "actual_order_qty",
-        "product_code", 
+        "product_code",
         "cat_low", "brand", "minor_option", "msrp_krw", "base_share",
         "avg_temp_c", "cdd", "hdd", "precip_mm", "heat_wave", "cold_wave",
         "year", "weekofyear", "month", "sin_week", "cos_week",
@@ -76,13 +75,10 @@ def main():
 
     sales = sales[keep_cols]
 
-    # Save
     sales.to_csv(OUT, index=False, encoding="utf-8-sig")
-
     print(f"Saved features_all.csv → {OUT}")
     print(sales.head(30))
 
 
 if __name__ == "__main__":
-    import numpy as np
     main()
