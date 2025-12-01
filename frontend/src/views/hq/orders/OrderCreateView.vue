@@ -110,10 +110,12 @@ import SupplierSearchModal from '../../../components/modal/SupplierSearchModal.v
 import SupplierSelectDisplay from './SupplierSelectDisplay.vue'
 import Money from '@/components/global/Money.vue'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
 
 // --- 1. 상수 정의 (DTO 및 기본 설정) ---
+const authStore = useAuthStore()
+
 const DEFAULT_ORDER_CONFIG = {
-  USER_ID: 112,
   WAREHOUSE_ID: 1,
   ORDER_TYPE: 'MANUAL',
   ORDER_STATUS: 'SUBMITTED',
@@ -225,7 +227,7 @@ async function OnCreatedPurchase() {
 
   // 발주 DTO 구성
   const payload = {
-    userId: DEFAULT_ORDER_CONFIG.USER_ID,
+    userId: authStore.userInfo?.userId,
     supplierId: selectedSupplier.value.supplierId,
     warehouseId: DEFAULT_ORDER_CONFIG.WAREHOUSE_ID,
     orderType: DEFAULT_ORDER_CONFIG.ORDER_TYPE,
