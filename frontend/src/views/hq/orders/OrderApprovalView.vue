@@ -2,8 +2,6 @@
   <OrderDetailView title="발주 상세 정보" detailTitle="발주 세부 정보" orderNumberLabel="발주 번호" vendorLabel="공급업체"
     summaryTitle="발주 금액 요약" :orderData="orderData" :showApprovalButtons="showApprovalButtons">
     <template #actions="{ showButtons }">
-      <PurchaseApprovalActions v-if="showButtons" :order-id="poId" :update-status-api="updatePurchaseStatus"
-        entity-name="발주" @success="handleProcessSuccess" />
     </template>
   </OrderDetailView>
 </template>
@@ -11,12 +9,14 @@
 <script setup>
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import { getPurchaseDetail, updatePurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 import OrderDetailView from '@/components/domain/order/OrderDetailView.vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const poId = route.params.id || 'PO-UNKNOWN'
 
 const po = reactive({
@@ -56,8 +56,15 @@ const fetchPurchaseDetail = async () => {
   }));
 }
 
+// HQ_ADMIN이고, 상태가 SUBMITTED 또는 DRAFT_AUTO인 경우에만 승인/반려 버튼 표시
+const isHqAdmin = computed(() => {
+  const role = authStore.userInfo?.role
+  return role === 'HQ_ADMIN'
+})
+
 const showApprovalButtons = computed(() => {
-  return po.status === 'SUBMITTED' || po.status === 'DRAFT_AUTO'
+  const validStatus = po.status === 'SUBMITTED' || po.status === 'DRAFT_AUTO'
+  return isHqAdmin.value && validStatus
 })
 
 function handleProcessSuccess() {

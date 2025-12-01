@@ -19,15 +19,6 @@
           <h2 class="section-title">정산 내역</h2>
           <span class="result-count">총 <strong>{{ rows.length }}</strong>건</span>
         </div>
-        <div class="header-actions">
-          <button class="btn-icon" @click="handleSearch(currentFilterData.value)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
-                stroke-width="2" stroke-linecap="round" />
-            </svg>
-            새로고침
-          </button>
-        </div>
       </div>
 
       <div class="table-container">
