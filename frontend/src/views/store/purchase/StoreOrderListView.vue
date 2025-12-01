@@ -5,7 +5,7 @@
     </header>
 
     <section class="filters card">
-      <PurchaseFilter @search="handleSearch" />
+      <PurchaseFilter :showVendorFilter="false" @search="handleSearch" />
     </section>
 
     <section class="card list">

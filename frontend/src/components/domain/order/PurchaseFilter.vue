@@ -5,7 +5,7 @@
 
             <FilterDropdown v-if="showTypeFilter" label="타입" :options="typeOptions" v-model="filters.orderType" />
 
-            <FilterDropdown label="공급업체" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
+            <FilterDropdown v-if="showVendorFilter" label="공급업체" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
                 placeholder="전체" @triggerSearchModal="openVendorSearchModal" />
 
             <FilterDateRange label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
@@ -49,6 +49,10 @@ const props = defineProps({
     showTypeFilter: {
         type: Boolean,
         default: false
+    },
+    showVendorFilter: {
+        type: Boolean,
+        default: true
     }
 });
 
