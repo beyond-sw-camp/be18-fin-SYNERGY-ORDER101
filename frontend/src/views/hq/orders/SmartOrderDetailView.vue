@@ -226,10 +226,7 @@ async function submitAll () {
 
   const changed = detail.items.filter(isEdited)
 
-  if (changed.length === 0) {
-    alert('변경된 품목이 없습니다.')
-    return
-  }
+
 
   if (!confirm(`총 ${changed.length}개 품목을 수정 및 제출하시겠습니까?`)) {
     return
