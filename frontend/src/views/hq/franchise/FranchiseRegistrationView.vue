@@ -85,7 +85,8 @@ const handleSubmit = async () => {
     console.log('store registered', resp.data)
     window.alert('가맹점을 등록하였습니다.')
     handleReset()
-    router.push({ name: 'hq-dashboard' })
+    // 창고 선택 상태도 초기화
+    selectedWareHouse.value = null
   } catch (e) {
     console.error('registration failed', e)
     console.error('error response:', e.response)

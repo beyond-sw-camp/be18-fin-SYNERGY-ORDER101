@@ -82,6 +82,22 @@ public class SmartOrderController {
         return ResponseEntity.ok(smartOrderService.submitSmartOrder(smartOrderId, request));
     }
 
+    //스마트 발주 승인
+    @PatchMapping("/{smartOrderId}/confirmed")
+    public ResponseEntity<SmartOrderResponseDto> confirmSmartOrder(
+            @PathVariable Long smartOrderId
+    ) {
+        return ResponseEntity.ok(smartOrderService.confirmSmartOrder(smartOrderId));
+    }
+
+    //스마트 발주 반려
+    @PatchMapping("/{smartOrderId}/rejected")
+    public ResponseEntity<SmartOrderResponseDto> rejectSmartOrder(
+            @PathVariable Long smartOrderId
+    ) {
+        return ResponseEntity.ok(smartOrderService.rejectSmartOrder(smartOrderId));
+    }
+
     //대시보드 상단 요약
     @GetMapping("/summary")
     public ResponseEntity<SmartOrderDashboardResponseDto> getSmartOrderSummary(

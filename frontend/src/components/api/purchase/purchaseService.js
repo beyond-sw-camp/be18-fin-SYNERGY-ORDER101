@@ -28,9 +28,26 @@ export function purchaseStatusOptions() {
         { text: '승인', value: 'CONFIRMED' },
         { text: '반려', value: 'REJECTED' },
         { text: '취소', value: 'CANCELLED' },
+    ];
+}
+
+export function purchaseTypeOptions() {
+    return [
+        { text: '전체', value: 'ALL' },
         { text: '일반', value: 'MANUAL' },
         { text: '자동', value: 'AUTO' },
-        { text: '스마트', value: 'SMART' },
+        { text: '스마트', value: 'SMART'},
+    ];
+}
+
+// 가맹점 주문용 상태 옵션 (초안 없음)
+export function franchiseOrderStatusOptions() {
+    return [
+        { text: '전체', value: 'ALL' },
+        { text: '제출', value: 'SUBMITTED' },
+        { text: '승인', value: 'CONFIRMED' },
+        { text: '반려', value: 'REJECTED' },
+        { text: '취소', value: 'CANCELLED' },
     ];
 }
 

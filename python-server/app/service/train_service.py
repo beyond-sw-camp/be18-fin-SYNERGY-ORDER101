@@ -1,4 +1,3 @@
-# app/service/train_service.py
 from __future__ import annotations
 
 import subprocess
@@ -6,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-BASE = Path(__file__).resolve().parents[1]  
+BASE = Path(__file__).resolve().parents[1]
 DATA_PIPELINE = BASE / "data_pipeline"
 MODELING = BASE / "modeling"
 
@@ -44,20 +43,13 @@ def _run_script(script: Path, logs: List[str]) -> None:
 
 
 def run_full_pipeline() -> Dict[str, Any]:
-    """
-    00~06: 피처/학습 데이터 생성
-    07   : LightGBM 학습 (lightgbm_model.pkl 저장)
-    08   : 미래 예측, predictions.csv 생성
-    """
     logs: List[str] = []
     try:
         scripts = [
-            # DATA_PIPELINE / "00_generate_sku_catalog.py",
-            # DATA_PIPELINE / "product_ml.py",
-            DATA_PIPELINE / "00a_generate_sku_catalog_ml.py",
+            # DATA_PIPELINE / "00_generate_sku_catalog.py", 
             DATA_PIPELINE / "01_generate_base_share.py",
             DATA_PIPELINE / "02_generate_synthetic_weather.py",
-            DATA_PIPELINE / "03_generate_category_sales.py",
+            # DATA_PIPELINE / "03_generate_category_sales.py",  # category_weekly_sales.csv 수동 관리
             DATA_PIPELINE / "04_generate_sku_sales.py",
             DATA_PIPELINE / "05_generate_weekly_sales.py",
             DATA_PIPELINE / "06_generate_features.py",

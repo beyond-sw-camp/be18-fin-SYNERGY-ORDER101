@@ -77,7 +77,11 @@
                   <div class="value">{{ product.categoryLargeName }}</div>
                 </template>
                 <template v-else>
-                  <select class="value" v-model="selectedLargeId" @change="onLargeChange">
+                  <select
+                    class="value select-value"
+                    v-model="selectedLargeId"
+                    @change="onLargeChange"
+                  >
                     <option :value="null">선택</option>
                     <option v-for="c in largeCategories" :key="c.id" :value="c.id">
                       {{ c.name }}
@@ -93,7 +97,7 @@
                 </template>
                 <template v-else>
                   <select
-                    class="value"
+                    class="value select-value"
                     v-model="selectedMediumId"
                     @change="onMediumChange"
                     :disabled="!selectedLargeId"
@@ -112,7 +116,11 @@
                   <div class="value">{{ product.categorySmallName }}</div>
                 </template>
                 <template v-else>
-                  <select class="value" v-model="selectedSmallId" :disabled="!selectedMediumId">
+                  <select
+                    class="value select-value"
+                    v-model="selectedSmallId"
+                    :disabled="!selectedMediumId"
+                  >
                     <option :value="null">선택</option>
                     <option v-for="c in smallCategories" :key="c.id" :value="c.id">
                       {{ c.name }}
@@ -511,6 +519,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 드롭다운 전용 스타일 */
+
 .product-detail {
   padding: 24px;
 }
@@ -623,6 +633,35 @@ onMounted(() => {
   align-items: center;
   font-size: 14px;
   color: #111827;
+}
+/* 기존 .value는 그대로 두고, 아래에 추가 */
+.value.select-value {
+  /* 기본 인풋 스타일에서 덮어쓰기 */
+  display: block;
+  width: 100%;
+  cursor: pointer;
+
+  /* 브라우저 기본 화살표 제거 */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: #f9fafb;
+
+  /* 오른쪽에 커스텀 화살표 아이콘 */
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+  padding-right: 36px; /* 화살표 들어갈 공간 */
+}
+
+/* 비활성화일 때 */
+.value.select-value:disabled {
+  cursor: not-allowed;
+  color: #9ca3af;
+  background-color: #f3f4f6;
+  opacity: 0.8;
 }
 
 .value.name {

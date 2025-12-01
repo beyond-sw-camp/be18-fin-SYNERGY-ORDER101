@@ -16,6 +16,8 @@ function fmtDate(iso) {
   return d.toISOString().slice(0, 10)
 }
 
+const ALLOWED_ROLES = ['HQ', 'STORE_ADMIN']
+
 async function loadUsers(page = 0, size = 20) {
   loading.value = true
   error.value = ''
@@ -23,10 +25,15 @@ async function loadUsers(page = 0, size = 20) {
     const res = await axios.get('http://localhost:8080/api/v1/users', { params: { page, size } })
     const data = res.data || {}
     // According to your API, users are in data.content
-    const list = Array.isArray(data.content) ? data.content : Array.isArray(data) ? data : []
+    const rawList = Array.isArray(data.content) ? data.content : Array.isArray(data) ? data : []
+
+    const list = rawList.filter((u) => {
+      const role = u.role || (Array.isArray(u.roles) && u.roles[0]) || ''
+      return ALLOWED_ROLES.includes(role)
+    })
+
     users.value = list
 
-    // initialize local status from isActive
     users.value.forEach((u) => {
       localStatus.set(u.userId, u.isActive ? '활성' : '비활성화')
     })

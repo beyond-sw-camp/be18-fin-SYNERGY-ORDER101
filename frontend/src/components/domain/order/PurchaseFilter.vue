@@ -3,7 +3,9 @@
         <div class="filter-row">
             <FilterDropdown label="상태" :options="statusOptions" v-model="filters.status" />
 
-            <FilterDropdown label="공급업체" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
+            <FilterDropdown v-if="showTypeFilter" label="타입" :options="typeOptions" v-model="filters.orderType" />
+
+            <FilterDropdown v-if="showVendorFilter" label="공급업체" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
                 placeholder="전체" @triggerSearchModal="openVendorSearchModal" />
 
             <FilterDateRange label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
@@ -41,10 +43,22 @@ import FilterDateRange from '../../base/FilterDateRange.vue';
 import FilterSearchInput from '../../base/FilterSearchInput.vue';
 import { getPastDateString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
-import { purchaseStatusOptions } from '@/components/api/purchase/purchaseService';
+import { purchaseStatusOptions, purchaseTypeOptions } from '@/components/api/purchase/purchaseService';
+
+const props = defineProps({
+    showTypeFilter: {
+        type: Boolean,
+        default: false
+    },
+    showVendorFilter: {
+        type: Boolean,
+        default: true
+    }
+});
 
 const initialFilters = {
     status: 'ALL',
+    orderType: 'ALL',
     vendorId: 'ALL',
     vendorName: '전체',
     startDate: getPastDateString(30),
@@ -57,6 +71,9 @@ const isVendorModalOpen = ref(false);
 
 // 상태 옵션
 const statusOptions = purchaseStatusOptions();
+
+// 타입 옵션
+const typeOptions = purchaseTypeOptions();
 
 const vendorOptions = ref([
     { text: '전체', value: 'ALL' },

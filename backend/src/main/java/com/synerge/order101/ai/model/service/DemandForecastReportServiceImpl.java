@@ -8,10 +8,12 @@ import com.synerge.order101.ai.model.entity.DemandForecast;
 import com.synerge.order101.ai.model.entity.SmartOrder;
 import com.synerge.order101.ai.model.repository.DemandForecastRepository;
 import com.synerge.order101.ai.model.repository.SmartOrderRepository;
+import com.synerge.order101.common.cache.CachedPerf;
 import com.synerge.order101.product.model.entity.CategoryLevel;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductCategory;
 import com.synerge.order101.product.model.repository.ProductRepository;
+import org.springframework.cache.annotation.Cacheable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,8 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
     private final SmartOrderRepository smartOrderRepository;
 
     @Override
+    @Cacheable(value = "forecastReport", key = "#targetWeek")
+    @CachedPerf("ForecastReport")
     public DemandForecastReportResponseDto buildForecastReport(LocalDate targetWeek) {
 
         LocalDate from = targetWeek.minusMonths(11).withDayOfMonth(1);
@@ -40,6 +44,21 @@ public class DemandForecastReportServiceImpl implements DemandForecastReportServ
 
         List<DemandForecast> dfList =
                 demandForecastRepository.findByTargetWeekBetween(from, to);
+
+        // Lazy Proxy 초기화 (직렬화 문제 해결)
+        dfList.forEach(df -> {
+            var p = df.getProduct();
+            if (p != null) {
+                p.getProductId();
+                var cat = p.getProductCategory();
+                if (cat != null) {
+                    cat.getCategoryName();
+                    if (cat.getParent() != null) {
+                        cat.getParent().getCategoryName();
+                    }
+                }
+            }
+        });
 
         // 1) Timeseries (좌측 그래프)
         Map<LocalDate, List<DemandForecast>> groupedByWeek = dfList.stream()

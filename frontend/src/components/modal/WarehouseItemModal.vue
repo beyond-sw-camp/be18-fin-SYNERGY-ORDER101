@@ -49,7 +49,7 @@ async function fetchWarehouseProducts(params) {
     }
     // BaseItemModal에서 사용하는 형식으로 변환
     return inventories.map(item => ({
-      productId: item.warehouseInventoryId,
+      productId: item.productId,
       productCode: item.productCode,
       sku: item.productCode,
       productName: item.productName,

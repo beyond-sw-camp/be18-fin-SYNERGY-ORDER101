@@ -147,7 +147,6 @@ const handleClearAll = async () => {
               SY
             </button>
             <div v-if="showProfileMenu" ref="profileMenuRef" class="profile-menu" role="menu">
-              <button type="button" class="profile-action" @click="goToMyPage">내 정보</button>
               <button type="button" class="profile-action logout" @click="handleLogoutClick">
                 로그아웃
               </button>

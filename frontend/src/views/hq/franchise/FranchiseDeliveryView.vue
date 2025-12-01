@@ -62,7 +62,7 @@
               <td>{{ r.warehouse }}</td>
               <td class="numeric">{{ r.qty }}</td>
 
-              <td>
+              <td class="status-cell">
                 <span 
                   class="chip" 
                   :class="statusClass(r.status)"
@@ -96,26 +96,22 @@ const DELIVERY_STATUS = {
   DELIVERED: 'DELIVERED',
 }
 
-// 셀렉트 박스용 상태 옵션
+
 const statusOptions = [
   { key: DELIVERY_STATUS.WAITING, label: '배송 대기중' },
   { key: DELIVERY_STATUS.IN_TRANSIT, label: '배송 중' },
   { key: DELIVERY_STATUS.DELIVERED, label: '배송 완료' },
 ]
 
-// 필터 상태
+
 const filters = ref({
   q: '',
   store: 'all',
   status: 'all',
 })
 
-// API에서 받아올 배송 목록
 const rows = ref([])
 
-/* ================================
-   API 호출: /api/v1/shipments
-================================ */
 async function fetchDeliveryList() {
   try {
     const res = await axios.get('/api/v1/shipments', {
@@ -144,29 +140,25 @@ onMounted(() => {
   fetchDeliveryList()
 })
 
-/* ================================
-   가맹점 셀렉트 옵션 (데이터에서 추출)
-================================ */
+
 const storeOptions = computed(() => {
   const set = new Set(rows.value.map(r => r.store))
   return [...set]
 })
 
-/* ================================
-   필터링된 결과
-================================ */
+
 const filteredRows = computed(() => {
   return rows.value.filter((r) => {
     const q = filters.value.q && filters.value.q.toLowerCase()
 
-    // 주문 ID 검색 (orderNo 기준)
+
     if (q && !r.id.toLowerCase().includes(q)) return false
 
-    // 가맹점 필터
+
     if (filters.value.store !== 'all' && r.store !== filters.value.store)
       return false
 
-    // 상태 필터 (WAITING/IN_TRANSIT/DELIVERED)
+
     if (filters.value.status !== 'all' && r.status !== filters.value.status)
       return false
 
@@ -174,9 +166,7 @@ const filteredRows = computed(() => {
   })
 })
 
-/* ================================
-   상태 뱃지 스타일 & 라벨
-================================ */
+
 function statusClass(s) {
   if (s === DELIVERY_STATUS.DELIVERED) return 's-delivered'
   if (s === DELIVERY_STATUS.IN_TRANSIT) return 's-intransit'
@@ -188,9 +178,7 @@ function statusLabel(s) {
   return opt ? opt.label : '알 수 없음'
 }
 
-/* ================================
-   버튼 동작
-================================ */
+
 function applyFilter() {
 }
 
@@ -209,9 +197,11 @@ function formatDateTime(dt) {
 .page-shell {
   padding: 24px 32px;
 }
+
 .page-header {
   margin-bottom: 18px;
 }
+
 .card {
   background: #fff;
   border: 1px solid #f0f0f3;
@@ -219,17 +209,25 @@ function formatDateTime(dt) {
   padding: 16px;
   margin-bottom: 20px;
 }
+
+/* 필터 영역 */
 .filters-row {
   display: flex;
   gap: 12px;
   align-items: center;
 }
+.delivery-table td:nth-child(5),
+.delivery-table th:nth-child(5) {
+  text-align: center;
+}
+
 .filters-row input,
 .filters-row select {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #e6e6e9;
 }
+
 .btn {
   padding: 8px 10px;
   border-radius: 8px;
@@ -237,45 +235,65 @@ function formatDateTime(dt) {
   background: white;
   cursor: pointer;
 }
+
+
+.delivery-table td.status-cell {
+  padding-top: 22px !important;
+}
+
+
+
 .table-wrap {
   overflow-x: auto;
 }
+
 .delivery-table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .delivery-table th,
 .delivery-table td {
-  padding: 14px 12px;
+  padding: 16px 14px;
   border-bottom: 1px solid #f0f0f3;
   text-align: left;
+  vertical-align: middle;
 }
+
 .delivery-table th.numeric,
 .delivery-table td.numeric {
   text-align: right;
-  width: 80px; 
+  width: 80px;
 }
+
 .po {
   font-weight: 600;
 }
+
+
+
 .chip {
-  padding: 6px 10px;
-  border-radius: 12px;
-  color: #fff;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
   font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  height: 28px;
+  color: #fff;
 }
-.s-delivered {
-  background: #0ea5a4;
-}
-.s-intransit {
-  background: #2563eb;
-}
-.s-pending {
-  background: #6b7280;
-}
+
+
+.s-delivered { background: #0ea5a4; }
+.s-intransit { background: #2563eb; }
+.s-pending   { background: #6b7280; }
+
 .no-data {
   text-align: center;
   color: #999;
   padding: 20px;
 }
+
 </style>

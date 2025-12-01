@@ -112,6 +112,20 @@ public class SmartOrder {
         this.snapshotAt = LocalDateTime.now();
     }
 
+    public void confirm() {
+        if (this.smartOrderStatus != OrderStatus.SUBMITTED) {
+            throw new CustomException(AiErrorCode.SMART_ORDER_UPDATE_FAILED);
+        }
+        this.smartOrderStatus = OrderStatus.CONFIRMED;
+    }
+
+    public void reject() {
+        if (this.smartOrderStatus != OrderStatus.SUBMITTED) {
+            throw new CustomException(AiErrorCode.SMART_ORDER_UPDATE_FAILED);
+        }
+        this.smartOrderStatus = OrderStatus.REJECTED;
+    }
+
     public void setSystemUserIfNull(User systemUser) {
         if (this.user == null) {
             this.user = systemUser;

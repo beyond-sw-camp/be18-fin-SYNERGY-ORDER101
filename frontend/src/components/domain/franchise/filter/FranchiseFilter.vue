@@ -42,7 +42,7 @@ import FilterDateRange from '../../../base/FilterDateRange.vue';
 import FilterSearchInput from '../../../base/FilterSearchInput.vue';
 import { getPastDateString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
-import { purchaseStatusOptions } from '@/components/api/purchase/purchaseService';
+import { franchiseOrderStatusOptions } from '@/components/api/purchase/purchaseService';
 
 // Props 정의
 const props = defineProps({
@@ -65,8 +65,8 @@ const initialFilters = {
 const filters = ref({ ...initialFilters });
 const isVendorModalOpen = ref(false);
 
-// 범위 옵션
-const scopeOptions = purchaseStatusOptions();
+// 범위 옵션 (초안 없음)
+const scopeOptions = franchiseOrderStatusOptions();
 
 const vendorOptions = ref([
     { text: '전체', value: 'ALL' },
@@ -87,7 +87,6 @@ function handleVendorSelect(vendor) {
     const { type, id, name, code } = vendor;
 
     // 필터 값 업데이트
-    filters.value.scope = 'ALL'; // 선택 시 전체로 변경
     filters.value.vendorId = id;
     filters.value.vendorName = name;
 
@@ -101,32 +100,14 @@ function handleVendorSelect(vendor) {
         });
     }
 
-    // scope 자동 조정 (선택사항)
-    if (type === 'FRANCHISE') {
-        filters.value.scope = 'AR'; // 가맹점 → 미수금
-    } else if (type === 'SUPPLIER') {
-        filters.value.scope = 'AP'; // 공급사 → 미지급금
-    }
-
     isVendorModalOpen.value = false;
 }
 
 function applyFilters() {
-    console.log('🔍 필터 적용:', {
-        scope: filters.value.scope,
-        vendorType: filters.value.vendorType,
-        vendorId: filters.value.vendorId,
-        vendorName: filters.value.vendorName,
-        startDate: filters.value.startDate,
-        endDate: filters.value.endDate,
-        keyword: filters.value.keyword
-    });
-
     emit('search', filters.value);
 }
 
 function resetFilters() {
-    console.log('🔄 필터 초기화');
     filters.value = { ...initialFilters };
     vendorOptions.value = [{ text: '전체', value: 'ALL' }];
     applyFilters();
@@ -134,19 +115,12 @@ function resetFilters() {
 
 // scope 변경 시 vendorId 초기화 (선택사항)
 watch(() => filters.value.scope, (newScope) => {
-    console.log('📊 범위 변경:', newScope);
     // scope 변경 시 업체 선택 초기화 (선택사항)
     if (newScope === 'ALL') {
         // 전체 선택 시 업체도 전체로 초기화
         filters.value.vendorId = 'ALL';
         filters.value.vendorName = '전체';
         vendorOptions.value = [{ text: '전체', value: 'ALL' }];
-    } else if (newScope === 'AR') {
-        // AR 선택 시 가맹점만 표시되도록 vendorType 고정
-        filters.value.vendorType = 'FRANCHISE';
-    } else if (newScope === 'AP') {
-        // AP 선택 시 공급사만 표시되도록 vendorType 고정
-        filters.value.vendorType = 'SUPPLIER';
     }
 });
 </script>

@@ -34,22 +34,22 @@
           <table class="order-table">
             <thead>
               <tr>
-                <th>SKU</th>
-                <th>이름</th>
-                <th>단가</th>
-                <th>주문 수량</th>
-                <th>금액</th>
-                <th>작업</th>
+                <th class="center">SKU</th>
+                <th class="center">이름</th>
+                <th class="center">단가</th>
+                <th class="center">주문 수량</th>
+                <th class="center">금액</th>
+                <th class="center">작업</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(row, idx) in rows" :key="row.sku + idx">
-                <td>{{ row.sku }}</td>
-                <td>{{ row.name }}</td>
+                <td class="center">{{ row.sku }}</td>
+                <td class="center">{{ row.name }}</td>
                 <td class="numeric">
                   <Money :value="row.price" />
                 </td>
-                <td>
+                <td class="center">
                   <!-- 수량이 1 미만으로 내려가지 않도록 min 설정 -->
                   <input type="number" v-model.number="row.qty" class="qty" min="1" />
                 </td>
@@ -57,7 +57,7 @@
                   <!-- 금액 계산: price * qty -->
                   <Money :value="row.price * row.qty" />
                 </td>
-                <td><button class="btn-delete" @click="removeRow(idx)">삭제</button></td>
+                <td class="center"><button class="btn-delete" @click="removeRow(idx)">삭제</button></td>
               </tr>
               <tr v-if="rows.length === 0">
                 <td colspan="6" class="empty">
@@ -110,10 +110,12 @@ import SupplierSearchModal from '../../../components/modal/SupplierSearchModal.v
 import SupplierSelectDisplay from './SupplierSelectDisplay.vue'
 import Money from '@/components/global/Money.vue'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
 
 // --- 1. 상수 정의 (DTO 및 기본 설정) ---
+const authStore = useAuthStore()
+
 const DEFAULT_ORDER_CONFIG = {
-  USER_ID: 112,
   WAREHOUSE_ID: 1,
   ORDER_TYPE: 'MANUAL',
   ORDER_STATUS: 'SUBMITTED',
@@ -225,7 +227,7 @@ async function OnCreatedPurchase() {
 
   // 발주 DTO 구성
   const payload = {
-    userId: DEFAULT_ORDER_CONFIG.USER_ID,
+    userId: authStore.userInfo?.userId,
     supplierId: selectedSupplier.value.supplierId,
     warehouseId: DEFAULT_ORDER_CONFIG.WAREHOUSE_ID,
     orderType: DEFAULT_ORDER_CONFIG.ORDER_TYPE,
@@ -361,6 +363,10 @@ async function OnCreatedPurchase() {
 .numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.center {
+  text-align: center;
 }
 
 .qty {
