@@ -1,0 +1,51 @@
+version: 0.2
+phases:
+  # install 단계: REPOSITORY_URI를 정의하는 대신, CodeBuild 환경 변수 설정 여부를 확인하는 용도로만 사용 권장
+  install:
+    commands:
+      # CodeBuild 환경 변수 $REPOSITORY_NAME가 설정되었는지 확인
+      - echo '--- INSTALL: Checking CodeBuild Environment ---'
+      - echo "REPOSITORY_NAME: $REPOSITORY_NAME"
+      - echo Preparing CodeBuild environment...
+
+  pre_build:
+    commands:
+      - echo '--- PRE_BUILD: Logging in to Amazon ECR ---'
+      # AWS_ACCOUNT_ID를 변수로 확보 (AWS_REGION은 CodeBuild가 제공)
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      
+  build:
+    commands:
+      # 🚨 1. Dockerfile이 있는 디렉터리로 이동합니다.
+      - echo '--- BUILD: Changing Directory ---'
+      - cd backend/ 
+      
+      # ECR 저장소 URI 정의 (CodeBuild 환경 변수 $REPOSITORY_NAME 사용)
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME 
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      
+      # 2. Docker build 실행 (현재 디렉터리(./backend)에서 Dockerfile을 찾습니다.)
+      - echo '--- BUILD: Building Docker Image ---'
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      
+      # 3. ECR에 이미지 푸시
+      - echo '--- BUILD: Pushing to ECR ---'
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo '--- POST_BUILD: Creating imagedefinitions.json for ECS deployment ---'
+      # ECS 배포를 위한 JSON 파일 생성
+      - printf '[{"name":"synergy-order101-backend","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files:
+    # artifacts는 CodeBuild가 실행되는 루트 디렉터리 기준으로 파일을 찾아야 합니다.
+    # 하지만 저희는 artifacts를 생성한 후 바로 상위 단계로 아티팩트를 옮기지 않았습니다.
+    # 따라서 CodeBuild의 실행 디렉터리('/codebuild/output/src/.../') 기준으로 파일을 찾을 수 있도록 경로를 수정해야 합니다.
+    # 그러나, CodeBuild는 자동으로 artifacts를 루트 경로에서 찾으므로, 
+    # 이 파일을 상위 디렉터리로 복사하는 명령을 추가하는 것이 안전합니다.
+    - imagedefinitions.json
