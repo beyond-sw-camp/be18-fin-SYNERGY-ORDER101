@@ -12,6 +12,8 @@ public class InventoryResponseDto {
 
     private Long warehouseInventoryId;
 
+    private Long productId;
+
     private String productCode;
 
     private String productCategory;
@@ -27,6 +29,7 @@ public class InventoryResponseDto {
     public static InventoryResponseDto fromEntity (WarehouseInventory inventory) {
         return new InventoryResponseDto(
                 inventory.getInventoryId(),
+                inventory.getProduct().getProductId(),
                 inventory.getProduct().getProductCode(),
                 inventory.getProduct().getProductCategory().getCategoryName(),
                 inventory.getProduct().getProductName(),

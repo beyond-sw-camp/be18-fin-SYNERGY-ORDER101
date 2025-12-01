@@ -127,39 +127,44 @@ const isAuthRoute = computed(() => {
 
 const isHQ = computed(() => currentRole.value === 'HQ')
 
-const sidebarSections = computed(() => {
-  if (currentRole.value === 'STORE_ADMIN') {
-    return storeSidebar
-  }
-
-  if (isHQ.value) {
-    return adminSidebar.filter((section) => section.id !== 'users')
-  }
-
-  return adminSidebar
-})
-
-const isStoreRole = computed(() => currentRole.value === 'STORE_ADMIN')
-const isHqAdmin = computed(() => currentRole.value === 'HQ_ADMIN')
-
-// HQ_ADMIN 전용 메뉴를 필터링한 사이드바
 const filteredAdminSidebar = computed(() => {
-  return adminSidebar.map(section => {
+  return adminSidebar.map((section) => {
     if (section.id === 'orders') {
       return {
         ...section,
-        children: section.children.filter(child => {
-          // 발주 승인 메뉴는 HQ_ADMIN만 볼 수 있음
+        children: section.children.filter((child) => {
+          // 발주 승인 메뉴: HQ_ADMIN만
           if (child.path === '/hq/orders/approval') {
             return isHqAdmin.value
           }
           return true
-        })
+        }),
       }
     }
     return section
   })
 })
+
+const sidebarSections = computed(() => {
+  // 1) 가맹점 관리자
+  if (isStoreRole.value) {
+    return storeSidebar
+  }
+
+  // 2) HQ / HQ_ADMIN 공통: 먼저 발주 승인 필터링 적용된 adminSideBar 사용
+  const base = filteredAdminSidebar.value
+
+  // 2-1) HQ: 사용자 관리 섹션 숨기기
+  if (isHQ.value) {
+    return base.filter((section) => section.id !== 'users')
+  }
+
+  // 2-2) HQ_ADMIN: 전체 노출 (발주 승인 + 사용자 관리)
+  return base
+})
+
+const isStoreRole = computed(() => currentRole.value === 'STORE_ADMIN')
+const isHqAdmin = computed(() => currentRole.value === 'HQ_ADMIN')
 
 const setDefaultExpanded = () => {
   const sections = sidebarSections.value
