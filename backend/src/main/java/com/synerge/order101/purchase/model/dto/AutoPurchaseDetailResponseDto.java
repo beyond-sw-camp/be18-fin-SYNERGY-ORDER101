@@ -44,8 +44,10 @@ public class AutoPurchaseDetailResponseDto {
         private BigDecimal unitPrice;
         private Integer orderQty;
         private Integer safetyQty;
+        private Integer onHandQty;
+        private Integer originalQty;
 
-        public static AutoPurchaseItemDto fromEntity(PurchaseDetail detail, int safetyQty){
+        public static AutoPurchaseItemDto fromEntity(PurchaseDetail detail, int safetyQty, int onHandQty, int originalQty) {
             return AutoPurchaseItemDto.builder()
                     .detailId(detail.getPurchaseOrderLineId())
                     .productId(detail.getProduct().getProductId())
@@ -54,6 +56,8 @@ public class AutoPurchaseDetailResponseDto {
                     .unitPrice(detail.getUnitPrice())
                     .orderQty(detail.getOrderQty())
                     .safetyQty(safetyQty)
+                    .onHandQty(onHandQty)
+                    .originalQty(originalQty)
                     .build();
         }
 

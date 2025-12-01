@@ -237,12 +237,9 @@ public class PurchaseServiceImpl implements PurchaseService {
                     LocalDate.now(),
                     items
             );
-            System.out.println("자동발주 생성완료" + request.getOrderType() + request.getOrderStatus());
 
             createPurchase(request);
         }
-
-
     }
 
     // 자동발주 목록 조회
@@ -264,16 +261,28 @@ public class PurchaseServiceImpl implements PurchaseService {
         Purchase purchase = purchaseRepository.findById(purchaseId).orElseThrow(
                 () -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
 
-        // PurchaseDetail + safetyQty 조회
-        List<Object[]> results = purchaseDetailRepository.findDetailsWithSafetyQty(purchaseId);
+        // PurchaseDetail + safetyQty + onHandQty 조회
+        List<Object[]> results = purchaseDetailRepository.findDetailsWithSafetyQtyAndOnHandQty(purchaseId);
 
         // DTO 변환
         List<AutoPurchaseDetailResponseDto.AutoPurchaseItemDto> items = results.stream()
                 .map(r -> {
                     PurchaseDetail detail = (PurchaseDetail) r[0];
                     Integer safetyQty = (Integer) r[1];
+                    Integer onHandQty = (Integer) r[2];   // 재고 추가
 
-                    return AutoPurchaseDetailResponseDto.AutoPurchaseItemDto.fromEntity(detail, safetyQty);
+                    // originalQty 계산
+                    Integer originalQty = purchaseDetailHistoryRepository
+                            .findTopByPurchaseOrderLineIdOrderByUpdatedAtAsc(detail.getPurchaseOrderLineId())
+                            .map(h -> h.getBeforeQty() == null ? h.getAfterQty() : h.getBeforeQty())
+                            .orElse(detail.getOrderQty());  // 수정 이력 없으면 현재 qty
+
+                    return AutoPurchaseDetailResponseDto.AutoPurchaseItemDto.fromEntity(
+                            detail,
+                            safetyQty,
+                            onHandQty,
+                            originalQty
+                    );
                 })
                 .toList();
 

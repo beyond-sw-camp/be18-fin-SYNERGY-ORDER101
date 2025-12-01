@@ -37,6 +37,7 @@
                 <th>단가</th>
                 <th>주문 수량</th>
                 <th>안전 재고</th>
+                <th>현 재고</th>
                 <th>금액</th>
                 <!-- <th>작업</th> -->
               </tr>
@@ -48,17 +49,25 @@
                 <td class="numeric">
                   <Money :value="row.unitPrice" />
                 </td>
-                  <td class="numeric">
-                    <input
-                      v-if="isDraft"
-                      type="number"
-                      v-model="row.orderQty"
-                      class="qty-input"
-                      @input="markModified(row)"
-                    />
-                    <span v-else>{{ row.orderQty }}</span>
-                  </td>
+                <td class="numeric">
+                  <input
+                    v-if="isDraft"
+                    type="number"
+                    v-model="row.orderQty"
+                    class="qty-input"
+                    @input="markModified(row)"
+                  />
+                  <span v-else>
+                    <span :class="row.isModified ? 'qty-modified' : ''">
+                      {{ row.orderQty }}
+                    </span>
+                    <span v-if="row.isModified" class="qty-before">
+                      ({{ row.originalQty }})
+                    </span>
+                  </span>
+                </td>
                 <td class="numeric">{{ row.safetyQty }}</td>
+                <td class="numeric">{{ row.onHandQty }}</td>
                 <td class="numeric">
                   <Money :value="row.unitPrice * row.orderQty" />
                 </td>
@@ -173,6 +182,12 @@ const fetchPurchaseDetail = async () => {
     requestedAt: autoOrderStore.selectedPurchase?.requestedAt,
     status: autoOrderStore.selectedPurchase?.status,
   })
+
+  if (po.status === 'SUBMITTED' && isHQAdmin.value) {
+    autoOrderStore.details.forEach(row => {
+      row.isModified = row.orderQty !== row.originalQty
+    })
+  }
 }
 
 // 요약 금액 계산
@@ -184,7 +199,11 @@ const subtotal = computed(() => {
 
 // 변경감지용
 function markModified(row) {
-  row.isModified = true
+  const orig = autoOrderStore.originalItems.find(o => o.productId === row.productId)
+  if (!orig) return
+
+  row.isModified = row.orderQty !== orig.orderQty  // 비교하여 변경 판단
+
   const target = autoOrderStore.editedItems.find(e => e.productId === row.productId)
   if (target) target.orderQty = row.orderQty
 }
@@ -197,7 +216,7 @@ function removeItem(detailId) {
 // 제출 API
 async function submit() {
   await autoOrderStore.submitAutoOrder(po.purchaseId)
-  // await fetchPurchaseDetail()
+  await fetchPurchaseDetail()
 }
 
 // 승인/반려 상태 업데이트
@@ -383,7 +402,7 @@ const displayUserName = computed(() => {
 
 /* 수정된 행 강조 */
 .modified {
-  background: #f3e8ff !important; /* 연보라 */
+  /* background: #c7b8ff !important;  */
   font-style: italic;
 }
 .qty-input {
@@ -392,4 +411,15 @@ const displayUserName = computed(() => {
   border: 1px solid #d7ccfc;
   border-radius: 6px;
 }
+.qty-modified {
+  color: #ef4444;    /* 빨간색 */
+  font-weight: 700;  /* bold */
+}
+
+.qty-before {
+  color: #000;       /* 검정 */
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 </style>

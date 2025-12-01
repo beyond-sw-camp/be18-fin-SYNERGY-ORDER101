@@ -83,10 +83,8 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                         status: detail.status,
                     }
 
-                    // 원본 저장
-                    this.originalItems = detail.purchaseItems.map(i => ({ ...i }))
-                    // 수정 가능한 사본 생성
-                    this.editedItems = detail.purchaseItems.map(i => ({ ...i, isModified: false }))
+                    this.originalItems = structuredClone(detail.purchaseItems)
+                    this.editedItems = structuredClone(detail.purchaseItems).map(i => ({ ...i, isModified: false }))
                 } else {
                     this.details = []
                 }
