@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import StoreListView from '@/views/hq/franchise/StoreListView.vue'
+
 const DashboardView = () => import('../views/DashboardView.vue')
 const PagePlaceholder = () => import('../views/PagePlaceholder.vue')
 const OrderCreateView = () => import('../views/hq/orders/OrderCreateView.vue')
@@ -163,12 +163,6 @@ const hqRoutes = [
     name: 'hq-franchise-registration',
     component: FranchiseRegistrationView,
     meta: { title: '가맹점 등록' },
-  },
-  {
-    path: '/hq/franchise/list',
-    name: 'hq-franchise-list',
-    component: StoreListView,
-    meta: { title: '가맹점 목록' },
   },
   {
     path: '/hq/franchise/stock',

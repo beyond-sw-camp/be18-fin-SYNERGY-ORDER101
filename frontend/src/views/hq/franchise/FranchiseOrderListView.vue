@@ -75,7 +75,7 @@ const totalPagesFromBackend = ref(0)
 
 // 필터 상태
 const filters = ref({
-  storeId: '',
+  vendorId: '',
   startDate: getPastDateString(30),
   endDate: getTodayString(),
   keyword: '',
@@ -99,7 +99,7 @@ onMounted(() => {
 function handleSearch(filterData) {
   console.log('🔍 필터 검색:', filterData)
   filters.value = {
-    storeId: filterData.vendorId || null,
+    vendorId: filterData.vendorId === null || filterData.vendorId === 'ALL' ? null : filterData.vendorId,
     startDate: filterData.startDate,
     endDate: filterData.endDate,
     keyword: filterData.keyword,
@@ -113,10 +113,10 @@ function handleSearch(filterData) {
 const searchStoreOrders = async () => {
   try {
     const params = {
-      storeId: filters.value.storeId || null,
+      vendorId: filters.value.vendorId || null,
       fromDate: filters.value.startDate || null,
       toDate: filters.value.endDate || null,
-      statuses: filters.value.statuses, // 전체 상태 조회
+      statuses: filters.value.statuses,
       searchText: filters.value.keyword || null
     };
 

@@ -59,8 +59,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in items" :key="item.sku">
-                <td><input type="checkbox" v-model="selectedMap[item.sku]" /></td>
+              <tr v-for="item in items" :key="item.productId" @click="toggleSelect(item.productId)" class="clickable-row">
+                <td @click.stop><input type="checkbox" v-model="selectedMap[item.productId]" /></td>
                 <td><code class="sku">{{ item.sku }}</code></td>
                 <td>{{ item.name }}</td>
                 <td class="numeric">
@@ -135,7 +135,7 @@ const selectedCount = computed(() => {
 })
 
 const isAllSelected = computed(() => {
-  const productSkus = items.value.map(item => item.sku)
+  const productSkus = items.value.map(item => item.id)
   if (productSkus.length === 0) return false // 품목이 없으면 전체 선택도 아님
 
   return productSkus.every(sku => selectedMap[sku])
@@ -264,13 +264,18 @@ function onSearchInput() {
 // 전체 선택/해제 토글
 function toggleSelectAll(e) {
   const checked = e.target.checked
-  items.value.forEach(i => { selectedMap[i.sku] = checked })
+  items.value.forEach(i => { selectedMap[i.id] = checked })
+}
+
+// 개별 항목 선택 토글 (행 클릭 시)
+function toggleSelect(id) {
+  selectedMap[id] = !selectedMap[id]
 }
 
 // 선택된 품목 추가 및 모달 닫기
 function addSelected() {
   // selectedMap을 기반으로 실제 선택된 품목 객체만 필터링
-  const selected = items.value.filter(i => selectedMap[i.sku])
+  const selected = items.value.filter(i => selectedMap[i.productId])
 
   if (!selected.length) {
     alert('품목을 선택하세요.')
@@ -471,6 +476,14 @@ onMounted(async () => {
 
 .items-table tbody tr:hover {
   background: #f8fafc;
+}
+
+.items-table tbody tr.clickable-row {
+  cursor: pointer;
+}
+
+.items-table tbody tr.clickable-row:hover {
+  background: #eef2ff;
 }
 
 .numeric {

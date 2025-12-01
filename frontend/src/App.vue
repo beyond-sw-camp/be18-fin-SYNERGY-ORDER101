@@ -65,7 +65,6 @@ const adminSidebar = [
     id: 'franchise',
     title: '가맹점 관리',
     children: [
-      { title: '가맹점 목록', path: '/hq/franchise/list' },
       { title: '가맹점 등록', path: '/hq/franchise/registration' },
       { title: '가맹점 주문 승인', path: '/hq/franchise/approval' },
       { title: '가맹점 주문 조회', path: '/hq/franchise/orders' },
@@ -127,10 +126,30 @@ const isAuthRoute = computed(() => {
 })
 
 const sidebarSections = computed(() =>
-  currentRole.value === 'STORE_ADMIN' ? storeSidebar : adminSidebar,
+  currentRole.value === 'STORE_ADMIN' ? storeSidebar : filteredAdminSidebar.value,
 )
 
 const isStoreRole = computed(() => currentRole.value === 'STORE_ADMIN')
+const isHqAdmin = computed(() => currentRole.value === 'HQ_ADMIN')
+
+// HQ_ADMIN 전용 메뉴를 필터링한 사이드바
+const filteredAdminSidebar = computed(() => {
+  return adminSidebar.map(section => {
+    if (section.id === 'orders') {
+      return {
+        ...section,
+        children: section.children.filter(child => {
+          // 발주 승인 메뉴는 HQ_ADMIN만 볼 수 있음
+          if (child.path === '/hq/orders/approval') {
+            return isHqAdmin.value
+          }
+          return true
+        })
+      }
+    }
+    return section
+  })
+})
 
 const setDefaultExpanded = () => {
   const sections = sidebarSections.value
