@@ -1,64 +1,6 @@
-<script setup>
-const orderSummary = [
-  { label: '총 주문', value: '150건', description: '지난 24시간 대비 +12%' },
-  { label: '주문 처리', value: '20건', description: '예정 4건' },
-]
-
-const settlementSummary = [
-  { label: '오늘 매출', value: '₩5,000,000' },
-  { label: '이번 달 매출', value: '₩120,000,000' },
-]
-
-const quickLinks = [
-  { title: '새 발주 생성', description: '3 단계로 빠르게 생성', highlight: true },
-  { title: '창고 조회', description: '실시간 재고 수량 확인' },
-  { title: '주문 조회', description: '가맹점 주문 상태 추적' },
-  { title: '수요 예측', description: 'AI 기반 수요 계획' },
-]
-</script>
-
 <template>
   <div class="dashboard">
-    <header>
-      <p class="eyebrow">대시보드</p>
-      <h1>운영 현황</h1>
-      <p class="subtitle">오늘 주문과 정산 흐름을 한눈에 확인하세요.</p>
-    </header>
-
-    <section class="card-grid">
-      <article class="card">
-        <h2>주문 현황</h2>
-        <div class="stats">
-          <div v-for="item in orderSummary" :key="item.label">
-            <p class="label">{{ item.label }}</p>
-            <p class="value">{{ item.value }}</p>
-            <p class="muted">{{ item.description }}</p>
-          </div>
-        </div>
-      </article>
-      <article class="card">
-        <h2>일일 정산</h2>
-        <div class="stats">
-          <div v-for="item in settlementSummary" :key="item.label">
-            <p class="label">{{ item.label }}</p>
-            <p class="value">{{ item.value }}</p>
-          </div>
-        </div>
-      </article>
-      <article class="card">
-        <h2>재고 상태</h2>
-        <div class="stats compact">
-          <div>
-            <p class="label">부족 품목</p>
-            <p class="value warning">5개</p>
-          </div>
-          <div>
-            <p class="label">총 품목</p>
-            <p class="value">1,000개</p>
-          </div>
-        </div>
-      </article>
-    </section>
+    <h1 class="eyebrow">대시보드</h1>
 
     <section class="quick-actions">
       <h2>빠른 작업</h2>
@@ -69,7 +11,9 @@ const quickLinks = [
           type="button"
           class="action-card"
           :class="{ highlight: link.highlight }"
+          @click="goTo(link.route)"
         >
+          <div class="icon-wrapper">{{ link.icon }}</div>
           <span class="action-title">{{ link.title }}</span>
           <span class="action-desc">{{ link.description }}</span>
         </button>
@@ -77,6 +21,24 @@ const quickLinks = [
     </section>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const quickLinks = [
+  { title: '새 발주 생성', description: '빠르게 생성', icon: '🛒', route: '/hq/orders/create', highlight: true },
+  { title: '창고 조회', description: '실시간 재고 수량 확인', icon: '🏬', route: '/hq/inventory/stock' },
+  { title: '주문 조회', description: '가맹점 주문 상태 추적', icon: '📦', route: '/hq/franchise/orders/:id' },
+  { title: '수요 예측', description: 'AI 기반 수요 계획', icon: '📈', route: '/hq/dashboard/forecast' },
+]
+
+function goTo(path) {
+  router.push(path)
+}
+</script>
 
 <style scoped>
 .dashboard {
@@ -196,5 +158,30 @@ header h1 {
 .action-desc {
   color: #6b7280;
   font-size: 13px;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.chart-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.08);
+  height: 280px;
+}
+
+.small-chart {
+  height: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.small-chart canvas {
+  max-width: 220px !important;
+  max-height: 220px !important;
 }
 </style>
