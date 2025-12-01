@@ -279,6 +279,26 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         return toResponse(entity);
     }
 
+    @Override
+    @Transactional
+    public SmartOrderResponseDto confirmSmartOrder(Long smartOrderId) {
+        SmartOrder entity = smartOrderRepository.findById(smartOrderId)
+                .orElseThrow(() -> new CustomException(AiErrorCode.SMART_ORDER_NOT_FOUND));
+
+        entity.confirm();
+        return toResponse(entity);
+    }
+
+    @Override
+    @Transactional
+    public SmartOrderResponseDto rejectSmartOrder(Long smartOrderId) {
+        SmartOrder entity = smartOrderRepository.findById(smartOrderId)
+                .orElseThrow(() -> new CustomException(AiErrorCode.SMART_ORDER_NOT_FOUND));
+
+        entity.reject();
+        return toResponse(entity);
+    }
+
 
     // 대시보드 상단 요약 카드
     public SmartOrderDashboardResponseDto getSmartOrderSummary(LocalDate targetWeek) {
