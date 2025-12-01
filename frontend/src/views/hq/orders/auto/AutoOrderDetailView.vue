@@ -75,8 +75,22 @@
           </table>
         </section>
 
-        <div class="approval-actions-wrapper" v-if="showApprovalActions">
-          <PurchaseApprovalActions />
+        <div class="approval-actions-wrapper" v-if="showApprovalActions && isHQAdmin">
+          <button
+            class="btn btn-approve"
+            @click="updateStatus('CONFIRMED')"
+            :disabled="loadingStatus"
+          >
+            {{ loadingStatus && currentAction === 'CONFIRMED' ? '처리 중...' : '승인' }}
+          </button>
+
+          <button
+            class="btn btn-reject"
+            @click="updateStatus('REJECTED')"
+            :disabled="loadingStatus"
+          >
+            {{ loadingStatus && currentAction === 'REJECTED' ? '처리 중...' : '반려' }}
+          </button>
         </div>
 
         <div class="actions-bottom" v-if="showSubmitButton">
@@ -116,7 +130,9 @@ import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute } from '@/components/global/Date.js'
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 import { useAutoOrderStore } from '@/stores/order/autoOrderStore'
+import { useAuthStore } from '@/stores/authStore'
 
+const authStore = useAuthStore()
 const autoOrderStore = useAutoOrderStore()
 const route = useRoute()
 const router = useRouter()
@@ -127,6 +143,10 @@ const isDraft = computed(() => po.status === 'DRAFT_AUTO')
 const showApprovalActions = computed(() => po.status === 'SUBMITTED')
 const showSubmitButton = computed(() => po.status === 'DRAFT_AUTO')
 
+const isHQAdmin = computed(() => authStore.userInfo?.role === 'HQ_ADMIN')
+
+const loadingStatus = ref(false)
+const currentAction = ref(null)
 
 // PO 정보 영역
 const po = reactive({
@@ -165,6 +185,8 @@ const subtotal = computed(() => {
 // 변경감지용
 function markModified(row) {
   row.isModified = true
+  const target = autoOrderStore.editedItems.find(e => e.productId === row.productId)
+  if (target) target.orderQty = row.orderQty
 }
 
 // 품목 삭제
@@ -174,8 +196,31 @@ function removeItem(detailId) {
 
 // 제출 API
 async function submit() {
-  await autoOrderStore.submitAutoOrder(po.purchaseId, autoOrderStore.details)
-  await fetchPurchaseDetail()
+  await autoOrderStore.submitAutoOrder(po.purchaseId)
+  // await fetchPurchaseDetail()
+}
+
+// 승인/반려 상태 업데이트
+async function updateStatus(status) {
+  if (!confirm(`정말로 이 발주를 ${status === 'CONFIRMED' ? '승인' : '반려'} 하시겠습니까?`)) return
+
+  try {
+    loadingStatus.value = true
+    currentAction.value = status
+
+    await autoOrderStore.updateStatus(po.purchaseId, status)
+
+    alert(`발주가 성공적으로 ${status === 'CONFIRMED' ? '승인' : '반려'} 되었습니다.`)
+
+    po.status = status
+
+  } catch (e) {
+    console.error("상태 업데이트 실패:", e)
+    alert("처리 중 오류가 발생했습니다.")
+  } finally {
+    loadingStatus.value = false
+    currentAction.value = null
+  }
 }
 
 const total = computed(() => subtotal.value)

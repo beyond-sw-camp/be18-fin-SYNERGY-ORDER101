@@ -1,6 +1,5 @@
 package com.synerge.order101.purchase.model.service;
 
-import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
@@ -33,7 +32,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -283,8 +281,9 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .purchaseId(purchase.getPurchaseId())
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
+                .userName(purchase.getUser().getName())
                 .requestedAt(purchase.getCreatedAt())
-                .status(purchase.getOrderStatus().name())
+                .status(purchase.getOrderStatus())
                 .purchaseItems(items)
                 .build();
     }
@@ -319,7 +318,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                                 .productId(productId)
                                 .beforeQty(detail.getOrderQty())
                                 .afterQty(0)
-                                .changedBy(purchase.getUser().getUserId())
+                                .changedBy(userId)
                                 .build()
                 );
                 purchaseDetailRepository.delete(detail);
@@ -334,7 +333,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                         .productId(productId)
                         .beforeQty(oldQty)
                         .afterQty(newQty)
-                        .changedBy(purchase.getUser().getUserId())
+                        .changedBy(userId)
                         .build()
                 );
                 detail.updateOrderQty(newQty);
@@ -366,7 +365,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                     .productId(productId)
                     .beforeQty(0)
                     .afterQty(qty)
-                    .changedBy(purchase.getUser().getUserId())
+                    .changedBy(userId)
                     .build()
             );
         }
@@ -399,5 +398,20 @@ public class PurchaseServiceImpl implements PurchaseService {
                 end,
                 pageable
         );
+    }
+
+    @Override
+    @Transactional
+    public AutoPurchaseDetailResponseDto updateAutoPurchase(Long purchaseId, OrderStatus status) {
+
+        Purchase purchase = purchaseRepository.findById(purchaseId)
+                .orElseThrow(() -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
+
+        purchase.updateOrderStatus(status);
+
+        AutoPurchaseDetailResponseDto dto = getAutoPurchaseDetail(purchaseId);
+        dto.updateStatus(status);
+
+        return dto;
     }
 }

@@ -107,7 +107,7 @@ public class JwtTokenProvider {
                 principal = ((com.synerge.order101.auth.model.service.CustomUserDetails) userDetails).getUser();
             }
 
-            return new UsernamePasswordAuthenticationToken(principal, null, userDetails.getAuthorities());
+            return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         } catch (UsernameNotFoundException e) {
             log.warn("[JwtTokenProvider] user not found for id={}", userId);
             throw e;

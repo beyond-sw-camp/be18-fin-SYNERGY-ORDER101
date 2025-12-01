@@ -1,5 +1,6 @@
 package com.synerge.order101.purchase.model.dto;
 
+import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.entity.PurchaseDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,9 +24,13 @@ public class AutoPurchaseDetailResponseDto {
 
     private LocalDateTime requestedAt;
 
-    private String status;
+    private OrderStatus status;
 
     private List<AutoPurchaseItemDto> purchaseItems;
+
+    public void updateStatus(OrderStatus newStatus) {
+        this.status = newStatus;
+    }
 
     @Getter
     @Builder
@@ -33,6 +38,7 @@ public class AutoPurchaseDetailResponseDto {
     public static class AutoPurchaseItemDto{
 
         private Long detailId;
+        private Long productId;
         private String productCode;
         private String productName;
         private BigDecimal unitPrice;
@@ -42,6 +48,7 @@ public class AutoPurchaseDetailResponseDto {
         public static AutoPurchaseItemDto fromEntity(PurchaseDetail detail, int safetyQty){
             return AutoPurchaseItemDto.builder()
                     .detailId(detail.getPurchaseOrderLineId())
+                    .productId(detail.getProduct().getProductId())
                     .productCode(detail.getProduct().getProductCode())
                     .productName(detail.getProduct().getProductName())
                     .unitPrice(detail.getUnitPrice())
