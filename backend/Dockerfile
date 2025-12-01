@@ -1,5 +1,5 @@
 # 1단계: 빌드 환경 (Java 21/Maven 환경에서 JAR 파일 빌드)
-FROM maven:3.8.8-eclipse-temurin-21 AS build
+FROM maven:3.8.8-eclipse-temurin-21 AS builder
 WORKDIR /app
 # 프로젝트 파일 복사
 COPY pom.xml .
