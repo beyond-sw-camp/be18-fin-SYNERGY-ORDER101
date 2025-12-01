@@ -171,9 +171,9 @@ public class SmartOrderServiceImpl implements SmartOrderService{
     }
 
     // 스마트 발주 목록 조회
-    @Cacheable(value = "smartOrders",
-            key = "{#status?.name(), #from, #to}")
-    @CachedPerf("SmartOrderList")
+//    @Cacheable(value = "smartOrders",
+//            key = "{#status?.name(), #from, #to}")
+//    @CachedPerf("SmartOrderList")
     public List<SmartOrderResponseDto> getSmartOrders(
             OrderStatus status, LocalDate from, LocalDate to
     ) {
