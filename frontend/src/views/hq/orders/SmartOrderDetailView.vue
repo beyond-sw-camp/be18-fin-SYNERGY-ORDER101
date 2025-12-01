@@ -131,7 +131,6 @@ const router = useRouter()
 const supplierId = route.params.supplierId
 const targetWeek = route.params.targetWeek
 
-// ✅ detail 한 번만 선언 + status 포함
 const detail = reactive({
   supplierId: null,
   supplierName: '',
@@ -185,7 +184,6 @@ async function fetchDetail () {
     detail.supplierName = data.supplierName
     detail.targetWeek = data.targetWeek
     detail.requesterName = data.requesterName
-    // ✅ 백엔드에서 내려준 status 반영 (없으면 DRAFT_AUTO 유지)
     detail.status = data.status || 'DRAFT_AUTO'
 
     detail.items = (data.items || []).map(item => ({
@@ -226,12 +224,9 @@ async function submitAll () {
 
   const changed = detail.items.filter(isEdited)
 
-  if (changed.length === 0) {
-    alert('변경된 품목이 없습니다.')
-    return
-  }
 
-  if (!confirm(`총 ${changed.length}개 품목을 수정 및 제출하시겠습니까?`)) {
+
+  if (!confirm(`총 ${changed.length}개 품목을 수정하셨습니다. 제출하시겠습니까?`)) {
     return
   }
 

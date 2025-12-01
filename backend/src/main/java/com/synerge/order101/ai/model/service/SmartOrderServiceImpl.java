@@ -262,8 +262,7 @@ public class SmartOrderServiceImpl implements SmartOrderService{
         SmartOrder entity = smartOrderRepository.findById(smartOrderId)
                 .orElseThrow(() -> new CustomException(AiErrorCode.SMART_ORDER_NOT_FOUND));
 
-        if (request.getRecommendedOrderQty() != null &&
-                !request.getRecommendedOrderQty().equals(entity.getRecommendedOrderQty())) {
+        if (request.getRecommendedOrderQty() != null) {
             entity.updateRecommendedQty(request.getRecommendedOrderQty());
         }
 
