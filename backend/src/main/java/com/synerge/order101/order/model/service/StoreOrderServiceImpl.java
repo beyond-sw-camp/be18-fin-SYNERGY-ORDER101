@@ -184,6 +184,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         OrderStatus curStatus = order.getOrderStatus();
 
         if (curStatus == OrderStatus.CONFIRMED) {
+
             // 주문 완료 이벤트 발행
             eventPublisher.publishEvent(new StoreOrderSettlementReqEvent(order));
 
@@ -192,8 +193,9 @@ public class StoreOrderServiceImpl implements StoreOrderService {
                     .storeOrder(order)
                     .store(order.getStore())
                     .shipmentStatus(ShipmentStatus.WAITING)
+                    .inventoryApplied(false)
+                    .inTransitApplied(false)
                     .build();
-
             shipmentRepository.save(shipment);
 
             log.info("Shipment(WAITING) created for storeOrderId={}", storeOrderId);
