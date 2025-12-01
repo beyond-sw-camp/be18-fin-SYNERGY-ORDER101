@@ -13,33 +13,31 @@
         <table class="orders-table">
           <thead>
             <tr>
-              <th>PO 번호</th>
-              <th>요청자</th>
-              <th>공급업체</th>
+              <th>주문 번호</th>
+              <th>매장명</th>
               <th class="center">품목 수</th>
+              <th class="center">총 수량</th>
               <th class="center">금액</th>
-              <th class="center">요청일</th>
+              <th class="center">주문일</th>
               <th>상태</th>
-              <th class="center">타입</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in rows" :key="row.id" class="clickable-row" @click="openDetail(row)">
-              <td class="po">{{ row.No }}</td>
-              <td>{{ row.requester }}</td>
-              <td>{{ row.vendor }}</td>
-              <td class="center">{{ row.items }}</td>
+              <td class="po">{{ row.orderNo }}</td>
+              <td>{{ row.storeName }}</td>
+              <td class="center">{{ row.itemCount }}</td>
+              <td class="center">{{ row.totalQty }}</td>
               <td class="center">
-                <Money :value="row.amount"></Money>
+                <Money :value="row.totalAmount"></Money>
               </td>
-              <td class="center">{{ formatDateTimeMinute(row.requestedAt) }}</td>
+              <td class="center">{{ formatDateTimeMinute(row.orderDate) }}</td>
               <td>
-                <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
+                <span :class="['chip', statusClass(row.orderStatus)]">{{ row.statusText }}</span>
               </td>
-              <td class="center">{{ row.orderType }}</td>
             </tr>
             <tr v-if="rows.length === 0">
-              <td colspan="8" class="no-data">검색 조건에 맞는 발주가 없습니다.</td>
+              <td colspan="7" class="no-data">검색 조건에 맞는 발주가 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -73,18 +71,31 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute, getPastDateString } from '@/components/global/Date'
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue'
 import axios from 'axios'
 
+// Auth Store (storeId 가져오기)
+const authStore = useAuthStore()
+
+// 주문 상태 매핑 (OrderStatus enum -> 한글)
+const ORDER_STATUS_MAP = {
+  SUBMITTED: { text: '제출', class: 's-waiting' },
+  PENDING: { text: '대기', class: 's-waiting' },
+  CONFIRMED: { text: '승인', class: 's-accepted' },
+  REJECTED: { text: '반려', class: 's-rejected' },
+  CANCELLED: { text: '취소', class: 's-rejected' },
+  COMPLETED: { text: '완료', class: 's-accepted' },
+  DRAFT: { text: '초안', class: 's-waiting' }
+}
+
 const filters = ref({
-  status: 'ALL',
-  vendorId: null,
+  statuses: null,
+  searchText: null,
   startDate: getPastDateString(30),
-  endDate: new Date().toISOString().slice(0, 10),
-  keyword: ''
+  endDate: new Date().toISOString().slice(0, 10)
 })
 
 const page = ref(1)
@@ -135,11 +146,10 @@ onMounted(() => {
 function handleSearch(filterData) {
   console.log('🔍 발주 필터 검색:', filterData)
   filters.value = {
-    status: filterData.status !== 'ALL' ? filterData.status : null,
-    vendorId: filterData.vendorId !== 'ALL' ? filterData.vendorId : null,
+    statuses: filterData.status !== 'ALL' ? filterData.status : null,
+    searchText: filterData.keyword || null,
     startDate: filterData.startDate,
-    endDate: filterData.endDate,
-    keyword: filterData.keyword
+    endDate: filterData.endDate
   }
   page.value = 1
   search()
@@ -152,41 +162,51 @@ async function search() {
   const apiPage = page.value - 1
 
   try {
-    console.log('검색 조건:', filters.value)
-
-    // Store용 API 엔드포인트 사용
+    // TradeSearchCondition 기반 파라미터 구성
     const params = {
       page: apiPage,
-      size: perPage.value
+      size: perPage.value,
+      sort: 'createdAt,desc'
     }
 
-    // 검색 조건 추가
-    if (filters.value.status) params.statuses = filters.value.status
-    if (filters.value.vendorId) params.vendorId = filters.value.vendorId
-    if (filters.value.keyword) params.searchText = filters.value.keyword
+    // Store 계정의 storeId를 vendorId로 전달 (백엔드에서 storeId 필터로 사용)
+    const storeId = authStore.userInfo?.storeId
+    if (storeId) {
+      params.vendorId = storeId
+    }
+
+    // 검색 조건 추가 (null이 아닌 경우만)
+    if (filters.value.statuses) params.statuses = filters.value.statuses
+    if (filters.value.searchText) params.searchText = filters.value.searchText
     if (filters.value.startDate) params.fromDate = filters.value.startDate
     if (filters.value.endDate) params.toDate = filters.value.endDate
 
-    // Store용 발주 목록 조회 API (예시 URL, 실제 백엔드 API에 맞게 수정 필요)
-    const response = await axios.get('/api/v1/stores/purchase-orders', { params })
+    console.log('📤 API 요청 파라미터:', params)
+
+    // GET /api/v1/store-orders (StoreOrderController.findStoreOrders)
+    const response = await axios.get('/api/v1/store-orders', { params })
     const data = response.data
 
-    console.log('API 응답 데이터:', data)
+    console.log('📥 API 응답 데이터:', data)
 
     totalElements.value = data.totalElements || 0
     totalPagesFromBackend.value = data.totalPages || 1
 
-    rows.value = (data.content || []).map(item => ({
-      id: item.purchaseId,
-      No: item.poNo,
-      vendor: item.supplierName,
-      requester: item.requesterName,
-      items: item.totalQty,
-      amount: item.totalAmount,
-      requestedAt: item.requestedAt,
-      status: mapPurchaseStatus(item.status),
-      orderType: mapPurchaseStatus(item.orderType)
-    }))
+    // StoreOrderSummaryResponseDto 매핑
+    rows.value = (data.content || []).map(item => {
+      const statusInfo = ORDER_STATUS_MAP[item.orderStatus] || { text: item.orderStatus, class: '' }
+      return {
+        id: item.storeOrderId,
+        orderNo: item.orderNo || `SO-${item.storeOrderId}`,
+        storeName: item.storeName || '-',
+        itemCount: item.itemCount || 0,
+        totalQty: item.totalQTY || 0,
+        totalAmount: item.totalAmount || 0,
+        orderDate: item.orderDate,
+        orderStatus: item.orderStatus,
+        statusText: statusInfo.text
+      }
+    })
 
   } catch (err) {
     console.error('발주 목록을 가져오는 중 오류 발생:', err)
@@ -202,18 +222,13 @@ function goPage(p) {
 }
 
 function openDetail(row) {
-  // Store용 발주 상세 페이지로 이동 (라우트는 나중에 추가)
-  router.push({ name: 'store-order-detail', params: { id: row.id } })
+  // Store용 발주 상세 페이지로 이동
+  router.push({ name: 'store-purchase-detail', params: { id: row.id } })
 }
 
-function statusClass(s) {
-  if (!s) return ''
-  if (s === '승인') return 's-accepted'
-  if (s === '제출' || s === '대기') return 's-waiting'
-  if (s === '반려') return 's-rejected'
-  if (s === '취소') return 's-rejected'
-  if (s === '초안') return 's-waiting'
-  return ''
+function statusClass(orderStatus) {
+  const statusInfo = ORDER_STATUS_MAP[orderStatus]
+  return statusInfo ? statusInfo.class : ''
 }
 </script>
 

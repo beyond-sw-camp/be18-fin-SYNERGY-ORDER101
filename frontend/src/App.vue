@@ -86,7 +86,10 @@ const storeSidebar = [
   {
     id: 'store-orders',
     title: '발주 관리',
-    children: [{ title: '발주 생성', path: '/store/purchase/create' }],
+    children: [
+      { title: '발주 생성', path: '/store/purchase/create' },
+      { title: '발주 목록', path: '/store/purchase/list' },
+    ],
   },
   {
     id: 'store-inventory',

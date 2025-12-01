@@ -39,6 +39,8 @@ const SmartOrderListViewView = () => import('../views/hq/orders/SmartOrderListVi
 const SmartOrderDetailView = () => import('../views/hq/orders/SmartOrderDetailView.vue')
 const DemandForecastView = () => import('../views/hq/dashboard/DemandForecastView.vue')
 const StoreOrderCreateView = () => import('../views/store/purchase/StoreOrderCreateView.vue')
+const StoreOrderListView = () => import('../views/store/purchase/StoreOrderListView.vue')
+const StoreOrderDetailView = () => import('../views/store/purchase/StoreOrderDetailView.vue')
 const StoreOrderDashboardView = () => import('../views/hq/dashboard/StoreOrderDashboardView.vue')
 
 const hqRoutes = [
@@ -249,6 +251,18 @@ const storeRoutes = [
     name: 'store-purchase-create',
     component: StoreOrderCreateView,
     meta: { title: '발주 생성' },
+  },
+  {
+    path: '/store/purchase/list',
+    name: 'store-purchase-list',
+    component: StoreOrderListView,
+    meta: { title: '발주 목록' },
+  },
+  {
+    path: '/store/purchase/:id',
+    name: 'store-purchase-detail',
+    component: StoreOrderDetailView,
+    meta: { title: '발주 상세' },
   },
   {
     path: '/store/inventory/stock',

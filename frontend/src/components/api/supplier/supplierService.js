@@ -11,7 +11,7 @@ import axios from 'axios'
  * @returns {Promise<{suppliers: Array<object>, totalCount: number, currentPage: number}>} 가공된 응답 객체
  * @throws {Error} API 통신 실패 시 에러 발생
  */
-export async function getSupplierList(page, pageSize, keyword, status) {
+export async function getSupplierList(page, pageSize, keyword) {
   // API 엔드포인트는 /api/v1/suppliers 또는 유사한 경로라고 가정합니다.
   const url = '/api/v1/suppliers'
 
@@ -20,7 +20,6 @@ export async function getSupplierList(page, pageSize, keyword, status) {
     page,
     size: pageSize,
     keyword: keyword || '',
-    status,
   }
 
   // 🚨 핵심: API 응답 구조를 Spring Page 객체 또는 유사한 DTO로 가정하고 구현합니다.

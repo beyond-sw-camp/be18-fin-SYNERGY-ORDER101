@@ -26,7 +26,7 @@ const internalSelectedSupplier = ref(props.selectedSupplier)
 const fetchSuppliers = async (page = 1) => {
   isLoading.value = true
   try {
-    // 2. 분리된 API 함수를 호출하고 결과를 받음
+    // 2. 분리된 API 함수를 호출하고 결과를 받음 (활성 공급업체만 조회)
     const data = await getSupplierList(page, pageSize.value, keyword.value)
     // 3. API 서비스에서 받은 가공된 데이터를 컴포넌트 상태에 반영
     suppliers.value = data.suppliers

@@ -278,8 +278,8 @@ watch(
             v-for="vendor in filteredVendors"
             :key="vendor.value"
             class="vendor-item"
-            :class="{ active: selectedVendor?.value === vendor.value, inactive: !vendor.isActive }"
-            @click="vendor.isActive && selectVendor(vendor)"
+            :class="{ active: selectedVendor?.value === vendor.value, inactive: vendor.type === 'FRANCHISE' && !vendor.isActive }"
+            @click="(vendor.type === 'SUPPLIER' || vendor.isActive) && selectVendor(vendor)"
           >
             <div class="vendor-info">
               <strong>{{ vendor.text }}</strong>
@@ -300,7 +300,7 @@ watch(
               >
                 <path d="M5 13l4 4L19 7" stroke="#6b72f9" stroke-width="2" stroke-linecap="round" />
               </svg>
-              <span v-if="!vendor.isActive" style="color: #ef4444; font-size: 12px">비활성</span>
+              <span v-if="vendor.type === 'FRANCHISE' && !vendor.isActive" style="color: #ef4444; font-size: 12px">비활성</span>
             </div>
           </div>
         </div>
