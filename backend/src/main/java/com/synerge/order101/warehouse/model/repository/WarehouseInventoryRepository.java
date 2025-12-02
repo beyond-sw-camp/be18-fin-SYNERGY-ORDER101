@@ -59,21 +59,45 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
 
     Optional<WarehouseInventory> findByProduct(Product product);
 
-    @Query("""
+    @Query(
+            value = """
     SELECT new com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto(
-        i.inventoryId, p.productId, p.productCode, pc.categoryName, p.productName,
-        i.onHandQuantity, i.safetyQuantity, p.price
+        i.inventoryId,
+        p.productId,
+        p.productCode,
+        pc.categoryName,
+        p.productName,
+        i.onHandQuantity,
+        i.safetyQuantity,
+        p.price
     )
     FROM WarehouseInventory i
     JOIN i.product p
     JOIN p.productCategory pc
-    WHERE (:largeCategoryId IS NULL OR pc.categoryLevel = 'LARGE' AND pc.productCategoryId = :largeCategoryId)
-      AND (:mediumCategoryId IS NULL OR pc.categoryLevel = 'MEDIUM' AND pc.productCategoryId = :mediumCategoryId)
-      AND (:smallCategoryId IS NULL OR pc.categoryLevel = 'SMALL' AND pc.productCategoryId = :smallCategoryId)
-""")
-    Page<InventoryResponseDto> searchInventory(Long largeCategoryId,
-                                               Long mediumCategoryId,
-                                               Long smallCategoryId,
-                                               Pageable pageable
+    LEFT JOIN pc.parent medium
+    LEFT JOIN medium.parent large
+    WHERE (:largeCategoryId IS NULL OR large.productCategoryId = :largeCategoryId)
+      AND (:mediumCategoryId IS NULL OR medium.productCategoryId = :mediumCategoryId)
+      AND (:smallCategoryId IS NULL OR pc.productCategoryId = :smallCategoryId)
+    """,
+            countQuery = """
+    SELECT COUNT(DISTINCT i.inventoryId)
+    FROM WarehouseInventory i
+    JOIN i.product p
+    JOIN p.productCategory pc
+    LEFT JOIN pc.parent medium
+    LEFT JOIN medium.parent large
+    WHERE (:largeCategoryId IS NULL OR large.productCategoryId = :largeCategoryId)
+      AND (:mediumCategoryId IS NULL OR medium.productCategoryId = :mediumCategoryId)
+      AND (:smallCategoryId IS NULL OR pc.productCategoryId = :smallCategoryId)
+    """
+    )
+    Page<InventoryResponseDto> searchInventory(
+            Long largeCategoryId,
+            Long mediumCategoryId,
+            Long smallCategoryId,
+            Pageable pageable
     );
+
+
 }
