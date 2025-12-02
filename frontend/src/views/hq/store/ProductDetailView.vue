@@ -133,12 +133,9 @@
             <!-- 공급가 -->
             <div class="field">
               <label>공급가</label>
-              <template v-if="!isEditMode">
-                <div class="value"><Money :value="product.price" /></div>
-              </template>
-              <template v-else>
-                <input class="value" type="number" v-model.number="editForm.price" />
-              </template>
+              <div class="value readonly">
+                {{ product.price }}
+              </div>
             </div>
 
             <!-- 설명 -->
@@ -180,10 +177,23 @@
               </template>
             </div>
 
-            <!-- ✅ 박스 밖에 컨트롤을 둔다 -->
+            <!--  박스 밖에 컨트롤을 둔다 -->
             <div v-if="isEditMode" class="image-actions">
-              <input type="file" accept="image/*" @change="onPickImage" />
-              <button type="button" class="btn-edit" @click="removeImage">이미지 삭제</button>
+              <!-- 실제 input은 숨김 -->
+              <input
+                id="product-image-input"
+                type="file"
+                accept="image/*"
+                class="file-input-hidden"
+                @change="onPickImage"
+              />
+
+              <!-- 우리가 꾸밀 버튼 -->
+              <label for="product-image-input" class="btn-upload"> 이미지 선택 </label>
+
+              <button type="button" class="btn-edit btn-image-remove" @click="removeImage">
+                이미지 삭제
+              </button>
             </div>
           </div>
         </div>
@@ -197,7 +207,7 @@
             <div class="name-lg">{{ inventorySummary?.productName || product.productName }}</div>
           </div>
 
-          <!-- ✅ 카드 2개만 (입고 예정 삭제) -->
+          <!--  카드 2개만 (입고 예정 삭제) -->
           <div class="stock-cards">
             <div class="stat">
               현재 재고
@@ -245,7 +255,7 @@
           </table>
         </div>
 
-        <!-- ✅ 입출고 페이지네이션 -->
+        <!--  입출고 페이지네이션 -->
         <div class="pagination" v-if="invTotalPages > 1">
           <button
             class="pager"
@@ -520,6 +530,53 @@ onMounted(() => {
 
 <style scoped>
 /* 드롭다운 전용 스타일 */
+
+.image-actions {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 실제 파일 input 숨기기 */
+.file-input-hidden {
+  display: none;
+}
+
+/* 예쁜 업로드 버튼 */
+.btn-upload {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.22);
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.btn-upload:hover {
+  background: #4338ca;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.28);
+  transform: translateY(-1px);
+}
+
+.btn-upload:active {
+  background: #3730a3;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.3);
+  transform: translateY(0);
+}
+
+/* 오른쪽 삭제 버튼 살짝 정리 (선택사항) */
+.btn-image-remove {
+  border-radius: 999px;
+  padding: 8px 14px;
+}
 
 .product-detail {
   padding: 24px;

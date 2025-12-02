@@ -5,6 +5,8 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
     state: () => ({
         items: [],
         details: [],
+        originalItems: [],
+        editedItems: [],
         selectedPurchase: null,
         page: 1,
         numOfRows: 5,
@@ -80,6 +82,9 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                         requestedAt: detail.requestedAt,
                         status: detail.status,
                     }
+
+                    this.originalItems = structuredClone(detail.purchaseItems)
+                    this.editedItems = structuredClone(detail.purchaseItems).map(i => ({ ...i, isModified: false }))
                 } else {
                     this.details = []
                 }
@@ -98,20 +103,37 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
             await this.fetchAutoOrders({ page: 1, numOfRows: this.numOfRows })
         },
 
-        async submitAutoOrder(purchaseId, items) {
-            try {
-                const res = await axios.patch(`/api/v1/purchase-orders/auto/${purchaseId}/submit`, {
-                    items: items.map(i => ({
-                        purchaseOrderLineId: i.detailId,
-                        productId: i.productId,
-                        orderQty: i.orderQty
-                    }))
-                })
-                return res.data
+        async submitAutoOrder(purchaseId) {
+            const requestItems = this.originalItems.map(orig => {
+                const edited = this.editedItems.find(e => e.productId === orig.productId)
+                return {
+                    purchaseDetailId: orig.detailId, 
+                    productId: orig.productId,
+                    orderQty: edited.orderQty
+                }
+            })
 
+            try {
+                const res = await axios.patch(`/api/v1/purchase-orders/auto/${purchaseId}/submit`, 
+                    { items: requestItems }
+                )
+                
+                return res.data
             } catch (e) {
                 console.error("자동발주 제출 실패:", e)
             }
         },
+
+        async updateStatus(purchaseId, status) {
+            try {
+                const res = await axios.patch(`/api/v1/purchase-orders/auto/${purchaseId}/status`, null ,{params: { status }})
+
+                await this.fetchAutoOrderDetail(purchaseId)
+                return res.data
+            } catch (e) {
+                console.error("상태 변경 실패:", e)
+                throw e
+            }
+        }
     }
 })

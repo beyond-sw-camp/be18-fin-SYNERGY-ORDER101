@@ -9,10 +9,13 @@
 
         <div class="filter-item">
           <label>공급사</label>
-          <div class="supplier-select" @click="openSupplierModal">
-            <span v-if="selectedSupplierName">{{ selectedSupplierName }}</span>
-            <span v-else class="placeholder">공급사 선택</span>
-          </div>
+          <input
+            readonly
+            :value="selectedSupplierName ? selectedSupplierName : '공급사 선택'"
+            :style="{ color: selectedSupplierName ? '#111' : '#9ca3af' }"
+            class="supplier-select"
+            @click="openSupplierModal"
+          />
         </div>
 
         <div class="filter-item">
@@ -257,6 +260,12 @@ function statusLabel(status) {
   border: 1px solid #e6e6e9;
   background: white;
   cursor: pointer;
+}
+
+.btn.primary {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
 }
 
 .table-wrap {

@@ -18,4 +18,5 @@ public interface StoreOrderService {
 
     public StoreOrderUpdateStatusResponseDto updateOrderStatus(Long storeOrderId, OrderStatus newStatus);
 
+    public StoreOrderStockCheckResponseDto checkStockForOrder(Long storeOrderId);
 }

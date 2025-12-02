@@ -21,7 +21,7 @@
           </div>
 
           <div class="form-row">
-            <label>생성일자</label>
+            <label>요청일자</label>
             <input class="input" :value="formatDateTimeMinute(po.requestedAt)" readonly />
           </div>
         </section>
@@ -37,6 +37,7 @@
                 <th>단가</th>
                 <th>주문 수량</th>
                 <th>안전 재고</th>
+                <th>현 재고</th>
                 <th>금액</th>
                 <!-- <th>작업</th> -->
               </tr>
@@ -48,17 +49,25 @@
                 <td class="numeric">
                   <Money :value="row.unitPrice" />
                 </td>
-                  <td class="numeric">
-                    <input
-                      v-if="isDraft"
-                      type="number"
-                      v-model="row.orderQty"
-                      class="qty-input"
-                      @input="markModified(row)"
-                    />
-                    <span v-else>{{ row.orderQty }}</span>
-                  </td>
+                <td class="numeric">
+                  <input
+                    v-if="isDraft"
+                    type="number"
+                    v-model="row.orderQty"
+                    class="qty-input"
+                    @input="markModified(row)"
+                  />
+                  <span v-else>
+                    <span :class="row.isModified ? 'qty-modified' : ''">
+                      {{ row.orderQty }}
+                    </span>
+                    <span v-if="row.isModified" class="qty-before">
+                      ({{ row.originalQty }})
+                    </span>
+                  </span>
+                </td>
                 <td class="numeric">{{ row.safetyQty }}</td>
+                <td class="numeric">{{ row.onHandQty }}</td>
                 <td class="numeric">
                   <Money :value="row.unitPrice * row.orderQty" />
                 </td>
@@ -75,8 +84,22 @@
           </table>
         </section>
 
-        <div class="approval-actions-wrapper" v-if="showApprovalActions">
-          <PurchaseApprovalActions />
+        <div class="approval-actions-wrapper" v-if="showApprovalActions && isHQAdmin">
+          <button
+            class="btn btn-approve"
+            @click="updateStatus('CONFIRMED')"
+            :disabled="loadingStatus"
+          >
+            {{ loadingStatus && currentAction === 'CONFIRMED' ? '처리 중...' : '승인' }}
+          </button>
+
+          <button
+            class="btn btn-reject"
+            @click="updateStatus('REJECTED')"
+            :disabled="loadingStatus"
+          >
+            {{ loadingStatus && currentAction === 'REJECTED' ? '처리 중...' : '반려' }}
+          </button>
         </div>
 
         <div class="actions-bottom" v-if="showSubmitButton">
@@ -116,7 +139,9 @@ import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute } from '@/components/global/Date.js'
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 import { useAutoOrderStore } from '@/stores/order/autoOrderStore'
+import { useAuthStore } from '@/stores/authStore'
 
+const authStore = useAuthStore()
 const autoOrderStore = useAutoOrderStore()
 const route = useRoute()
 const router = useRouter()
@@ -127,6 +152,10 @@ const isDraft = computed(() => po.status === 'DRAFT_AUTO')
 const showApprovalActions = computed(() => po.status === 'SUBMITTED')
 const showSubmitButton = computed(() => po.status === 'DRAFT_AUTO')
 
+const isHQAdmin = computed(() => authStore.userInfo?.role === 'HQ_ADMIN')
+
+const loadingStatus = ref(false)
+const currentAction = ref(null)
 
 // PO 정보 영역
 const po = reactive({
@@ -153,6 +182,12 @@ const fetchPurchaseDetail = async () => {
     requestedAt: autoOrderStore.selectedPurchase?.requestedAt,
     status: autoOrderStore.selectedPurchase?.status,
   })
+
+  if (po.status === 'SUBMITTED' && isHQAdmin.value) {
+    autoOrderStore.details.forEach(row => {
+      row.isModified = row.orderQty !== row.originalQty
+    })
+  }
 }
 
 // 요약 금액 계산
@@ -164,7 +199,13 @@ const subtotal = computed(() => {
 
 // 변경감지용
 function markModified(row) {
-  row.isModified = true
+  const orig = autoOrderStore.originalItems.find(o => o.productId === row.productId)
+  if (!orig) return
+
+  row.isModified = row.orderQty !== orig.orderQty  // 비교하여 변경 판단
+
+  const target = autoOrderStore.editedItems.find(e => e.productId === row.productId)
+  if (target) target.orderQty = row.orderQty
 }
 
 // 품목 삭제
@@ -174,8 +215,31 @@ function removeItem(detailId) {
 
 // 제출 API
 async function submit() {
-  await autoOrderStore.submitAutoOrder(po.purchaseId, autoOrderStore.details)
+  await autoOrderStore.submitAutoOrder(po.purchaseId)
   await fetchPurchaseDetail()
+}
+
+// 승인/반려 상태 업데이트
+async function updateStatus(status) {
+  if (!confirm(`정말로 이 발주를 ${status === 'CONFIRMED' ? '승인' : '반려'} 하시겠습니까?`)) return
+
+  try {
+    loadingStatus.value = true
+    currentAction.value = status
+
+    await autoOrderStore.updateStatus(po.purchaseId, status)
+
+    alert(`발주가 성공적으로 ${status === 'CONFIRMED' ? '승인' : '반려'} 되었습니다.`)
+
+    po.status = status
+
+  } catch (e) {
+    console.error("상태 업데이트 실패:", e)
+    alert("처리 중 오류가 발생했습니다.")
+  } finally {
+    loadingStatus.value = false
+    currentAction.value = null
+  }
 }
 
 const total = computed(() => subtotal.value)
@@ -338,7 +402,7 @@ const displayUserName = computed(() => {
 
 /* 수정된 행 강조 */
 .modified {
-  background: #f3e8ff !important; /* 연보라 */
+  /* background: #c7b8ff !important;  */
   font-style: italic;
 }
 .qty-input {
@@ -347,4 +411,15 @@ const displayUserName = computed(() => {
   border: 1px solid #d7ccfc;
   border-radius: 6px;
 }
+.qty-modified {
+  color: #ef4444;    /* 빨간색 */
+  font-weight: 700;  /* bold */
+}
+
+.qty-before {
+  color: #000;       /* 검정 */
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 </style>

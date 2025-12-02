@@ -6,8 +6,6 @@ import com.synerge.order101.purchase.model.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
 public interface PurchaseService {
 
 
@@ -33,4 +31,6 @@ public interface PurchaseService {
     AutoPurchaseDetailResponseDto submitAutoPurchase(Long purchaseId, Long submitUserId, AutoPurchaseSubmitRequestDto request);
 
     Page<AutoPurchaseListResponseDto> searchAutoPurchases(AutoPurchaseSearchRequestDto request);
+
+    AutoPurchaseDetailResponseDto updateAutoPurchase(Long purchaseId, OrderStatus status);
 }

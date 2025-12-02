@@ -1,12 +1,15 @@
 package com.synerge.order101.warehouse.model.service;
 
 import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
+import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.purchase.model.dto.CalculatedAutoItem;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
+import com.synerge.order101.warehouse.model.entity.Warehouse;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
+import com.synerge.order101.warehouse.model.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,14 +24,29 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements InventoryService {
+    private final WarehouseRepository warehouseRepository;
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final StoreOrderDetailRepository storeOrderDetailRepository;
 
+    // 재고 추가
+    public void createInventory(Product product) {
+        Warehouse warehouse = warehouseRepository.findById(1L).orElseThrow();
+
+        WarehouseInventory inventory = WarehouseInventory.builder()
+                .warehouse(warehouse)
+                .product(product)
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        warehouseInventoryRepository.save(inventory);
+    }
+
+    // 재고 조회
     @Override
     @Transactional
     public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId) {
 
-        Pageable pageable = PageRequest.of(page - 1, numOfRows);  // page는 0부터 시작
+        Pageable pageable = PageRequest.of(page - 1, numOfRows);
 
         return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, pageable);
     }
@@ -48,8 +66,20 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public void increaseInventory(Purchase purchase) {
         purchase.getPurchaseDetails().forEach(detail -> {
-            WarehouseInventory inventory = warehouseInventoryRepository.findByProduct_ProductId(detail.getProduct().getProductId())
-                    .orElseThrow(() -> new IllegalStateException("해당 상품의 재고를 찾을 수 없습니다: " + detail.getProduct().getProductId()));
+            Long productId = detail.getProduct().getProductId();
+            
+            // 창고 재고에서 제품 조회, 없으면 새로 생성
+            WarehouseInventory inventory = warehouseInventoryRepository.findByProduct_ProductId(productId)
+                    .orElseGet(() -> {
+                        // 새로운 창고 재고 생성
+                        WarehouseInventory newInventory = WarehouseInventory.builder()
+                                .warehouse(purchase.getWarehouse())
+                                .product(detail.getProduct())
+                                .onHandQuantity(0)
+                                .safetyQuantity(0)
+                                .build();
+                        return warehouseInventoryRepository.save(newInventory);
+                    });
 
             inventory.increase(detail.getOrderQty().intValue());
         });

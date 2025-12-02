@@ -35,24 +35,24 @@
                             <tr>
                                 <th class="text-center">SKU</th>
                                 <th class="text-center">이름</th>
-                                <th class="text-right">단가</th>
                                 <th class="text-right">주문 수량</th>
-                                <th class="text-right">금액</th>
+                                <th class="text-right">공급가</th>
+                                <th class="text-right">판매가</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(row, idx) in orderData.items" :key="row.sku + idx">
+                            <tr v-for="(row, idx) in (orderData.items || [])" :key="`item-${idx}-${row.sku || row.productId || idx}`">
                                 <td class="text-center">{{ row.sku }}</td>
                                 <td class="text-center">{{ row.name }}</td>
+                                <td class="text-right">{{ row.qty }}</td>
+                                <td class="text-right">
+                                    <Money :value="row.purchasePrice || row.price" />
+                                </td>
                                 <td class="text-right">
                                     <Money :value="row.price" />
                                 </td>
-                                <td class="text-right">{{ row.qty }}</td>
-                                <td class="text-right">
-                                    <Money :value="row.price * row.qty" />
-                                </td>
                             </tr>
-                            <tr v-if="orderData.items.length === 0">
+                            <tr v-if="!orderData.items || orderData.items.length === 0">
                                 <td colspan="5" class="empty">품목이 없습니다.</td>
                             </tr>
                         </tbody>
@@ -122,7 +122,8 @@ const props = defineProps({
 })
 
 const subtotal = computed(() => {
-    return props.orderData.items.reduce((s, r) => s + Number(r.price || 0) * Number(r.qty || 0), 0) || 0
+    const items = props.orderData.items || []
+    return items.reduce((s, r) => s + Number(r.price || 0) * Number(r.qty || 0), 0) || 0
 })
 
 const total = computed(() => subtotal.value)

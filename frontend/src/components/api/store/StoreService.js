@@ -104,3 +104,21 @@ export async function updateStoreOrderStatus(storeOrderId, newStatus) {
     throw new Error('주문 상태 업데이트에 실패했습니다.')
   }
 }
+
+/**
+ * [주문 승인 전 창고 재고 확인]
+ * @param {number} storeOrderId - 주문 ID
+ * @returns {Promise<{hasEnoughStock: boolean, insufficientItems: Array}>}
+ */
+export async function checkStockForOrder(storeOrderId) {
+  const url = `/api/v1/store-orders/${storeOrderId}/stock-check`
+
+  try {
+    const response = await axios.get(url)
+    console.log(`주문 ${storeOrderId} 재고 확인 성공:`, response.data)
+    return response.data
+  } catch (error) {
+    console.error('[API Error] 재고 확인 실패:', error.message)
+    throw new Error('재고 확인에 실패했습니다.')
+  }
+}

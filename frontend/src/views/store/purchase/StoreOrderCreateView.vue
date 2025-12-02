@@ -8,21 +8,13 @@
         <!-- 발주 세부 정보 카드 -->
         <section class="card">
           <h3 class="card-title">발주 세부 정보</h3>
-          <div class="form-row">
-            <label>창고 선택</label>
-            <WarehouseSelectDisplay :warehouse="selectedWarehouse" @open-modal="isWarehouseModalOpen = true" />
-          </div>
-
-          <div class="actions">
-            <button class="btn-primary" @click="onSubmitOrder" :disabled="!canSubmitOrder">발주 요청 제출</button>
-          </div>
         </section>
 
         <!-- 품목 세부 정보 카드 -->
         <section class="card">
           <div class="card-head">
             <h3 class="card-title">품목 세부 정보</h3>
-            <button class="btn" @click="openItemModal" :disabled="!selectedWarehouse.warehouseId">+ 품목 추가</button>
+            <button class="btn" @click="openItemModal">+ 품목 추가</button>
           </div>
 
           <!-- 품목 테이블 -->
@@ -31,7 +23,7 @@
               <tr>
                 <th>SKU</th>
                 <th>이름</th>
-                <th>재고</th>
+                <th>현재 재고</th>
                 <th>금액</th>
                 <th>주문 수량</th>
                 <th>작업</th>
@@ -41,7 +33,7 @@
               <tr v-for="(row, idx) in rows" :key="row.sku + idx">
                 <td>{{ row.sku }}</td>
                 <td>{{ row.name }}</td>
-                <td class="numeric">{{ row.stock?.toLocaleString() ?? '-' }}</td>
+                <td class="numeric">{{ row.stock ?? 0 }}</td>
                 <td class="numeric"><Money :value="row.price" /></td>
                 <td>
                     <input type="number" v-model.number="row.qty" class="qty" min="1" />
@@ -49,12 +41,17 @@
                 <td><button class="btn-delete" @click="removeRow(idx)">삭제</button></td>
               </tr>
               <tr v-if="rows.length === 0">
-                <td colspan="7" class="empty">
+                <td colspan="6" class="empty">
                   품목이 없습니다. '품목 추가' 버튼을 눌러 추가하세요.
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <!-- 발주 요청 버튼 -->
+          <div class="actions">
+            <button class="btn-primary" @click="onSubmitOrder" :disabled="!canSubmitOrder">발주 요청 제출</button>
+          </div>
         </section>
       </div>
 
@@ -70,10 +67,6 @@
             <span>총 주문 수량:</span>
             <span class="numeric">{{ totalQty.toLocaleString() }}개</span>
           </div>
-          <div class="summary-row">
-            <span>선택된 창고:</span>
-            <span>{{ selectedWarehouse.warehouseName || selectedWarehouse.name || '-' }}</span>
-          </div>
           <hr />
           <div class="summary-row total">
             <span>총 금액:</span>
@@ -83,30 +76,20 @@
       </aside>
     </div>
 
-    <!-- 품목 추가 모달 (WarehouseItemModal) -->
-    <WarehouseItemModal
+    <!-- 품목 추가 모달 (OrderItemModal - 전체 품목 조회) -->
+    <OrderItemModal
       v-if="showItemModal"
+      :storeId="authStore.userInfo?.storeId"
       @close="showItemModal = false"
       @add="onAddItems"
-    />
-
-    <!-- 창고 검색 모달 (WarehouseSearchModal) -->
-    <WarehouseSearchModal
-      v-if="isWarehouseModalOpen"
-      :current-warehouse="selectedWarehouse"
-      @close="isWarehouseModalOpen = false"
-      @select="handleWarehouseSelect"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import WarehouseItemModal from '@/components/modal/WarehouseItemModal.vue'
-import WarehouseSearchModal from '@/components/modal/WarehouseSearchModal.vue'
-import WarehouseSelectDisplay from './WarehouseSelectDisplay.vue'
+import { ref, computed } from 'vue'
+import OrderItemModal from '@/components/modal/OrderItemModal.vue'
 import apiClient from '@/components/api'
-import { getDefaultWarehouse } from '@/components/api/warehouse/WarehouseService.js'
 import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
 
@@ -115,10 +98,7 @@ const authStore = useAuthStore()
 
 // --- 상태 (State) 정의 ---
 const showItemModal = ref(false)
-const isWarehouseModalOpen = ref(false)
 const rows = ref([])
-// 기본 창고로 초기화 (본사 창고)
-const selectedWarehouse = ref(getDefaultWarehouse())
 const productIdSet = ref(new Set())
 
 // --- 계산된 속성 (Computed) ---
@@ -130,36 +110,17 @@ const totalAmount = computed(() =>
   rows.value.reduce((sum, r) => sum + (r.price || 0) * (r.qty || 0), 0)
 )
 
-const canSubmitOrder = computed(() =>
-  selectedWarehouse.value.warehouseId && rows.value.length > 0
-)
+const canSubmitOrder = computed(() => rows.value.length > 0)
 
 // --- 이벤트 핸들러 ---
 
 /**
- * 창고 선택 모달에서 선택된 창고를 처리합니다.
- */
-function handleWarehouseSelect(warehouse) {
-  selectedWarehouse.value = warehouse
-
-  // 창고 변경 시 기존 품목 초기화
-  if (rows.value.length > 0) {
-    rows.value = []
-    productIdSet.value.clear()
-  }
-  isWarehouseModalOpen.value = false
-}
-
-/**
- * WarehouseItemModal에서 선택된 품목들을 받아 발주 목록에 추가합니다.
+ * OrderItemModal에서 선택된 품목들을 받아 발주 목록에 추가합니다.
  */
 function onAddItems(products) {
   if (!Array.isArray(products)) {
-    console.error('onAddItems: 품목 데이터는 배열 형태여야 합니다.', products)
     return
   }
-
-  console.log('추가할 품목들:', products)
   products.forEach(p => {
     if (productIdSet.value.has(p.productId)) return
 
@@ -169,7 +130,7 @@ function onAddItems(products) {
       sku: p.sku,
       name: p.name,
       price: p.price || 0,
-      stock: p.stock,
+      stock: p.stock ?? 0,
       qty: 1
     })
   })
@@ -187,10 +148,6 @@ function removeRow(idx) {
  * 품목 추가 모달을 엽니다.
  */
 function openItemModal() {
-  if (!selectedWarehouse.value.warehouseId) {
-    alert('품목을 추가하려면 먼저 창고를 선택해야 합니다.')
-    return
-  }
   showItemModal.value = true
 }
 
@@ -200,24 +157,15 @@ function openItemModal() {
 function resetForm() {
   rows.value = []
   productIdSet.value.clear()
-  // 기본 창고로 다시 설정
-  selectedWarehouse.value = getDefaultWarehouse()
   showItemModal.value = false
-  isWarehouseModalOpen.value = false
 }
 
 /**
  * 발주 생성 요청(POST)을 서버로 전송합니다.
- * 백엔드 StoreOrderCreateRequest DTO 구조:
- * - storeId: Long (required)
- * - warehouseId: Long (required)
- * - userId: Long (required)
- * - items: List<Item> (productId, orderQty)
- * - remark: String (optional)
  */
 async function onSubmitOrder() {
   if (!canSubmitOrder.value) {
-    alert('창고와 최소 1개 이상의 품목을 선택해야 합니다.')
+    alert('최소 1개 이상의 품목을 선택해야 합니다.')
     return
   }
 
@@ -233,15 +181,13 @@ async function onSubmitOrder() {
   // 발주 DTO 구성 (StoreOrderCreateRequest)
   const payload = {
     storeId: Number(storeId),
-    warehouseId: selectedWarehouse.value.warehouseId,
     userId: Number(userId),
     items: rows.value.map(r => ({
       productId: r.productId,
       orderQty: r.qty
     })),
-    remark: '' // 필요시 비고란 추가
+    remark: ''
   }
-  console.log('발주 생성 요청 페이로드:', payload)
   try {
     const res = await apiClient.post('/api/v1/store-orders', payload)
 
@@ -251,7 +197,6 @@ async function onSubmitOrder() {
       resetForm()
     }
   } catch (e) {
-    console.error('발주 생성 실패:', e)
     const errorMessage = e.response?.data?.message || '발주 생성 중 오류가 발생했습니다.'
     alert(`발주 생성 실패: ${errorMessage}`)
   }
