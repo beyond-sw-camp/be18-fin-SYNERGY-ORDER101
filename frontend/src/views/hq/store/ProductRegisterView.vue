@@ -58,7 +58,28 @@
 
         <div class="form-row">
           <label>공급가</label>
-          <input v-model.number="form.price" placeholder="₩ 0" class="input" />
+          <input
+            v-model.number="form.price"
+            placeholder="₩ 0"
+            class="input"
+            type="number"
+            min="0"
+          />
+        </div>
+
+        <div class="form-row">
+          <label>납품가</label>
+          <input
+            v-model.number="form.deliveryPrice"
+            placeholder="₩ 0"
+            class="input"
+            type="number"
+            :disabled="!form.price"
+            min="0"
+          />
+          <small v-if="form.price" class="hint-text">
+            최소 {{ minDeliveryPrice.toLocaleString() }}원 이상 입력해야 합니다.
+          </small>
         </div>
 
         <div class="form-row toggle-row">
@@ -112,7 +133,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { createProduct } from '@/components/api/product/productService'
@@ -123,9 +144,12 @@ const saving = ref(false)
 const form = reactive({
   productName: '',
   price: 0,
+  deliveryPrice: 0,
   status: true,
   description: '',
 })
+
+const minDeliveryPrice = computed(() => (form.price ? Math.ceil(form.price * 1.1) : 0))
 
 const fileInput = ref(null)
 const imageFile = ref(null)
@@ -192,11 +216,34 @@ const fetchSuppliers = async () => {
 
 const onSave = async () => {
   if (!form.productName) {
-    alert('제품명과 상품 코드는 필수입니다.')
+    alert('제품명은 필수입니다.')
     return
   }
   if (!selectedSmallId.value) {
     alert('소분류를 선택해주세요.')
+    return
+  }
+  if (!form.price || form.price <= 0) {
+    alert('공급가를 입력해주세요.')
+    return
+  }
+
+  if (!selectedSupplierId.value) {
+    alert('공급사를 선택해주세요.')
+    return
+  }
+
+  if (!form.deliveryPrice || form.deliveryPrice <= 0) {
+    alert('납품가를 입력해주세요.')
+    return
+  }
+  const minPrice = Math.ceil(form.price * 1.1)
+  if (form.deliveryPrice < minPrice) {
+    alert(
+      `납품가는 공급가의 10% 이상이어야 합니다.\n` +
+        `(공급가: ${form.price.toLocaleString()}원, ` +
+        `최소 납품가: ${minPrice.toLocaleString()}원)`,
+    )
     return
   }
   const req = {
@@ -209,6 +256,7 @@ const onSave = async () => {
     categoryMediumId: selectedMediumId.value,
     categorySmallId: selectedSmallId.value,
     supplierId: selectedSupplierId.value,
+    deliveryPrice: form.deliveryPrice,
   }
   saving.value = true
   try {
