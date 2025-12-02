@@ -8,6 +8,7 @@ import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.*;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.purchase.model.service.PurchaseService;
+import com.synerge.order101.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -103,9 +104,9 @@ public class PurchaseController {
     @PatchMapping("/auto/{purchaseId}/submit")
     public ResponseEntity<BaseResponseDto<AutoPurchaseDetailResponseDto>> submitAutoPurchaseDetail(@PathVariable Long purchaseId,
                                                                                                    @RequestBody(required = false) AutoPurchaseSubmitRequestDto request,
-                                                                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+                                                                                                   @AuthenticationPrincipal User user) {
 
-        Long userId = userDetails.getUser().getUserId();
+        Long userId = user.getUserId();
 
         AutoPurchaseDetailResponseDto response = purchaseService.submitAutoPurchase(purchaseId, userId, request);
 

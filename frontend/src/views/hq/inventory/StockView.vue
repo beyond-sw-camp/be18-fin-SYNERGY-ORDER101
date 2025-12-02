@@ -73,11 +73,10 @@
 <script setup>
 import { ref, computed ,onMounted, watch } from 'vue'
 import { useInventoryStore } from '@/stores/inventory/inventoryStore'
-import { getTopCategories, getChildCategories } from '@/components/api/product/categoryService' 
+import { getTopCategories, getChildCategories } from '@/components/api/product/categoryService'
 
 const inventoryStore = useInventoryStore()
 
-// 카테고리 데이터
 const largeCategories = ref([])
 const mediumCategories = ref([])
 const smallCategories = ref([])
@@ -87,12 +86,11 @@ const mediumCategoryId = ref('')
 const smallCategoryId = ref('')
 
 const page = computed(() => inventoryStore.page)
-const totalPages = computed(() => Math.ceil(inventoryStore.totalCount / inventoryStore.numOfRows))
+const totalPages = computed(() => inventoryStore.totalPages)
 
-// 페이지 번호 배열 생성
-const pages = computed(() => {
-  return Array.from({ length: totalPages.value }, (_, i) => i + 1)
-})
+const pages = computed(() =>
+  Array.from({ length: totalPages.value }, (_, i) => i + 1)
+)
 
 onMounted(async () => {
   largeCategories.value = await getTopCategories()
@@ -108,36 +106,28 @@ const fetchInventory = async (page = 1) => {
   })
 }
 
-// ------- 카테고리 변경 감지 -------
+// 카테고리 필터 감지
 watch(largeCategoryId, async (newVal) => {
   mediumCategoryId.value = ''
   smallCategoryId.value = ''
   mediumCategories.value = []
   smallCategories.value = []
-
-  if (newVal) {
-    mediumCategories.value = await getChildCategories(Number(newVal))
-  }
+  if (newVal) mediumCategories.value = await getChildCategories(Number(newVal))
   fetchInventory(1)
 })
 
 watch(mediumCategoryId, async (newVal) => {
   smallCategoryId.value = ''
   smallCategories.value = []
-
-  if (newVal) {
-    smallCategories.value = await getChildCategories(Number(newVal))
-  }
+  if (newVal) smallCategories.value = await getChildCategories(Number(newVal))
   fetchInventory(1)
 })
 
-watch(smallCategoryId, () => {
-  fetchInventory(1)
-})
+watch(smallCategoryId, () => fetchInventory(1))
 
 const changePage = async (p) => {
   if (p < 1 || p > totalPages.value) return
-  await fetchInventory(p)
+  fetchInventory(p)
 }
 </script>
 
