@@ -162,7 +162,9 @@ const totalAmount = computed(() =>
 
 // 전체 상태 / 제출 여부
 const overallStatus = computed(() => detail.status)
-const isSubmitted = computed(() => overallStatus.value === 'SUBMITTED')
+const isSubmitted = computed(() => {
+  return overallStatus.value === 'CONFIRMED'
+})
 
 onMounted(() => {
   fetchDetail()
@@ -184,7 +186,8 @@ async function fetchDetail () {
     detail.supplierName = data.supplierName
     detail.targetWeek = data.targetWeek
     detail.requesterName = data.requesterName
-    detail.status = data.status || 'DRAFT_AUTO'
+    detail.status = data.smartOrderStatus || 'DRAFT_AUTO'
+
 
     detail.items = (data.items || []).map(item => ({
       smartOrderId: item.smartOrderId,
@@ -251,7 +254,8 @@ async function submitAll () {
   }
 }
 
-function statusLabel (s) {
+function statusLabel(s) {
+  if (s === 'CONFIRMED') return '승인'
   if (s === 'SUBMITTED') return '제출'
   if (s === 'DRAFT_AUTO') return '초안'
   return s || '-'

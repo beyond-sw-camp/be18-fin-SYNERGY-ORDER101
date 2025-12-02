@@ -201,52 +201,47 @@ function formatCurrency (value) {
   return num.toLocaleString('ko-KR') + '원'
 }
 
-function groupBySupplierAndWeek () {
+
+function groupBySupplierAndWeek() {
   const map = new Map()
 
   for (const row of rawRows.value) {
-    const supplierId = row.supplierId
-    const supplierName = row.supplierName || '-'
-    const targetWeek = row.targetWeek
-
-    const key = `${supplierId}_${targetWeek}`
+    const status = row.smartOrderStatus
+    const key = `${row.supplierId}_${row.targetWeek}`
 
     if (!map.has(key)) {
       map.set(key, {
         key,
-        supplierId,
-        supplierName,
-        targetWeek,
+        supplierId: row.supplierId,
+        supplierName: row.supplierName,
+        targetWeek: row.targetWeek,
         poNumber: row.poNumber,
         itemCount: 0,
         totalForecastQty: 0,
         totalRecommendedQty: 0,
         totalAmount: 0,
-        status: row.smartOrderStatus,
+        status: status, 
       })
     }
 
     const g = map.get(key)
+
     g.itemCount += 1
-    g.totalForecastQty += row.forecastQty || 0
-    g.totalRecommendedQty += row.recommendedOrderQty || 0
+    g.totalForecastQty += row.forecastQty
+    g.totalRecommendedQty += row.recommendedOrderQty
+    g.totalAmount += Number(row.unitPrice) * Number(row.recommendedOrderQty)
 
-    const unitPrice = Number(row.unitPrice || 0)
-    const qty = Number(row.recommendedOrderQty || 0)
-    g.totalAmount += unitPrice * qty
-
-    if (row.smartOrderStatus === 'SUBMITTED') {
+    
+    if (status === 'SUBMITTED') {
       g.status = 'SUBMITTED'
+    } else if (status === 'CONFIRMED' && g.status !== 'SUBMITTED') {
+      g.status = 'CONFIRMED'
     }
   }
 
-  groupedRows.value = Array.from(map.values()).sort((a, b) => {
-    if (a.targetWeek === b.targetWeek) {
-      return (a.supplierId || 0) - (b.supplierId || 0)
-    }
-    return a.targetWeek < b.targetWeek ? -1 : 1
-  })
+  groupedRows.value = [...map.values()]
 }
+
 
 function openDetail (row) {
   router.push({
@@ -258,16 +253,18 @@ function openDetail (row) {
   })
 }
 
-function statusLabel (s) {
+function statusLabel(s) {
+  if (s === 'CONFIRMED') return '승인'
   if (s === 'SUBMITTED') return '제출'
   if (s === 'DRAFT_AUTO') return '초안'
   return s || '-'
 }
 
 function statusClass (s) {
+  if (s === 'CONFIRMED') return 's-confirmed'
   if (s === 'SUBMITTED') return 's-submitted'
   if (s === 'DRAFT_AUTO') return 's-draft'
-  return ''
+  return 's-unknown'
 }
 </script>
 
@@ -420,5 +417,8 @@ function statusClass (s) {
 
 .s-submitted {
   background: #16a34a;
+}
+.s-confirmed {
+  background: #3b82f6;
 }
 </style>
