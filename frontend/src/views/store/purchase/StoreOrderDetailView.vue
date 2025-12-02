@@ -170,7 +170,7 @@ const progressSteps = computed(() => {
       {
         key: "REJECTED",
         label: "반려됨",
-        time: findTime("WAITING"),
+        time: findTime("."),
       }
     ]
   }
