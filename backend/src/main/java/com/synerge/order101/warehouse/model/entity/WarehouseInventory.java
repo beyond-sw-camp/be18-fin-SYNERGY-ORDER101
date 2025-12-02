@@ -28,8 +28,9 @@ public class WarehouseInventory {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Builder.Default
     @Column(name = "on_hand_qty", nullable = false)
-    private Integer onHandQuantity;
+    private Integer onHandQuantity = 0;
 
     @Builder.Default
     @Column(name = "safety_qty", nullable = false)

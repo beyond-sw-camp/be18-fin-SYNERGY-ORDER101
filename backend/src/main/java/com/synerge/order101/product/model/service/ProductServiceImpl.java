@@ -29,6 +29,7 @@ import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.supplier.model.repository.SupplierRepository;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
 import com.synerge.order101.warehouse.model.repository.WarehouseRepository;
+import com.synerge.order101.warehouse.model.service.InventoryServiceImpl;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -67,6 +68,7 @@ public class ProductServiceImpl implements ProductService {
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final SupplierRepository supplierRepository;
     private final ProductSupplierRepository productSupplierRepository;
+    private final InventoryServiceImpl inventoryService;
 
     private final AmazonS3 amazonS3;
 
@@ -136,6 +138,9 @@ public class ProductServiceImpl implements ProductService {
                     .build();
             productSupplierRepository.save(ps);
         }
+
+        inventoryService.createInventory(product);
+
         return new  ProductCreateRes(product.getProductId());
     }
 
