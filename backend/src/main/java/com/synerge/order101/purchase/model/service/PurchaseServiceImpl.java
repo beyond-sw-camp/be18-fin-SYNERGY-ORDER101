@@ -1,6 +1,5 @@
 package com.synerge.order101.purchase.model.service;
 
-import com.synerge.order101.common.dto.ItemsResponseDto;
 import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
@@ -33,7 +32,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -239,12 +237,9 @@ public class PurchaseServiceImpl implements PurchaseService {
                     LocalDate.now(),
                     items
             );
-            System.out.println("자동발주 생성완료" + request.getOrderType() + request.getOrderStatus());
 
             createPurchase(request);
         }
-
-
     }
 
     // 자동발주 목록 조회
@@ -266,16 +261,28 @@ public class PurchaseServiceImpl implements PurchaseService {
         Purchase purchase = purchaseRepository.findById(purchaseId).orElseThrow(
                 () -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
 
-        // PurchaseDetail + safetyQty 조회
-        List<Object[]> results = purchaseDetailRepository.findDetailsWithSafetyQty(purchaseId);
+        // PurchaseDetail + safetyQty + onHandQty 조회
+        List<Object[]> results = purchaseDetailRepository.findDetailsWithSafetyQtyAndOnHandQty(purchaseId);
 
         // DTO 변환
         List<AutoPurchaseDetailResponseDto.AutoPurchaseItemDto> items = results.stream()
                 .map(r -> {
                     PurchaseDetail detail = (PurchaseDetail) r[0];
                     Integer safetyQty = (Integer) r[1];
+                    Integer onHandQty = (Integer) r[2];   // 재고 추가
 
-                    return AutoPurchaseDetailResponseDto.AutoPurchaseItemDto.fromEntity(detail, safetyQty);
+                    // originalQty 계산
+                    Integer originalQty = purchaseDetailHistoryRepository
+                            .findTopByPurchaseOrderLineIdOrderByUpdatedAtAsc(detail.getPurchaseOrderLineId())
+                            .map(h -> h.getBeforeQty() == null ? h.getAfterQty() : h.getBeforeQty())
+                            .orElse(detail.getOrderQty());  // 수정 이력 없으면 현재 qty
+
+                    return AutoPurchaseDetailResponseDto.AutoPurchaseItemDto.fromEntity(
+                            detail,
+                            safetyQty,
+                            onHandQty,
+                            originalQty
+                    );
                 })
                 .toList();
 
@@ -283,8 +290,9 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .purchaseId(purchase.getPurchaseId())
                 .poNo(purchase.getPoNo())
                 .supplierName(purchase.getSupplier().getSupplierName())
-                .requestedAt(purchase.getCreatedAt())
-                .status(purchase.getOrderStatus().name())
+                .userName(purchase.getUser().getName())
+                .requestedAt(purchase.getPoDate())
+                .status(purchase.getOrderStatus())
                 .purchaseItems(items)
                 .build();
     }
@@ -319,7 +327,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                                 .productId(productId)
                                 .beforeQty(detail.getOrderQty())
                                 .afterQty(0)
-                                .changedBy(purchase.getUser().getUserId())
+                                .changedBy(userId)
                                 .build()
                 );
                 purchaseDetailRepository.delete(detail);
@@ -334,7 +342,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                         .productId(productId)
                         .beforeQty(oldQty)
                         .afterQty(newQty)
-                        .changedBy(purchase.getUser().getUserId())
+                        .changedBy(userId)
                         .build()
                 );
                 detail.updateOrderQty(newQty);
@@ -366,14 +374,17 @@ public class PurchaseServiceImpl implements PurchaseService {
                     .productId(productId)
                     .beforeQty(0)
                     .afterQty(qty)
-                    .changedBy(purchase.getUser().getUserId())
+                    .changedBy(userId)
                     .build()
             );
         }
 
         purchaseDetailHistoryRepository.saveAll(historyList);
 
-        purchase.updateOrderStatus(OrderStatus.SUBMITTED);
+        User submitUser = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(PurchaseErrorCode.PURCHASE_CREATION_FAILED));
+
+        purchase.submit(submitUser, LocalDateTime.now());
 
         // 자동 발주 알림 (테스트 완)
         List<User> admins = userRepository.findByRole(Role.HQ_ADMIN);
@@ -399,5 +410,20 @@ public class PurchaseServiceImpl implements PurchaseService {
                 end,
                 pageable
         );
+    }
+
+    @Override
+    @Transactional
+    public AutoPurchaseDetailResponseDto updateAutoPurchase(Long purchaseId, OrderStatus status) {
+
+        Purchase purchase = purchaseRepository.findById(purchaseId)
+                .orElseThrow(() -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
+
+        purchase.updateOrderStatus(status);
+
+        AutoPurchaseDetailResponseDto dto = getAutoPurchaseDetail(purchaseId);
+        dto.updateStatus(status);
+
+        return dto;
     }
 }

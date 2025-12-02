@@ -18,10 +18,13 @@
         <!-- 입고일 때: 공급사 선택 -->
         <div class="filter-item" v-if="activeTab === 'INBOUND'">
           <label>공급사</label>
-          <div class="supplier-select" @click="openSupplierModal">
-            <span v-if="selectedSupplierName">{{ selectedSupplierName }}</span>
-            <span v-else class="placeholder">공급사 선택</span>
-          </div>
+          <input
+            readonly
+            :value="selectedSupplierName ? selectedSupplierName : '공급사 선택'"
+            :style="{ color: selectedSupplierName ? '#111' : '#9ca3af' }"
+            class="supplier-select"
+            @click="openSupplierModal"
+          />
         </div>
 
         <!-- 출고일 때: 가맹점 선택 -->

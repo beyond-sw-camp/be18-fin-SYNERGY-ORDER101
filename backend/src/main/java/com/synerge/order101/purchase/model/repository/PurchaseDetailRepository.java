@@ -16,13 +16,14 @@ public interface PurchaseDetailRepository extends JpaRepository<PurchaseDetail, 
     List<PurchaseDetail> findByPurchase_PurchaseId(Long purchaseId);
 
     @Query("""
-        SELECT pd, wi.safetyQuantity
+        SELECT pd, wi.safetyQuantity, wi.onHandQuantity
         FROM PurchaseDetail pd
         LEFT JOIN WarehouseInventory wi ON wi.product.productId = pd.product.productId
         WHERE pd.purchase.purchaseId = :purchaseId
         ORDER BY pd.purchaseOrderLineId ASC
     """)
-    List<Object[]> findDetailsWithSafetyQty(Long purchaseId);
+    List<Object[]> findDetailsWithSafetyQtyAndOnHandQty(Long purchaseId);
+
 
     @Query("""
         select coalesce(sum(pd.orderQty), 0)
