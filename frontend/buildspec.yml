@@ -1,0 +1,29 @@
+version: 0.2
+
+env:
+  variables:
+    S3_BUCKET: order101-frontend # 네 버킷 이름
+    CLOUDFRONT_DISTRIBUTION_ID: EDTL5NOCRCLXW # 네 CloudFront 배포 ID
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] install dependencies"
+      - npm ci || npm install
+  build:
+    commands:
+      - echo "[build] build vue app"
+      - npm run build
+  post_build:
+    commands:
+      - echo "[deploy] sync to s3"
+      - aws s3 sync dist/ s3://$S3_BUCKET/ --delete
+      - echo "[deploy] invalidate cloudfront cache"
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: dist

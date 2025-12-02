@@ -1,6 +1,7 @@
 // supplierService.js
 
 import axios from 'axios'
+import apiClient from '..'
 
 /**
  * [공급업체 목록 조회]
@@ -24,7 +25,7 @@ export async function getSupplierList(page, pageSize, keyword) {
 
   // 🚨 핵심: API 응답 구조를 Spring Page 객체 또는 유사한 DTO로 가정하고 구현합니다.
   try {
-    const { data } = await axios.get(url, { params })
+    const { data } = await apiClient.get(url, { params })
 
     // 응답 형태가
     // { code, message, items, page, numOfRows, totalCount } 라고 가정
