@@ -19,7 +19,10 @@
       </div>
       <div class="card info">
         <label>상태</label>
-        <div class="value status-chip">{{ statusLabel(displayStatus) }}</div>
+        <div class="value status-chip" :class="{ rejected: isRejected }">
+          {{ statusLabel(displayStatus) }}
+        </div>
+
       </div>
     </section>
 
@@ -67,7 +70,10 @@
             v-for="(s, idx) in progressSteps"
             :key="s.key + '-icon'"
             class="step-icon"
-            :class="{ active: idx <= currentStepIndex }"
+            :class="{
+              active: idx <= currentStepIndex,
+              rejected: isRejected
+            }"
           >
             <div class="icon">
               <i :class="idx <= currentStepIndex ? 'pi pi-check' : 'pi pi-circle'" />
@@ -75,7 +81,11 @@
           </div>
         </div>
         <div class="track" ref="trackRef">
-          <div class="track-fill" :style="{ width: filledPercent + '%' }"></div>
+          <div
+            class="track-fill"
+            :class="{ rejected: isRejected }"
+            :style="{ width: filledPercent + '%' }"
+          ></div>
         </div>
 
         <div class="steps-labels">
@@ -113,6 +123,10 @@ import apiClient from "@/components/api";
 import Money from "@/components/global/Money.vue";
 import { formatDateTimeMinute } from "@/components/global/Date.js";
 
+const isRejected = computed(() => detail.status === "REJECTED");
+
+
+
 const route = useRoute();
 const orderId = route.params.id;
 
@@ -129,9 +143,12 @@ const detail = reactive({
 const hasStatus = (st) => detail.logs.some((l) => l.status === st);
 
 const findTime = (st) => {
-  const log = detail.logs.find((l) => l.status === st);
+  const log = detail.logs.find(
+    (l) => l.status === st || l.status.startsWith(st)
+  );
   return log ? formatDateTimeMinute(log.changedAt) : "";
 };
+
 
 const findNote = (st) => {
   const log = detail.logs.find((l) => l.status === st);
@@ -147,19 +164,42 @@ const displayStatus = computed(() => {
   return "-";
 });
 
-const progressSteps = computed(() => [
-  { key: "SUBMITTED", label: "제출됨", time: findTime("SUBMITTED") },
-  { key: "WAITING", label: "배송대기", time: findTime("WAITING") },
-  { key: "SHIPPED", label: "배송중", time: findTime("SHIPPED") },
-  { key: "DELIVERED", label: "배송완료", time: findTime("DELIVERED") },
-]);
+const progressSteps = computed(() => {
+  if (isRejected.value) {
+    return [
+      {
+        key: "SUBMITTED",
+        label: "제출됨",
+        time: findTime("SUBMITTED"),
+        note: findNote("SUBMITTED"),
+      },
+      {
+        key: "REJECTED",
+        label: "반려됨",
+        time: findTime("."),
+        note: findNote("."),
+      },
+    ];
+  }
+
+  return [
+    { key: "SUBMITTED", label: "제출됨", time: findTime("SUBMITTED") },
+    { key: "WAITING", label: "배송대기", time: findTime("WAITING") },
+    { key: "SHIPPED", label: "배송중", time: findTime("SHIPPED") },
+    { key: "DELIVERED", label: "배송완료", time: findTime("DELIVERED") },
+  ];
+});
+
+
 
 const currentStepIndex = computed(() => {
+  if (isRejected.value) return 1; 
   if (displayStatus.value === "DELIVERED") return 3;
   if (displayStatus.value === "SHIPPED") return 2;
   if (displayStatus.value === "WAITING") return 1;
   return 0;
 });
+
 
 const trackRef = ref(null);
 const trackWidth = ref(0);
@@ -170,6 +210,8 @@ onMounted(() => {
 
 
 const filledPercent = computed(() => {
+  if (isRejected.value) return 37.5;
+
   switch (displayStatus.value) {
     case "WAITING":
       return 37.5; // 배송대기
@@ -233,14 +275,15 @@ const totalAmount = computed(() =>
 
 const formatMoney = (v) => Number(v).toLocaleString() + "원";
 
-const statusLabel = (s) =>
-  (
-    {
-      WAITING: "배송대기",
-      SHIPPED: "배송중",
-      DELIVERED: "배송완료",
-    }[s] || "-"
-  );
+const statusLabel = (s) => {
+  if (isRejected.value) return "반려됨";
+  return {
+    WAITING: "배송대기",
+    SHIPPED: "배송중",
+    DELIVERED: "배송완료",
+  }[s] || "-";
+};
+
 </script>
 
 <style scoped>
@@ -287,6 +330,17 @@ const statusLabel = (s) =>
 .numeric {
   text-align: right;
 }
+.status-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.status-chip.rejected {
+  background: #ffe5e5;
+  color: #d93025;
+}
+
 
 .timeline {
   display: grid;
@@ -350,4 +404,15 @@ const statusLabel = (s) =>
   padding: 12px 0;
   border-top: 1px solid #eee;
 }
+
+.step-icon.rejected .icon {
+  background: #ff4d4d !important;
+  border-color: #ff4d4d !important;
+  color: white;
+}
+
+.track-fill.rejected {
+  background: #ff4d4d !important;
+}
+
 </style>
