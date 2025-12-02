@@ -101,7 +101,15 @@
       <div class="statuses">
         <div v-for="s in progressSteps" :key="s.key" class="status-row">
           <div class="status-title">{{ s.label }}</div>
-          <div class="status-time">{{ s.time }}</div>
+          <div class="status-time">
+            <template v-if="s.key === 'REJECTED'">
+              본사에서 반려하였습니다.
+            </template>
+
+            <template v-else>
+              {{ s.time }}
+            </template>
+          </div>
 
           <div v-if="s.key === 'SHIPPED'">
             <div class="status-desc">{{ trackingNumber }}</div>
