@@ -131,7 +131,7 @@ public class ProductServiceImpl implements ProductService {
                     .product(product)
                     .supplier(supplier)
                     .supplierProductCode(supplierProductCode)
-                    .purchasePrice(request.getPrice())
+                    .purchasePrice(request.getDeliveryPrice())
                     .leadTimeDays(leadTimeDays)
                     .build();
             productSupplierRepository.save(ps);
