@@ -32,9 +32,11 @@
                 <Money :value="row.estimatedPrice" />
               </td>
               <td class="center">{{ formatDateTimeMinute(row.createdAt) }}</td>
-              <td class="center actions">
-                <button class="btn-accept" @click.stop="approve(row)">승인</button>
-                <button class="btn-reject" @click.stop="reject(row)">반려</button>
+              <td class="center">
+                <div class="actions">
+                  <button class="btn-accept" @click.stop="approve(row)">승인</button>
+                  <button class="btn-reject" @click.stop="reject(row)">반려</button>
+                </div>
               </td>
             </tr>
             <tr v-if="filteredRows.length === 0">
@@ -171,9 +173,32 @@ function openDetail(row) {
 }
 
 async function approve(row) {
-  if (!confirm(`${row.store} 가맹점의 주문을 승인하시겠습니까?`)) return
-
   try {
+    // 1. 먼저 재고 확인
+    const { checkStockForOrder } = await import('@/components/api/store/StoreService.js')
+    const stockCheck = await checkStockForOrder(row.id)
+
+    // 2. 재고가 부족한 경우
+    if (!stockCheck.hasEnoughStock) {
+      const insufficientItems = stockCheck.insufficientItems || []
+      const itemList = insufficientItems
+        .map(item => `- ${item.productName}: 요청 ${item.requestedQty}개, 재고 ${item.availableQty}개 (부족: ${item.shortageQty}개)`)
+        .join('\n')
+
+      const goToPurchase = confirm(
+        `창고 재고가 부족합니다.\n\n${itemList}\n\n공급사 발주 페이지로 이동하시겠습니까?`
+      )
+
+      if (goToPurchase) {
+        // 발주 생성 페이지로 이동
+        router.push({ name: 'hq-orders-create' })
+      }
+      return
+    }
+
+    // 3. 재고가 충분한 경우 승인 진행
+    if (!confirm(`${row.store} 가맹점의 주문을 승인하시겠습니까?`)) return
+
     const { updateStoreOrderStatus } = await import('@/components/api/store/StoreService.js')
     await updateStoreOrderStatus(row.id, 'CONFIRMED')
 
@@ -261,7 +286,7 @@ async function reject(row) {
 }
 
 .actions {
-  display: flex;
+  display: inline-flex;
   gap: 8px;
   justify-content: center;
 }

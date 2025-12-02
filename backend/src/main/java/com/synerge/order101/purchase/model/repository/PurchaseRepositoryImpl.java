@@ -125,7 +125,7 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
 
     private BooleanExpression vendorIdEq(Long vendorId) {
         if (vendorId == null) return null;
-        return purchase.supplier.supplierId.eq(vendorId).or(purchase.user.userId.eq(vendorId));
+        return purchase.supplier.supplierId.eq(vendorId);
     }
 
 }

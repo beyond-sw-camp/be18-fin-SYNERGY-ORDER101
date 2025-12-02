@@ -31,7 +31,7 @@ const router = useRouter()
 const quickLinks = [
   { title: '새 발주 생성', description: '빠르게 생성', icon: '🛒', route: '/hq/orders/create', highlight: true },
   { title: '창고 조회', description: '실시간 재고 수량 확인', icon: '🏬', route: '/hq/inventory/stock' },
-  { title: '주문 조회', description: '가맹점 주문 상태 추적', icon: '📦', route: '/hq/franchise/orders/:id' },
+  { title: '정산 조회', description: '정산 내역 조회 및 관리 ', icon: '🧾', route: '/hq/settlement/list' },
   { title: '수요 예측', description: 'AI 기반 수요 계획', icon: '📈', route: '/hq/dashboard/forecast' },
 ]
 
@@ -139,17 +139,17 @@ header h1 {
   border: 1px solid #eef1f6;
   padding: 20px;
   text-align: left;
-  background-color: #fff;
+  background-color: #f9f5f9;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.action-card.highlight {
+/* .action-card.highlight {
   background-color: #ecfdf5;
   border-color: #a7f3d0;
-}
+} */
 
 .action-title {
   font-weight: 600;

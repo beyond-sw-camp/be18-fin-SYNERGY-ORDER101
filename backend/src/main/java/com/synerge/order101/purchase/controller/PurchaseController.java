@@ -8,6 +8,7 @@ import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.*;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.purchase.model.service.PurchaseService;
+import com.synerge.order101.user.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -101,17 +102,18 @@ public class PurchaseController {
 
     // 자동 발주 수정 & 제출
     @PatchMapping("/auto/{purchaseId}/submit")
-    public ResponseEntity<BaseResponseDto<AutoPurchaseDetailResponseDto>> updateAutoPurchaseDetail(@PathVariable Long purchaseId,
+    public ResponseEntity<BaseResponseDto<AutoPurchaseDetailResponseDto>> submitAutoPurchaseDetail(@PathVariable Long purchaseId,
                                                                                                    @RequestBody(required = false) AutoPurchaseSubmitRequestDto request,
-                                                                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+                                                                                                   @AuthenticationPrincipal User user) {
 
-        Long userId = userDetails.getUser().getUserId();
+        Long userId = user.getUserId();
 
         AutoPurchaseDetailResponseDto response = purchaseService.submitAutoPurchase(purchaseId, userId, request);
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, response));
     }
 
+    // 자동 발주 검색 필터링
     @PostMapping("/auto/search")
     public ResponseEntity<ItemsResponseDto<AutoPurchaseListResponseDto>> searchAutoPurchases(
             @RequestBody AutoPurchaseSearchRequestDto request
@@ -120,5 +122,15 @@ public class PurchaseController {
         int totalCount = (int) response.getTotalElements();
 
         return ResponseEntity.ok(new ItemsResponseDto<>(HttpStatus.OK, response.getContent(), response.getNumber() + 1, totalCount));
+    }
+
+    // 자동 발주 승인/반려
+    @PatchMapping("/auto/{purchaseId}/status")
+    public ResponseEntity<BaseResponseDto<AutoPurchaseDetailResponseDto>> updateAutoPurchaseDetail(@PathVariable Long purchaseId,
+                                                                                                   @RequestParam OrderStatus status) {
+
+        AutoPurchaseDetailResponseDto response = purchaseService.updateAutoPurchase(purchaseId, status);
+
+        return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, response));
     }
 }

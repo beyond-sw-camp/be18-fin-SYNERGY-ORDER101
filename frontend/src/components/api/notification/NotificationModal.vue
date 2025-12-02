@@ -120,8 +120,6 @@ const onScroll = () => {
   list-style: none;
   margin: 0;
   padding: 6px;
-  overflow-y: auto;
-  max-height: 470px;
 }
 .noti-item {
   position: relative;

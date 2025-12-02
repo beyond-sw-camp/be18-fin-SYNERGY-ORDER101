@@ -87,4 +87,17 @@ public class StoreOrderController {
 
         return ResponseEntity.ok(responseDto);
     }
+
+    /**
+     * 6. 주문 승인 전 창고 재고 확인 (GET /orders/{storeOrderId}/stock-check)
+     * - 주문에 포함된 품목들의 창고 재고를 확인하여 부족한 품목 목록을 반환합니다.
+     */
+    @GetMapping("/{storeOrderId}/stock-check")
+    public ResponseEntity<StoreOrderStockCheckResponseDto> checkStockForOrder(
+            @PathVariable Long storeOrderId) {
+
+        StoreOrderStockCheckResponseDto responseDto = storeOrderService.checkStockForOrder(storeOrderId);
+
+        return ResponseEntity.ok(responseDto);
+    }
 }

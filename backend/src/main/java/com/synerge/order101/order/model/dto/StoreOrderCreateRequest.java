@@ -15,7 +15,7 @@ public class StoreOrderCreateRequest {
     @NonNull
     private Long storeId;
 
-    @NonNull
+    // warehouseId는 optional - 미지정 시 store의 defaultWarehouse 사용
     private Long warehouseId;
 
     @NonNull
