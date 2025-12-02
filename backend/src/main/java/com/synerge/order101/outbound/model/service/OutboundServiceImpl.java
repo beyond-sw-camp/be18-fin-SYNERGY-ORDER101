@@ -144,7 +144,6 @@ public class OutboundServiceImpl implements OutboundService {
         });
     }
 
-    // 수정
     private String generateOutboundNo(StoreOrder storeOrder) {
         return "OUT-" + storeOrder.getStoreOrderId() + "-" + System.currentTimeMillis();
     }

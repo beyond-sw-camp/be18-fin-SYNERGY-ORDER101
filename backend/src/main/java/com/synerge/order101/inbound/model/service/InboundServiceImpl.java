@@ -81,16 +81,12 @@ public class InboundServiceImpl implements InboundService {
         LocalDateTime start = request.startDate() != null ? request.startDate().atStartOfDay() : null;
         LocalDateTime end = request.endDate() != null ? request.endDate().atTime(23, 59, 59) : null;
 
-        System.out.println("request검증"+request.supplierId());
-        System.out.println("page검증"+page);
-        System.out.println("numOfRows검증"+numOfRows);
         Page<Object[]> result = inboundRepository.searchInbounds(
                 request.supplierId(),
                 start,
                 end,
                 pageable
         );
-        System.out.println(result.getContent());
 
         return result.map(row -> {
             Inbound inbound = (Inbound) row[0];
