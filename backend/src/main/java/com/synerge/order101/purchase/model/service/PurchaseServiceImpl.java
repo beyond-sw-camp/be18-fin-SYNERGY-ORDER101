@@ -90,10 +90,22 @@ public class PurchaseServiceImpl implements PurchaseService {
                 ));
 
         List<PurchaseDetail> details = purchaseDetailRepository.findByPurchase_PurchaseId(purchaseId);
+        Long supplierId = purchase.getSupplier().getSupplierId();
 
-        // DTO 변환
+        // DTO 변환 (공급가 조회 포함)
         PurchaseDetailResponseDto.PurchaseItemDto[] items = details.stream()
-                .map(PurchaseDetailResponseDto.PurchaseItemDto::fromEntity)
+                .map(detail -> {
+                    // product_supplier에서 공급가 조회
+                    BigDecimal purchasePrice = productSupplierRepository
+                            .findByProduct_ProductIdAndSupplier_SupplierId(
+                                    detail.getProduct().getProductId(), 
+                                    supplierId
+                            )
+                            .map(ProductSupplier::getPurchasePrice)
+                            .orElse(BigDecimal.ZERO);
+                    
+                    return PurchaseDetailResponseDto.PurchaseItemDto.fromEntity(detail, purchasePrice);
+                })
                 .toArray(PurchaseDetailResponseDto.PurchaseItemDto[]::new);
 
         return PurchaseDetailResponseDto.builder()

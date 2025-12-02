@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <div class="modal">
       <header class="modal-header">
         <h3>품목 추가</h3>
@@ -24,7 +24,7 @@
           </select>
 
           <select v-model="filters.smallCategoryId" class="select" :disabled="!filters.mediumCategoryId"
-            @change="fetchProducts">
+            @change="onSmallCategoryChange">
             <option :value="null">전체 소분류</option>
             <option v-for="cat in smallCategories" :key="cat.id" :value="cat.id">
               {{ cat.name }}
@@ -74,6 +74,24 @@
               </tr>
             </tbody>
           </table>
+
+          <!-- 페이지네이션 -->
+          <div class="pagination" v-if="totalPages > 1">
+            <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(1)">«</button>
+            <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">‹</button>
+            <button 
+              v-for="page in visiblePages" 
+              :key="page" 
+              class="page-btn" 
+              :class="{ active: page === currentPage }"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+            <button class="page-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">›</button>
+            <button class="page-btn" :disabled="currentPage === totalPages" @click="goToPage(totalPages)">»</button>
+            <span class="page-info">{{ currentPage }} / {{ totalPages }} (총 {{ totalCount }}개)</span>
+          </div>
         </div>
       </section>
 
@@ -94,13 +112,19 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
-// Money 컴포넌트가 사용되었으므로, 실제 프로젝트에서 임포트해야 합니다.
-// import Money from '@/components/Money.vue' 
+import { getInventoryList } from '@/components/api/warehouse/WarehouseService.js'
+import { useAuthStore } from '@/stores/authStore.js'
+import Money from '@/components/global/Money.vue' 
 
 const emit = defineEmits(['close', 'add'])
+const authStore = useAuthStore()
 
 const props = defineProps({
   initialSupplierId: {
+    type: [String, Number],
+    default: null
+  },
+  storeId: {
     type: [String, Number],
     default: null
   }
@@ -109,8 +133,15 @@ const props = defineProps({
 // --- State (반응형 데이터) ---
 const items = ref([])
 const selectedMap = reactive({}) // SKU를 키로 사용하여 선택 상태 관리
+const storeInventoryMap = ref({}) // 가맹점 재고 Map (productId -> stock)
 const loading = ref(false)
 const error = ref(null)
+
+// 페이지네이션 상태
+const currentPage = ref(1)
+const pageSize = ref(20)
+const totalCount = ref(0)
+const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value) || 1)
 
 // 카테고리 데이터
 const largeCategories = ref([])
@@ -135,10 +166,21 @@ const selectedCount = computed(() => {
 })
 
 const isAllSelected = computed(() => {
-  const productSkus = items.value.map(item => item.id)
-  if (productSkus.length === 0) return false // 품목이 없으면 전체 선택도 아님
+  const productIds = items.value.map(item => item.productId)
+  if (productIds.length === 0) return false // 품목이 없으면 전체 선택도 아님
 
-  return productSkus.every(sku => selectedMap[sku])
+  return productIds.every(id => selectedMap[id])
+})
+
+// 페이지 번호 목록 (5개씩 표시)
+const visiblePages = computed(() => {
+  const pages = []
+  const start = Math.max(1, currentPage.value - 2)
+  const end = Math.min(totalPages.value, start + 4)
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
 })
 
 // --- Utilities (유틸리티) ---
@@ -149,7 +191,8 @@ function normalizeProduct(p) {
     productId: p.productId || p.id,
     sku: p.productCode || p.sku || p.code,
     name: p.productName || p.name || p.product_name,
-    price: Number(p.price || p.unitPrice || 0),
+    price: Number(p.price || p.unitPrice || 0), // 납품가 (판매가)
+    purchasePrice: Number(p.purchasePrice || p.supplyPrice || p.price || 0), // 공급가
     stock: p.stockQuantity ?? p.stock ?? null,
     lead: Number(p.leadTimeDays || p.lead_time_days || 1),
     _raw: p
@@ -168,28 +211,87 @@ async function fetchProducts() {
   try {
     let productlist = []
 
-    if (filters.supplierId) {
-      // 공급사 상세 조회로 품목 가져오기
-      const detail = await getSupplierDetail(filters.supplierId)
-      // 예상 구조: detail.items[0].products 또는 detail.products
-      productlist = detail.items?.[0]?.products || detail.products || []
-    } else {
-      // 공급사 미지정 시 기존 제품 목록 API 사용 (필요 시 유지)
-      const res = await axios.get('/api/v1/products', {
-        params: {
-          page: 1,
-          numOfRows: 100,
-          largeCategoryId: filters.largeCategoryId,
-          mediumCategoryId: filters.mediumCategoryId,
-          smallCategoryId: filters.smallCategoryId,
-          keyword: filters.keyword.trim() || undefined
+    // 본사(HQ)인지 가맹점(STORE)인지 확인
+    const isHQ = authStore.userInfo.role === 'HQ_ADMIN' || authStore.userInfo.role === 'HQ_USER'
+    const isStore = authStore.userInfo.role === 'STORE_ADMIN' || authStore.userInfo.role === 'STORE_USER'
+
+    // 재고 Map 초기화
+    storeInventoryMap.value = {}
+
+    if (isStore) {
+      // 가맹점 재고 조회 (storeId가 유효한 경우에만)
+      const storeIdValue = props.storeId ? Number(props.storeId) : null
+      if (storeIdValue && !isNaN(storeIdValue)) {
+        try {
+          const invRes = await axios.get(`/api/v1/stores/${storeIdValue}/inventory`)
+          const invItems = invRes.data?.items || []
+          // productId를 키로 재고 Map 생성
+          invItems.forEach(inv => {
+            if (inv.productId) {
+              storeInventoryMap.value[inv.productId] = inv.onHandQty ?? 0
+            }
+            if (inv.productCode) {
+              storeInventoryMap.value[inv.productCode] = inv.onHandQty ?? 0
+            }
+          })
+        } catch (invErr) {
+          console.warn('가맹점 재고 조회 실패:', invErr)
         }
-      }).then(r => r.data)
-      productlist = res.items?.[0]?.products || res.products || []
+      }
+    } else if (isHQ) {
+      // 본사일 경우 창고 재고 조회
+      try {
+        const invRes = await getInventoryList(1, 9999) // 전체 재고 조회
+        const invItems = invRes.inventories || []
+        // productCode를 키로 재고 Map 생성
+        invItems.forEach(inv => {
+          if (inv.productCode) {
+            storeInventoryMap.value[inv.productCode] = inv.onHandQty ?? 0
+          }
+          if (inv.productId) {
+            storeInventoryMap.value[inv.productId] = inv.onHandQty ?? 0
+          }
+        })
+      } catch (invErr) {
+        console.warn('창고 재고 조회 실패:', invErr)
+      }
     }
 
-    // items.value에 정규화된 상품 목록 저장
-    items.value = productlist.map(normalizeProduct)
+    // 공급사 ID가 있으면 공급사 상세 API 사용 (공급가 포함)
+    if (filters.supplierId) {
+      const detail = await getSupplierDetail(filters.supplierId, currentPage.value, pageSize.value, filters.keyword.trim() || '')
+      productlist = detail.products || []
+      totalCount.value = detail.totalCount || 0
+    } else {
+      // 공급사 미지정 시 기존 제품 목록 API 사용
+      const params = {
+        page: currentPage.value,
+        numOfRows: pageSize.value,
+        keyword: filters.keyword.trim() || undefined
+      }
+      
+      // 카테고리 ID가 있을 때만 추가
+      if (filters.largeCategoryId) params.largeCategoryId = filters.largeCategoryId
+      if (filters.mediumCategoryId) params.mediumCategoryId = filters.mediumCategoryId
+      if (filters.smallCategoryId) params.smallCategoryId = filters.smallCategoryId
+      
+      const res = await axios.get('/api/v1/products', { params }).then(r => r.data)
+      
+      // API 응답: { items: [...상품배열], totalCount, page }
+      productlist = res.items || []
+      totalCount.value = res.totalCount || 0
+    }
+
+    // items.value에 정규화된 상품 목록 저장 (가맹점 재고 반영)
+    items.value = productlist.map(p => {
+      const normalized = normalizeProduct(p)
+      // 가맹점 재고 매핑 (productId 또는 productCode로)
+      const stockFromStore = storeInventoryMap.value[normalized.productId] ?? storeInventoryMap.value[normalized.sku] ?? 0
+      return {
+        ...normalized,
+        stock: stockFromStore
+      }
+    })
 
   } catch (e) {
     console.error('상품 로드 실패:', e)
@@ -208,7 +310,6 @@ async function loadLargeCategories() {
     const res = await axios.get('/api/v1/categories/top').then(r => r.data)
     largeCategories.value = res || []
   } catch (e) {
-    console.warn('대분류 로드 실패:', e)
     largeCategories.value = []
   }
 }
@@ -219,7 +320,6 @@ async function loadMediumCategories(id) {
     const res = await axios.get(`/api/v1/categories/${id}/children`).then(r => r.data)
     mediumCategories.value = res || []
   } catch (e) {
-    console.warn('중분류 로드 실패:', e)
     mediumCategories.value = []
   }
 }
@@ -230,7 +330,6 @@ async function loadSmallCategories(id) {
     const res = await axios.get(`/api/v1/categories/${id}/children`).then(r => r.data)
     smallCategories.value = res || []
   } catch (e) {
-    console.warn('소분류 로드 실패:', e)
     smallCategories.value = []
   }
 }
@@ -243,6 +342,7 @@ async function onLargeCategoryChange() {
   filters.smallCategoryId = null
   mediumCategories.value = []
   smallCategories.value = []
+  currentPage.value = 1
   if (filters.largeCategoryId) await loadMediumCategories(filters.largeCategoryId)
   fetchProducts()
 }
@@ -251,25 +351,42 @@ async function onLargeCategoryChange() {
 async function onMediumCategoryChange() {
   filters.smallCategoryId = null
   smallCategories.value = []
+  currentPage.value = 1
   if (filters.mediumCategoryId) await loadSmallCategories(filters.mediumCategoryId)
+  fetchProducts()
+}
+
+// 소분류 변경 핸들러
+function onSmallCategoryChange() {
+  currentPage.value = 1
   fetchProducts()
 }
 
 // 검색어 입력 핸들러 (디바운스 적용)
 function onSearchInput() {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => fetchProducts(), 400)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    fetchProducts()
+  }, 400)
+}
+
+// 페이지 이동
+function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  fetchProducts()
 }
 
 // 전체 선택/해제 토글
 function toggleSelectAll(e) {
   const checked = e.target.checked
-  items.value.forEach(i => { selectedMap[i.id] = checked })
+  items.value.forEach(i => { selectedMap[i.productId] = checked })
 }
 
 // 개별 항목 선택 토글 (행 클릭 시)
-function toggleSelect(id) {
-  selectedMap[id] = !selectedMap[id]
+function toggleSelect(productId) {
+  selectedMap[productId] = !selectedMap[productId]
 }
 
 // 선택된 품목 추가 및 모달 닫기
@@ -560,5 +677,52 @@ onMounted(async () => {
 .btn-secondary:hover {
   background: #f9fafb;
   border-color: #d1d5db;
+}
+
+/* 페이지네이션 스타일 */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f7;
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-btn.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.page-info {
+  margin-left: 12px;
+  font-size: 13px;
+  color: #94a3b8;
 }
 </style>

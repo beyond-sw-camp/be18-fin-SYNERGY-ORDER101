@@ -2,6 +2,15 @@
   <OrderDetailView title="발주 상세 정보" detailTitle="발주 세부 정보" orderNumberLabel="발주 번호" vendorLabel="공급업체"
     summaryTitle="발주 금액 요약" :orderData="orderData" :showApprovalButtons="showApprovalButtons">
     <template #actions="{ showButtons }">
+      <PurchaseApprovalActions 
+        v-if="showButtons"
+        :poId="po.purchaseId"
+        sourceType="REGULAR"
+        entityName="발주"
+        approveLabel="승인"
+        rejectLabel="반려"
+        @success="handleProcessSuccess"
+      />
     </template>
   </OrderDetailView>
 </template>
@@ -49,9 +58,10 @@ const fetchPurchaseDetail = async () => {
   });
 
   po.items = data.purchaseItems.map(item => ({
-    sku: item.purchaseId,
+    sku: item.productCode,
     name: item.productName,
-    price: item.unitPrice,
+    purchasePrice: item.purchasePrice,  // 공급가 (product_supplier)
+    price: item.unitPrice,              // 판매가 (product)
     qty: item.orderQty,
   }));
 }

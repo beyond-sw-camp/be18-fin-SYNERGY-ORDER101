@@ -28,6 +28,8 @@ import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
+import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
+import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
 import com.synerge.order101.warehouse.model.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +64,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final WarehouseRepository warehouseRepository;
+    private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final ShipmentRepository shipmentRepository;
 
     private final NotificationService notificationService;
@@ -115,14 +118,12 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     public StoreOrderCreateResponseDto createOrder(StoreOrderCreateRequest request) {
 
         // store 조회
-        Store store = null;
-        store = storeRepository.findById(request.getStoreId())
+        Store store = storeRepository.findById(request.getStoreId())
                 .orElseThrow(() -> new CustomException(OrderErrorCode.STORE_NOT_FOUND));
 
-        // warehouse 조회
-        Warehouse warehouse = null;
-        warehouse = warehouseRepository.findById(request.getWarehouseId())
-                .orElseThrow(() -> new CustomException(OrderErrorCode.WAREHOUSE_NOT_FOUND));
+        // warehouse 선택 로직: 요청에 warehouseId가 있으면 사용, 없으면 store의 defaultWarehouse 사용
+        // TODO: 추후 거리/재고 기반 창고 선택 로직 추가 예정
+        Warehouse warehouse = selectWarehouse(request.getWarehouseId(), store);
 
         // user 조회
         User user = null;
@@ -217,6 +218,72 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         return StoreOrderUpdateStatusResponseDto.builder()
                 .storeOrderId(order.getStoreOrderId())
                 .status(order.getOrderStatus().name())
+                .build();
+    }
+
+    /**
+     * 창고 선택 로직
+     * 1. 요청에 warehouseId가 있으면 해당 창고 사용
+     * 2. 없으면 store의 defaultWarehouse 사용
+     * 3. defaultWarehouse도 없으면 예외 발생
+     * 
+     * TODO: 추후 거리/재고 기반 창고 선택 로직 추가 예정
+     */
+    private Warehouse selectWarehouse(Long warehouseId, Store store) {
+        // 1. 요청에 warehouseId가 명시된 경우
+        if (warehouseId != null) {
+            return warehouseRepository.findById(warehouseId)
+                    .orElseThrow(() -> new CustomException(OrderErrorCode.WAREHOUSE_NOT_FOUND));
+        }
+        
+        // 2. store의 defaultWarehouse 사용
+        Warehouse defaultWarehouse = store.getDefaultWarehouse();
+        if (defaultWarehouse != null) {
+            return defaultWarehouse;
+        }
+        
+        // 3. 기본 창고도 없는 경우 예외 발생
+        throw new CustomException(OrderErrorCode.WAREHOUSE_NOT_FOUND);
+    }
+
+    /**
+     * 주문 승인 전 창고 재고 확인
+     * - 주문에 연결된 창고의 재고를 확인하여 부족한 품목 목록을 반환합니다.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public StoreOrderStockCheckResponseDto checkStockForOrder(Long storeOrderId) {
+        StoreOrder order = storeOrderRepository.findById(storeOrderId)
+                .orElseThrow(() -> new CustomException(OrderErrorCode.ORDER_NOT_FOUND));
+
+        List<StoreOrderDetail> details = storeOrderDetailRepository.findByStoreOrder_StoreOrderId(storeOrderId);
+
+        List<StoreOrderStockCheckResponseDto.InsufficientStockItem> insufficientItems = new java.util.ArrayList<>();
+
+        for (StoreOrderDetail detail : details) {
+            Long productId = detail.getProduct().getProductId();
+            int requestedQty = detail.getOrderQty().intValue();
+
+            // 창고 재고 조회
+            int availableQty = warehouseInventoryRepository.findByProduct_ProductId(productId)
+                    .map(WarehouseInventory::getOnHandQuantity)
+                    .orElse(0);
+
+            if (availableQty < requestedQty) {
+                insufficientItems.add(StoreOrderStockCheckResponseDto.InsufficientStockItem.builder()
+                        .productId(productId)
+                        .productName(detail.getProduct().getProductName())
+                        .productCode(detail.getProduct().getProductCode())
+                        .requestedQty(requestedQty)
+                        .availableQty(availableQty)
+                        .shortageQty(requestedQty - availableQty)
+                        .build());
+            }
+        }
+
+        return StoreOrderStockCheckResponseDto.builder()
+                .hasEnoughStock(insufficientItems.isEmpty())
+                .insufficientItems(insufficientItems)
                 .build();
     }
 }
