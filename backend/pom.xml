@@ -186,7 +186,9 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.2.5</version>
 				<configuration>
+					<useModulePath>false</useModulePath>
 					<systemPropertyVariables>
+						<junit.platform.listeners.autodetection.enabled>true</junit.platform.listeners.autodetection.enabled>
 						<allure.results.directory>target/allure-results</allure.results.directory>
 					</systemPropertyVariables>
 				</configuration>
