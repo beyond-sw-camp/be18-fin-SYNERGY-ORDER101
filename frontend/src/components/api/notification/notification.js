@@ -107,12 +107,12 @@ export const useNotificationStore = defineStore('notification', {
       this.lastEventId = null
     },
     async markAllRead() {
-      await axios.post('/api/v1/notifications/read-all')
+      await apiClient.post('/api/v1/notifications/read-all')
       this.unreadCount = 0
     },
 
     async deleteNotification(id) {
-      await axios.delete(`/api/v1/notifications/${id}`)
+      await apiClient.delete(`/api/v1/notifications/${id}`)
       const targetId = Number(id)
 
       this.notifications = this.notifications.filter(
@@ -121,7 +121,7 @@ export const useNotificationStore = defineStore('notification', {
       this.totalCount = Math.max(0, this.totalCount - 1)
     },
     async clearAll() {
-      await axios.delete('/api/v1/notifications')
+      await apiClient.delete('/api/v1/notifications')
 
       this.notifications = []
       this.unreadCount = 0
