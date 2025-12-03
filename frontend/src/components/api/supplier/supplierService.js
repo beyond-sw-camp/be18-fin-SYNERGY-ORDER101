@@ -23,7 +23,7 @@ export async function getSupplierList(page, pageSize, keyword) {
     keyword: keyword || '',
   }
 
-  // 🚨 핵심: API 응답 구조를 Spring Page 객체 또는 유사한 DTO로 가정하고 구현합니다.
+  // 핵심: API 응답 구조를 Spring Page 객체 또는 유사한 DTO로 가정하고 구현합니다.
   try {
     const { data } = await apiClient.get(url, { params })
 
