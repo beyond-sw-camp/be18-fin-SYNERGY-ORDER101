@@ -126,7 +126,7 @@ def health_check():
 
 @app.get("/")
 def root():
-    return {"status": "fastapi running on ecs!"}
+    return {"status": "fastapi running on ecs!!"}
 
 
 if __name__ == "__main__":
