@@ -109,8 +109,8 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
-// Money 컴포넌트가 사용되었으므로, 실제 프로젝트에서 임포트해야 합니다.
-// import Money from '@/components/Money.vue'
+import { useAuthStore } from '@/stores/authStore'
+import Money from '@/components/global/Money.vue'
 
 const emit = defineEmits(['close', 'add'])
 const authStore = useAuthStore()
