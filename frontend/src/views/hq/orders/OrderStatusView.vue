@@ -79,7 +79,7 @@ import { formatDateTimeMinute, getPastDateString } from '@/components/global/Dat
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue';
 
 const filters = ref({
-  status: 'ALL',
+  status: null,
   orderType: null,
   vendorId: null,
   startDate: getPastDateString(30),

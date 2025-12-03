@@ -16,6 +16,7 @@ public class SupplierProductItemRes {
     private String productCode;
     private String supplierProductCode;
     private String productName;
-    private BigDecimal price;
+    private BigDecimal purchasePrice;  // 공급가 (product_supplier.테이블)
+    private BigDecimal price;          // 판매가 (product 테이블)
     private Integer leadTimeDays;
 }

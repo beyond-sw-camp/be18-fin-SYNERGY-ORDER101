@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
+  <div class="modal-backdrop">
     <div class="modal">
       <header class="modal-header">
         <h3>품목 추가</h3>
@@ -113,6 +113,7 @@ import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
 // import Money from '@/components/Money.vue'
 
 const emit = defineEmits(['close', 'add'])
+const authStore = useAuthStore()
 
 const props = defineProps({
   initialSupplierId: {
@@ -124,6 +125,7 @@ const props = defineProps({
 // --- State (반응형 데이터) ---
 const items = ref([])
 const selectedMap = reactive({}) // SKU를 키로 사용하여 선택 상태 관리
+const storeInventoryMap = ref({}) // 가맹점 재고 Map (productId -> stock)
 const loading = ref(false)
 const error = ref(null)
 
@@ -189,7 +191,8 @@ function normalizeProduct(p) {
     productId: p.productId || p.id,
     sku: p.productCode || p.sku || p.code,
     name: p.productName || p.name || p.product_name,
-    price: Number(p.price || p.unitPrice || 0),
+    price: Number(p.price || p.unitPrice || 0), // 납품가 (판매가)
+    purchasePrice: Number(p.purchasePrice || p.supplyPrice || p.price || 0), // 공급가
     stock: p.stockQuantity ?? p.stock ?? null,
     lead: Number(p.leadTimeDays || p.lead_time_days || 1),
     _raw: p,
@@ -276,7 +279,6 @@ async function loadLargeCategories() {
     const res = await axios.get('/api/v1/categories/top').then((r) => r.data)
     largeCategories.value = res || []
   } catch (e) {
-    console.warn('대분류 로드 실패:', e)
     largeCategories.value = []
   }
 }
@@ -290,7 +292,6 @@ async function loadMediumCategories(id) {
     const res = await axios.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     mediumCategories.value = res || []
   } catch (e) {
-    console.warn('중분류 로드 실패:', e)
     mediumCategories.value = []
   }
 }
@@ -304,7 +305,6 @@ async function loadSmallCategories(id) {
     const res = await axios.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     smallCategories.value = res || []
   } catch (e) {
-    console.warn('소분류 로드 실패:', e)
     smallCategories.value = []
   }
 }
@@ -317,6 +317,7 @@ async function onLargeCategoryChange() {
   filters.smallCategoryId = null
   mediumCategories.value = []
   smallCategories.value = []
+  currentPage.value = 1
   if (filters.largeCategoryId) await loadMediumCategories(filters.largeCategoryId)
   fetchProducts()
 }
@@ -325,14 +326,31 @@ async function onLargeCategoryChange() {
 async function onMediumCategoryChange() {
   filters.smallCategoryId = null
   smallCategories.value = []
+  currentPage.value = 1
   if (filters.mediumCategoryId) await loadSmallCategories(filters.mediumCategoryId)
+  fetchProducts()
+}
+
+// 소분류 변경 핸들러
+function onSmallCategoryChange() {
+  currentPage.value = 1
   fetchProducts()
 }
 
 // 검색어 입력 핸들러 (디바운스 적용)
 function onSearchInput() {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => fetchProducts(), 400)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    fetchProducts()
+  }, 400)
+}
+
+// 페이지 이동
+function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  fetchProducts()
 }
 
 // 전체 선택/해제 토글
@@ -344,8 +362,8 @@ function toggleSelectAll(e) {
 }
 
 // 개별 항목 선택 토글 (행 클릭 시)
-function toggleSelect(id) {
-  selectedMap[id] = !selectedMap[id]
+function toggleSelect(productId) {
+  selectedMap[productId] = !selectedMap[productId]
 }
 
 // 선택된 품목 추가 및 모달 닫기

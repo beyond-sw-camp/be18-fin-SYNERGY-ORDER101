@@ -36,9 +36,9 @@
               <tr>
                 <th class="center">SKU</th>
                 <th class="center">이름</th>
-                <th class="center">단가</th>
                 <th class="center">주문 수량</th>
-                <th class="center">금액</th>
+                <th class="center">공급가</th>
+                <th class="center">판매가</th>
                 <th class="center">작업</th>
               </tr>
             </thead>
@@ -46,16 +46,15 @@
               <tr v-for="(row, idx) in rows" :key="row.sku + idx">
                 <td class="center">{{ row.sku }}</td>
                 <td class="center">{{ row.name }}</td>
-                <td class="numeric">
-                  <Money :value="row.price" />
-                </td>
                 <td class="center">
                   <!-- 수량이 1 미만으로 내려가지 않도록 min 설정 -->
                   <input type="number" v-model.number="row.qty" class="qty" min="1" />
                 </td>
                 <td class="numeric">
-                  <!-- 금액 계산: price * qty -->
-                  <Money :value="row.price * row.qty" />
+                  <Money :value="row.purchasePrice" />
+                </td>
+                <td class="numeric">
+                  <Money :value="row.price" />
                 </td>
                 <td class="center"><button class="btn-delete" @click="removeRow(idx)">삭제</button></td>
               </tr>
@@ -181,7 +180,8 @@ function onAddItems(products) {
       productId: p.productId,
       sku: p.sku,
       name: p.name,
-      price: p.price,
+      purchasePrice: p.purchasePrice || p.supplyPrice || 0, // 공급가
+      price: p.price || 0, // 납품가
       qty: 1 // 기본 수량 1
     })
   })
@@ -244,10 +244,8 @@ async function OnCreatedPurchase() {
     const res = await axios.post('/api/v1/purchase-orders', payload)
 
     if (res.status === 201) {
-      alert('발주 생성 완료: ') // 생성된 ID를 표시
-      //TODO: router.push('/purchase-orders')
-      // 해당 페이지 초기화
-
+      alert('발주 생성 완료!')
+      resetForm() // 폼 초기화
     }
   } catch (e) {
     console.error('발주 생성 실패 상세:', e)
