@@ -76,7 +76,7 @@
           </table>
 
           <!-- 수정 + 제출 버튼 -->
-         <div class="actions-bottom" v-if="detail.items.length > 0">
+          <div class="actions-bottom" v-if="detail.items.length > 0">
             <button
                 class="btn-primary"
                 :disabled="saving || isSubmitted"
@@ -121,9 +121,7 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// import axios from 'axios'
 import apiClient from '@/components/api'
-
 
 const route = useRoute()
 const router = useRouter()
@@ -136,14 +134,13 @@ const detail = reactive({
   supplierName: '',
   targetWeek: '',
   requesterName: '',
-  status: 'DRAFT_AUTO',   // 기본값: 초안
+  status: 'DRAFT_AUTO',
   items: [],
 })
 
 const saving = ref(false)
 const loading = ref(false)
 
-// 합계
 const totalForecastQty = computed(() =>
   detail.items.reduce((sum, r) => sum + (r.forecastQty || 0), 0)
 )
@@ -160,10 +157,9 @@ const totalAmount = computed(() =>
   }, 0)
 )
 
-// 전체 상태 / 제출 여부
 const overallStatus = computed(() => detail.status)
 const isSubmitted = computed(() => {
-  return overallStatus.value === 'CONFIRMED'
+  return overallStatus.value === 'SUBMITTED' || overallStatus.value === 'CONFIRMED'
 })
 
 onMounted(() => {
@@ -174,20 +170,14 @@ async function fetchDetail () {
   loading.value = true
   try {
     const res = await apiClient.get('/api/v1/smart-orders/detail', {
-      params: {
-        supplierId,
-        targetWeek,
-      },
+      params: { supplierId, targetWeek }
     })
 
     const data = res.data
-
     detail.supplierId = data.supplierId
     detail.supplierName = data.supplierName
     detail.targetWeek = data.targetWeek
     detail.requesterName = data.requesterName
-    detail.status = data.smartOrderStatus || 'DRAFT_AUTO'
-
 
     detail.items = (data.items || []).map(item => ({
       smartOrderId: item.smartOrderId,
@@ -195,40 +185,50 @@ async function fetchDetail () {
       productName: item.productName,
       forecastQty: item.forecastQty,
       recommendedOrderQty: item.recommendedOrderQty,
-      unitPrice: Number(item.unitPrice || 0), 
+      unitPrice: Number(item.unitPrice || 0),
       originalRecommendedQty: item.recommendedOrderQty,
     }))
+
+
+    const listRes = await apiClient.get('/api/v1/smart-orders', {
+      params: {
+        supplierId,
+        targetWeek,
+      }
+    })
+
+
+    if (listRes.data?.length > 0) {
+      detail.status = listRes.data[0].smartOrderStatus
+    } else {
+      detail.status = 'DRAFT_AUTO'
+    }
+
   } catch (e) {
     console.error('스마트 발주 상세 조회 실패:', e)
-    const msg = e.response?.data?.message || '상세 정보를 불러오는 중 오류가 발생했습니다.'
-    alert(msg)
+    alert(e.response?.data?.message ?? '상세 정보를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
 }
 
-function formatCurrency (value) {
+function formatCurrency(value) {
   const num = Number(value || 0)
   return num.toLocaleString('ko-KR') + '원'
 }
 
-// 작성자 표시 (SYSTEM / USER)
-function isEdited (row) {
+function isEdited(row) {
   return row.recommendedOrderQty !== row.originalRecommendedQty
 }
 
-// 수정 + 제출 (수정 == 제출)
-async function submitAll () {
-  // 이미 SUBMITTED면 방어 로직
+
+async function submitAll() {
   if (isSubmitted.value) {
     alert('이미 제출된 발주입니다.')
     return
   }
 
   const changed = detail.items.filter(isEdited)
-
-
-
   if (!confirm(`총 ${changed.length}개 품목을 수정하셨습니다. 제출하시겠습니까?`)) {
     return
   }
@@ -243,12 +243,10 @@ async function submitAll () {
     }
 
     alert('스마트 발주가 수정 및 제출되었습니다.')
-    // await fetchDetail()               
     router.push({ name: 'hq-smart-orders' })
   } catch (e) {
     console.error('스마트 발주 제출 실패:', e)
-    const msg = e.response?.data?.message || '제출 중 오류가 발생했습니다.'
-    alert(msg)
+    alert(e.response?.data?.message || '제출 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }
