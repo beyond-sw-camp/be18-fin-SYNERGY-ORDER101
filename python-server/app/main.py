@@ -124,6 +124,9 @@ def trigger_retrain():
 def health_check():
     return {"status": "ok"}
 
+@app.get("/")
+def root():
+    return {"status": "fastapi running on ecs"}
 
 
 if __name__ == "__main__":
