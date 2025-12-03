@@ -2,8 +2,7 @@ spring:
   application:
     name: order101
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/order101?useUnicode=true&characterEncoding=utf8
+    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/order101
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
@@ -19,6 +18,7 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+      username: default
       password: ${REDIS_PASSWORD}
 server:
   port: 8080
@@ -30,6 +30,9 @@ ai:
 
 cloud:
   aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
     s3:
       bucket: order101
     region:

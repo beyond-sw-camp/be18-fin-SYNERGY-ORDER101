@@ -21,11 +21,9 @@ import com.synerge.order101.user.model.repository.UserRepository;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import com.synerge.order101.warehouse.model.repository.WarehouseRepository;
 import com.synerge.order101.warehouse.model.service.InventoryService;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,31 +40,80 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Purchase Service Mock 테스트")
 class PurchaseServiceImplTest {
+
+    @Mock
+    private PurchaseRepository purchaseRepository;
+
+    @Mock
+    private PurchaseDetailRepository purchaseDetailRepository;
+
+    @Mock
+    private PurchaseDetailHistoryRepository purchaseDetailHistoryRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private SupplierRepository supplierRepository;
+
+    @Mock
+    private WarehouseRepository warehouseRepository;
+
+    @Mock
+    private ProductSupplierRepository productSupplierRepository;
+
+    @Mock
+    private InventoryService inventoryService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PurchaseServiceImpl purchaseService;
 
-    @Mock private PurchaseRepository purchaseRepository;
-    @Mock private PurchaseDetailRepository purchaseDetailRepository;
-    @Mock private PurchaseDetailHistoryRepository purchaseDetailHistoryRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private ProductRepository productRepository;
-    @Mock private SupplierRepository supplierRepository;
-    @Mock private WarehouseRepository warehouseRepository;
-    @Mock private ProductSupplierRepository productSupplierRepository;
-    @Mock private InventoryService inventoryService;
-    @Mock private NotificationService notificationService;
-    @Mock private ApplicationEventPublisher eventPublisher;
+    @Test
+    @DisplayName("발주 조회 - 성공")
+    void testFindPurchase_Success() {
+        // given
+        Long purchaseId = 1L;
+        User mockUser = User.builder().userId(1L).name("테스트사용자").build();
+        Supplier mockSupplier = Supplier.builder().supplierId(1L).supplierName("테스트공급업체").build();
+        Warehouse mockWarehouse = Warehouse.builder().warehouseId(1L).build();
+        
+        Purchase testPurchase = Purchase.builder()
+            .supplier(mockSupplier)
+            .user(mockUser)
+            .warehouse(mockWarehouse)
+            .orderStatus(OrderStatus.DRAFT_AUTO)
+            .orderType(Purchase.OrderType.MANUAL)
+            .poDate(LocalDateTime.now())
+            .createdAt(LocalDateTime.now())
+            .build();
+            
+        given(purchaseRepository.findById(purchaseId)).willReturn(Optional.of(testPurchase));
 
-    // 자동 발주 생성 (createAutoPurchase)
+        // when
+        Purchase foundPurchase = purchaseRepository.findById(purchaseId).orElseThrow();
+
+        // then
+        assertThat(foundPurchase).isNotNull();
+        assertThat(foundPurchase.getOrderStatus()).isEqualTo(OrderStatus.DRAFT_AUTO);
+    }
+        // 자동 발주 생성 (createAutoPurchase)
     @Test
     @DisplayName("자동 발주 생성 테스트 - 재고 부족 품목이 있을 경우 자동 발주가 생성되어야 한다")
     void createAutoPurchase_Success() {
