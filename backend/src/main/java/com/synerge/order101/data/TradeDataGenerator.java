@@ -61,56 +61,48 @@ public class TradeDataGenerator {
     public void generatePurchases(int count) {
         List<Supplier> suppliers = supplierRepository.findAll();
         Warehouse warehouse = warehouseRepository.findById(1L).orElseThrow();
-        List<Product> products = productRepository.findAll();
 
-        // 발주 담당자 필터링 (HQ 권한을 가진 유저만 조회)
         List<User> managers = userRepository.findAll().stream()
                 .filter(u -> u.getRole() == Role.HQ)
                 .toList();
 
         // 데이터 유효성 검사
-        if (suppliers.isEmpty() || products.isEmpty()) {
-            System.out.println("[Skip] Cannot generate Purchases. Missing base data.");
+        if (suppliers.isEmpty()) {
+            System.out.println("[Skip] Cannot generate Purchases. Missing Supplier data.");
             return;
         }
 
         if (managers.isEmpty()) {
-            System.out.println("[Skip] Cannot generate Purchases. No HQ Managers found. (Please run UserDataGenerator first)");
+            System.out.println("[Skip] Cannot generate Purchases. No HQ Managers found.");
             return;
         }
 
-        List<Purchase> purchaseList = new ArrayList<>();
         List<PurchaseDetail> detailList = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
-            // 랜덤 관계 설정
             Supplier supplier = suppliers.get(random.nextInt(suppliers.size()));
 
             // 해당 공급사가 취급하는 상품 목록(ProductSupplier) 조회
-            // (Repository에 findBySupplier 메서드가 필요합니다)
             List<ProductSupplier> supplierItems = productSupplierRepository.findBySupplier(supplier);
 
-            // 필터링된 매니저 목록에서 랜덤 선택
             User manager = managers.get(random.nextInt(managers.size()));
 
             LocalDateTime pastDate = LocalDateTime.now().minusDays(random.nextInt(30)); // 최근 30일
 
-            // 발주서(Purchase) 생성
             Purchase purchase = Purchase.builder()
                     .supplier(supplier)
                     .warehouse(warehouse)
-                    .user(manager)                        // 담당자 주입
-                    .orderType(Purchase.OrderType.MANUAL) // 수동 발주
-                    .orderStatus(OrderStatus.SUBMITTED)   // 입고 완료 상태
-                    .poDate(pastDate)                     // 발주 일자
-                    .createdAt(pastDate)                  // 생성 일자
+                    .user(manager)
+                    .orderType(Purchase.OrderType.MANUAL)
+                    .orderStatus(OrderStatus.SUBMITTED)
+                    .poDate(pastDate)
+                    .createdAt(pastDate)
                     .build();
 
-            purchase = purchaseRepository.save(purchase); // ID 생성을 위해 저장
+            purchase = purchaseRepository.save(purchase);
 
             // 발주 상세(PurchaseDetail) 생성 (1건당 1~5개 품목)
-            // 해당 공급사의 상품 목록(supplierItems) 중에서 랜덤으로 선택
-            int itemCount = random.nextInt(Math.min(5, supplierItems.size())) + 1; // 1~5개 (또는 최대 개수)
+            int itemCount = random.nextInt(Math.min(5, supplierItems.size())) + 1;
 
             for (int j = 0; j < itemCount; j++) {
                 ProductSupplier ps = supplierItems.get(random.nextInt(supplierItems.size()));
@@ -122,17 +114,15 @@ public class TradeDataGenerator {
                 detailList.add(PurchaseDetail.builder()
                         .purchase(purchase)
                         .product(product)
-                        .orderQty(random.nextInt(100) + 10) // 10 ~ 110개
-                        .unitPrice(unitPrice)      // 상품 원가
+                        .orderQty(random.nextInt(50) + 10) // 10 ~ 50개
+                        .unitPrice(unitPrice)
                         .deadline(pastDate.toLocalDate().plusDays(ps.getLeadTimeDays() != null ? ps.getLeadTimeDays() : 3)) // 리드타임 반영
                         .createdAt(pastDate)
                         .build());
             }
-            purchaseList.add(purchase);
         }
 
         purchaseDetailRepository.saveAll(detailList);
-        System.out.println("Purchases created: " + purchaseList.size() + " orders / " + detailList.size() + " items");
     }
 
     /**
@@ -161,20 +151,18 @@ public class TradeDataGenerator {
             return;
         }
 
-        List<StoreOrder> orderList = new ArrayList<>();
+        // 점주 1명 고정 (리스트의 첫 번째 유저 사용)
+        User fixedStoreOwner = storeOwners.get(0);
+
         List<StoreOrderDetail> detailList = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
-            // 필터링된 점주 목록에서 랜덤 선택
-            User user = storeOwners.get(random.nextInt(storeOwners.size()));
-
             LocalDateTime orderDate = LocalDateTime.now().minusDays(random.nextInt(30));
 
-            // 주문서(StoreOrder) 생성
             StoreOrder order = StoreOrder.builder()
                     .store(store)
-                    .warehouse(warehouse) // 출고 창고 설정
-                    .user(user)           // 주문자 (점주)
+                    .warehouse(warehouse)
+                    .user(fixedStoreOwner)
                     .orderDatetime(orderDate)
                     .createdAt(orderDate)
                     .orderStatus(OrderStatus.SUBMITTED)
@@ -190,21 +178,19 @@ public class TradeDataGenerator {
                 Product product = products.get(random.nextInt(products.size()));
                 int qty = random.nextInt(20) + 1; // 1~20개
                 BigDecimal price = product.getPrice();
-                BigDecimal amount = price.multiply(BigDecimal.valueOf(qty)); // 총액 계산
+                BigDecimal amount = price.multiply(BigDecimal.valueOf(qty));
 
                 detailList.add(StoreOrderDetail.builder()
                         .storeOrder(order)
                         .product(product)
                         .orderQty(qty)
                         .unitPrice(price)
-                        .amount(amount) // 총액 설정
+                        .amount(amount)
                         .createdAt(orderDate)
                         .build());
             }
-            orderList.add(order);
         }
 
         storeOrderDetailRepository.saveAll(detailList);
-        System.out.println("Store Orders created: " + orderList.size() + " orders / " + detailList.size() + " items");
     }
 }
