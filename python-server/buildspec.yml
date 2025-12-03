@@ -25,4 +25,5 @@ phases:
 
 artifacts:
   files:
-    - python-server/imagedefinitions.json
+    - imagedefinitions.json
+  base-directory: python-server
