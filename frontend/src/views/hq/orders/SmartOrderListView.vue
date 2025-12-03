@@ -22,6 +22,9 @@
           <option value="">전체</option>
           <option value="DRAFT_AUTO">초안</option>
           <option value="SUBMITTED">제출</option>
+          <option value="CONFIRMED">승인</option>
+          <option value="REJECTED">반려</option>
+          <option value="CANCELLED">취소</option>
         </select>
       </div>
 

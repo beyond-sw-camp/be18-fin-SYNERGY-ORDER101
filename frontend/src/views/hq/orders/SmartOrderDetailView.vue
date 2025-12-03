@@ -187,7 +187,7 @@ async function fetchDetail() {
       originalRecommendedQty: item.recommendedOrderQty,
     }))
 
-\    await fetchStatusFromList()
+    await fetchStatusFromList()
 
   } catch (e) {
     console.error('상세 오류:', e)
