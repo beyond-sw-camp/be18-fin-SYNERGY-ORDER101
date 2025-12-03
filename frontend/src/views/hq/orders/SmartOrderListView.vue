@@ -47,10 +47,6 @@
         <p class="summary-value">{{ draftCount }} 건</p>
       </div>
       <div class="summary-card">
-        <p class="summary-label">제출</p>
-        <p class="summary-value">{{ submittedCount }} 건</p>
-      </div>
-      <div class="summary-card">
         <p class="summary-label">총 추천 발주 금액</p>
         <p class="summary-value">{{ formatCurrency(totalRecommendedAmount) }}</p>
       </div>
