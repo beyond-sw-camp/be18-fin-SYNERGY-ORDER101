@@ -1,0 +1,69 @@
+version: 0.2
+
+env:
+  variables:
+    S3_BUCKET: order101-frontend
+    CLOUDFRONT_DISTRIBUTION_ID: EDTL5NOCRCLXW
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "[install] current dir:"; pwd
+      - echo "[install] files:"; ls
+      - |
+        # 프로젝트 루트 감지
+        if [ -f frontend/package.json ]; then
+          echo "[install] using frontend/ as project root"
+          cd frontend
+        elif [ -f package.json ]; then
+          echo "[install] using current directory as project root"
+        else
+          echo "[install] ERROR: package.json not found in . or ./frontend"
+          ls
+          exit 1
+        fi
+        echo "[install] running npm install in $(pwd)"
+        npm install
+  build:
+    commands:
+      - echo "[build] current dir:"; pwd
+      - echo "[build] files:"; ls
+      - |
+        if [ -f frontend/package.json ]; then
+          echo "[build] using frontend/ as project root"
+          cd frontend
+        elif [ -f package.json ]; then
+          echo "[build] using current directory as project root"
+        else
+          echo "[build] ERROR: package.json not found"
+          ls
+          exit 1
+        fi
+        echo "[build] running npm run build in $(pwd)"
+        npm run build
+  post_build:
+    commands:
+      - echo "[post_build] current dir:"; pwd
+      - echo "[post_build] files:"; ls
+      - |
+        if [ -f frontend/package.json ]; then
+          echo "[post_build] using frontend/ as project root"
+          cd frontend
+        elif [ -f package.json ]; then
+          echo "[post_build] using current directory as project root"
+        else
+          echo "[post_build] ERROR: package.json not found"
+          ls
+          exit 1
+        fi
+        echo "[post_build] syncing dist/ to S3 and invalidating CloudFront"
+        aws s3 sync dist/ s3://$S3_BUCKET/ --delete
+        aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+
+# artifacts는 사실 안 써도 되지만, 쓰고 싶다면 dist 기준으로 맞춰줘야 함
+artifacts:
+  files:
+    - '**/*'
+  base-directory: dist

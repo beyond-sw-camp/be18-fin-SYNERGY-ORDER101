@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  backend:
+    image: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/spring-repo:latest
+    container_name: backend_app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Secrets Manager에서 가져올 환경 변수를 쉘 변수로 정의
+      - JWT_SECRET=${JWT_SECRET} 
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://database:3306/mydb
+      - SPRING_REDIS_HOST=redis
+    depends_on:
+      - database
+      - redis
+
+  frontend:
+    image: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/vue-repo:latest
+    container_name: frontend_app
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  database:
+    image: mariadb:10.5
+    container_name: mariadb_db
+    restart: always
+    environment:
+      # DB 비밀번호도 Secrets Manager에서 가져올 환경 변수로 정의
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=mydb
+    volumes:
+      - db_data:/var/lib/mysql
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis_cache
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  db_data:

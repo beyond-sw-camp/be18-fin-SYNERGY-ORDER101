@@ -47,14 +47,16 @@ public class PurchaseDetailResponseDto {
         // 코드 이름 단가 수량 금액
         private String productCode;
         private String productName;
-        private BigDecimal unitPrice;
+        private BigDecimal unitPrice;      // 판매가 (product.price)
+        private BigDecimal purchasePrice;  // 공급가 (product_supplier.purchase_price)
         private Integer orderQty;
 
-        public static PurchaseItemDto fromEntity(PurchaseDetail detail){
+        public static PurchaseItemDto fromEntity(PurchaseDetail detail, BigDecimal purchasePrice){
             return PurchaseItemDto.builder()
                     .productCode(detail.getProduct().getProductCode())
                     .productName(detail.getProduct().getProductName())
-                    .unitPrice(detail.getUnitPrice())
+                    .unitPrice(detail.getProduct().getPrice())  // 판매가
+                    .purchasePrice(purchasePrice)                // 공급가
                     .orderQty(detail.getOrderQty())
                     .build();
         }

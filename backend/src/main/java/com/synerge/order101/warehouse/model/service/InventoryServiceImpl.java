@@ -66,8 +66,20 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public void increaseInventory(Purchase purchase) {
         purchase.getPurchaseDetails().forEach(detail -> {
-            WarehouseInventory inventory = warehouseInventoryRepository.findByProduct_ProductId(detail.getProduct().getProductId())
-                    .orElseThrow(() -> new IllegalStateException("해당 상품의 재고를 찾을 수 없습니다: " + detail.getProduct().getProductId()));
+            Long productId = detail.getProduct().getProductId();
+            
+            // 창고 재고에서 제품 조회, 없으면 새로 생성
+            WarehouseInventory inventory = warehouseInventoryRepository.findByProduct_ProductId(productId)
+                    .orElseGet(() -> {
+                        // 새로운 창고 재고 생성
+                        WarehouseInventory newInventory = WarehouseInventory.builder()
+                                .warehouse(purchase.getWarehouse())
+                                .product(detail.getProduct())
+                                .onHandQuantity(0)
+                                .safetyQuantity(0)
+                                .build();
+                        return warehouseInventoryRepository.save(newInventory);
+                    });
 
             inventory.increase(detail.getOrderQty().intValue());
         });

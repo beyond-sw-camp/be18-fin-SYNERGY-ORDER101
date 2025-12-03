@@ -1,4 +1,5 @@
 import axios from 'axios'
+import apiClient from '..'
 
 /**
  * [상품 목록 조회]
@@ -42,7 +43,7 @@ export async function getProductList(
   }
 
   try {
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
     const apiData = response.data
 
     return {

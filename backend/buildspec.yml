@@ -2,40 +2,31 @@ version: 0.2
 phases:
   install:
     commands:
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME
-      - echo Preparing CodeBuild environment...
+      - echo "--- INSTALL Checking CodeBuild Environment ---"
+      - echo "REPOSITORY_NAME $REPOSITORY_NAME"
 
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      # ECR 로그인 (AWS 계정 ID와 리전은 CodeBuild 환경 변수로 자동 주입됨)
+      - echo "--- PRE_BUILD Logging in to Amazon ECR ---"
       - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-  
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
   build:
     commands:
-      # ECR 저장소 URI 정의
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/five-team-backend-repo # 🚨 1. ECR 저장소 이름으로 수정
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      
-      # 1. Maven 빌드는 Dockerfile 내에서 수행되므로 여기서는 Docker build만 실행
-      - echo Building the Docker image...
-      # Dockerfile을 사용하여 이미지 빌드
-      - docker build -t $REPOSITORY_URI:latest .
+      - echo "--- BUILD Building Docker Image ---"
+      - docker build -t $REPOSITORY_URI:latest -f backend/Dockerfile backend/
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      
-      # 2. ECR에 이미지 푸시
-      - echo Pushing the Docker images...
+      - echo "--- BUILD Pushing to ECR ---"
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo Creating imagedefinitions.json for ECS deployment...
-      # ECS에 배포할 이미지 정보를 담은 JSON 파일 생성 (무중단 배포의 핵심 정보)
-      # name: synergy-order101-backend는 ECS Task Definition의 컨테이너 이름과 일치해야 합니다.
+      - echo "--- POST_BUILD Creating imagedefinitions.json ---"
       - printf '[{"name":"synergy-order101-backend","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:
-    - imagedefinitions.json # CodePipeline의 다음 단계(ECS 배포)로 전달될 최종 결과물
+    - imagedefinitions.json

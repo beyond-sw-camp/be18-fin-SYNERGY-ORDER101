@@ -88,7 +88,8 @@ public class SupplierServiceImpl implements SupplierService {
                         .productCode(ps.getProduct().getProductCode())
                         .supplierProductCode(ps.getSupplierProductCode())
                         .productName(ps.getProduct().getProductName())
-                        .price(ps.getPurchasePrice())
+                        .purchasePrice(ps.getPurchasePrice())           // 공급가
+                        .price(ps.getProduct().getPrice())              // 판매가
                         .leadTimeDays(ps.getLeadTimeDays())
                         .build())
                 .toList();

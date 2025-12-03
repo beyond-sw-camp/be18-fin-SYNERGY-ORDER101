@@ -35,7 +35,7 @@ public class StoreOrder {
     private Store store;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "warehouse_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)) // 필요 없나?
+    @JoinColumn(name = "warehouse_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Warehouse warehouse;
 
     @ManyToOne(fetch = FetchType.LAZY)

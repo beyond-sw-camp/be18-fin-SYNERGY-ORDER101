@@ -75,7 +75,10 @@
             v-for="(s, idx) in progressSteps"
             :key="s.key + '-icon'"
             class="step-icon"
-            :class="{ active: idx <= currentStepIndex }"
+            :class="{
+              active: idx <= currentStepIndex,
+              rejected: isRejected
+            }"
           >
             <div class="icon">
               <i :class="idx <= currentStepIndex ? 'pi pi-check' : 'pi pi-circle'" />
@@ -83,7 +86,11 @@
           </div>
         </div>
         <div class="track" ref="trackRef">
-          <div class="track-fill" :style="{ width: filledPercent + '%' }"></div>
+          <div
+            class="track-fill"
+            :class="{ rejected: isRejected }"
+            :style="{ width: filledPercent + '%' }"
+          ></div>
         </div>
 
         <div class="steps-labels">
@@ -99,7 +106,17 @@
       <div class="statuses">
         <div v-for="s in progressSteps" :key="s.key" class="status-row">
           <div class="status-title">{{ s.label }}</div>
-          <div class="status-time">{{ s.time }}</div>
+
+          <div class="status-time">
+            <template v-if="s.key === 'REJECTED'">
+              본사에 의해 반려되었습니다.
+            </template>
+
+            <template v-else>
+              {{ s.time }}
+            </template>
+          </div>
+          
 
           <div v-if="s.key === 'SHIPPED'">
             <div class="status-desc">{{ trackingNumber }}</div>
@@ -125,6 +142,9 @@ const route = useRoute()
 const router = useRouter()
 const orderId = route.params.id
 
+const isRejected = computed(() => detail.status === "REJECTED");
+
+
 const detail = reactive({
   orderNo: '',
   storeName: '',
@@ -149,23 +169,46 @@ const displayStatus = computed(() => {
   return '-'
 })
 
-const progressSteps = computed(() => [
-  { key: 'SUBMITTED', label: '제출됨', time: findTime('SUBMITTED') },
-  { key: 'WAITING', label: '배송대기', time: findTime('WAITING') },
-  { key: 'SHIPPED', label: '배송중', time: findTime('SHIPPED') },
-  { key: 'DELIVERED', label: '배송완료', time: findTime('DELIVERED') }
-])
+const progressSteps = computed(() => {
+  if (isRejected.value) {
+    return [
+      {
+        key: "SUBMITTED",
+        label: "제출됨",
+        time: findTime("SUBMITTED"),
+      },
+      {
+        key: "REJECTED",
+        label: "반려됨",
+        time: findTime("."),
+      }
+    ]
+  }
+
+
+  return [
+    { key: "SUBMITTED", label: "제출됨", time: findTime("SUBMITTED") },
+    { key: "WAITING", label: "배송대기", time: findTime("WAITING") },
+    { key: "SHIPPED", label: "배송중", time: findTime("SHIPPED") },
+    { key: "DELIVERED", label: "배송완료", time: findTime("DELIVERED") }
+  ]
+});
+
+
 
 const currentStepIndex = computed(() => {
-  if (displayStatus.value === 'DELIVERED') return 3
-  if (displayStatus.value === 'SHIPPED') return 2
-  if (displayStatus.value === 'WAITING') return 1
-  return 0
-})
+  if (isRejected.value) return 1; 
+  if (displayStatus.value === "DELIVERED") return 3;
+  if (displayStatus.value === "SHIPPED") return 2;
+  if (displayStatus.value === "WAITING") return 1;
+  return 0;
+});
+
 
 const trackRef = ref(null)
 
 const filledPercent = computed(() => {
+  if (isRejected.value) return 37.5;
   switch (displayStatus.value) {
     case 'WAITING':
       return 37.5
@@ -220,7 +263,7 @@ async function fetchDetail() {
         unitPrice: it.price
       })) || []
 
-    console.log('📦 주문 상세 조회 완료:', detail)
+    console.log('주문 상세 조회 완료:', detail)
   } catch (error) {
     console.error('주문 상세 조회 실패:', error)
     alert('주문 상세 정보를 불러오는데 실패했습니다.')
@@ -239,12 +282,16 @@ const totalAmount = computed(() =>
 
 const formatMoney = (v) => Number(v).toLocaleString() + '원'
 
-const statusLabel = (s) =>
-  ({
-    WAITING: '배송대기',
-    SHIPPED: '배송중',
-    DELIVERED: '배송완료'
-  }[s] || '-')
+const statusLabel = (s) => {
+  if (isRejected.value) return "반려됨";
+
+  return {
+    WAITING: "배송대기",
+    SHIPPED: "배송중",
+    DELIVERED: "배송완료"
+  }[s] || "-";
+};
+
 
 const statusClass = (s) =>
   ({
@@ -486,4 +533,23 @@ function goBack() {
   color: #4f46e5;
   margin-top: 4px;
 }
+
+
+.status-chip.rejected {
+  background: #ffe5e5 !important;
+  color: #d93025 !important;
+}
+
+
+.step-icon.rejected .icon {
+  background: #ff4d4d !important;
+  border-color: #ff4d4d !important;
+  color: white !important;
+}
+
+
+.track-fill.rejected {
+  background: #ff4d4d !important;
+}
+
 </style>
