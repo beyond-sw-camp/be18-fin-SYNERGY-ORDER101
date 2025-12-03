@@ -67,7 +67,7 @@ export async function getProductDetail(productId) {
   const url = `/api/v1/products/${productId}`
 
   try {
-    const { data } = await axios.get(url)
+    const { data } = await apiClient.get(url)
 
     if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
       return data.items[0]
@@ -82,7 +82,7 @@ export async function getProductInventory(productId, page = 1, numOfRows = 10) {
   const url = `/api/v1/products/${productId}/inventory`
   const params = { page, numOfRows }
 
-  const { data } = await axios.get(url, { params })
+  const { data } = await apiClient.get(url, { params })
 
   const detail = data.items?.[0]
 
@@ -104,7 +104,7 @@ export async function updateProduct(productId, requestDto, imageFile) {
     fd.append('image', imageFile)
   }
 
-  const res = await axios.put(`/api/v1/products/${productId}`, fd, {
+  const res = await apiClient.put(`/api/v1/products/${productId}`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 
@@ -112,7 +112,7 @@ export async function updateProduct(productId, requestDto, imageFile) {
 }
 
 export async function deleteProduct(productId) {
-  const { data } = await axios.delete(`/api/v1/products/${productId}`)
+  const { data } = await apiClient.delete(`/api/v1/products/${productId}`)
   return data
 }
 
@@ -123,7 +123,7 @@ export async function createProduct(request, imageFile) {
 
   if (imageFile) fd.append('image', imageFile)
 
-  const { data } = await axios.post('/api/v1/products', fd, {
+  const { data } = await apiClient.post('/api/v1/products', fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 
