@@ -36,7 +36,7 @@
         <button class="search-btn" @click="handleSearch">검색</button>
       </div>
 
-      <h3 class="card-title">모든 상품</h3>
+      <h3 class="card-title">모든 상품(1)</h3>
 
       <div class="table-wrap">
         <table class="product-table">
