@@ -17,7 +17,7 @@ public class SafetyStockScheduler {
      * 매일 새벽 3시 안전재고 업데이트
      * CRON: 0 0 3 * * *
      */
-    @Scheduled(cron = "0 13 17 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
     public void updateSafetyStockDaily() {
         log.info("▶ [안전재고 스케줄러] 실행 시작");
 
