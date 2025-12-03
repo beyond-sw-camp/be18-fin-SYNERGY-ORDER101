@@ -9,11 +9,12 @@ phases:
       - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 084375551971.dkr.ecr.ap-northeast-2.amazonaws.com
       - REPO=084375551971.dkr.ecr.ap-northeast-2.amazonaws.com/order101-ai
       - TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - cd ..
 
   build:
     commands:
       - echo Build started on $(date)
-      - docker build -t $REPO:$TAG .
+      - docker build -t $REPO:$TAG ./python-server
       - docker tag $REPO:$TAG $REPO:latest
 
   post_build:
@@ -26,4 +27,3 @@ phases:
 artifacts:
   files:
     - imagedefinitions.json
-  base-directory: python-server
