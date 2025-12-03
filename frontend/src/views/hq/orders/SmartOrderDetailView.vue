@@ -28,7 +28,6 @@
           </div>
         </section>
 
-        <!-- 품목 세부 정보 -->
         <section class="card">
           <h3 class="card-title">품목 세부 정보</h3>
 
@@ -56,39 +55,39 @@
                     min="0"
                     class="qty-input"
                     v-model.number="row.recommendedOrderQty"
+                    :disabled="isSubmitted"
                   />
                 </td>
+
                 <td class="numeric">
                   {{ formatCurrency(row.unitPrice * (row.recommendedOrderQty || 0)) }}
                 </td>
+
                 <td class="center">
-                  <span
-                    :class="['chip-mini', isEdited(row) ? 'edited' : 'not-edited']"
-                  >
+                  <span :class="['chip-mini', isEdited(row) ? 'edited' : 'not-edited']">
                     {{ isEdited(row) ? 'USER' : 'SYSTEM' }}
                   </span>
                 </td>
               </tr>
+
               <tr v-if="detail.items.length === 0">
                 <td colspan="5" class="empty">품목이 없습니다.</td>
               </tr>
             </tbody>
           </table>
 
-          <!-- 수정 + 제출 버튼 -->
-         <div class="actions-bottom" v-if="detail.items.length > 0">
+          <div class="actions-bottom" v-if="detail.items.length > 0">
             <button
-                class="btn-primary"
-                :disabled="saving || isSubmitted"
-                @click="submitAll"
+              class="btn-primary"
+              :disabled="saving || isSubmitted"
+              @click="submitAll"
             >
-                {{ isSubmitted ? '이미 제출된 발주입니다' : (saving ? '저장 중...' : '수정 및 제출') }}
+              {{ isSubmitted ? '이미 제출된 발주입니다' : (saving ? '저장 중...' : '수정 및 제출') }}
             </button>
-        </div>
+          </div>
         </section>
       </div>
 
-      <!-- 우측: 요약 카드 -->
       <aside class="right-col">
         <div class="summary card">
           <h4>발주 금액 요약</h4>
@@ -111,19 +110,17 @@
       </aside>
     </div>
 
-    <!-- 로딩 상태 -->
     <div v-else class="loading-state">
       데이터를 가져오는 중입니다...
     </div>
   </div>
 </template>
 
+
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// import axios from 'axios'
 import apiClient from '@/components/api'
-
 
 const route = useRoute()
 const router = useRouter()
@@ -136,14 +133,14 @@ const detail = reactive({
   supplierName: '',
   targetWeek: '',
   requesterName: '',
-  status: 'DRAFT_AUTO',   // 기본값: 초안
+  poNumber: '',
+  status: 'DRAFT_AUTO',
   items: [],
 })
 
 const saving = ref(false)
 const loading = ref(false)
 
-// 합계
 const totalForecastQty = computed(() =>
   detail.items.reduce((sum, r) => sum + (r.forecastQty || 0), 0)
 )
@@ -153,29 +150,23 @@ const totalRecommendedQty = computed(() =>
 )
 
 const totalAmount = computed(() =>
-  detail.items.reduce((sum, r) => {
-    const price = Number(r.unitPrice || 0)
-    const qty = Number(r.recommendedOrderQty || 0)
-    return sum + price * qty
-  }, 0)
+  detail.items.reduce((sum, r) => sum + Number(r.unitPrice) * Number(r.recommendedOrderQty), 0)
 )
 
-// 전체 상태 / 제출 여부
 const overallStatus = computed(() => detail.status)
-const isSubmitted = computed(() => overallStatus.value === 'SUBMITTED')
+const isSubmitted = computed(() =>
+  ['SUBMITTED', 'CONFIRMED'].includes(overallStatus.value)
+)
 
 onMounted(() => {
   fetchDetail()
 })
 
-async function fetchDetail () {
+async function fetchDetail() {
   loading.value = true
   try {
     const res = await apiClient.get('/api/v1/smart-orders/detail', {
-      params: {
-        supplierId,
-        targetWeek,
-      },
+      params: { supplierId, targetWeek }
     })
 
     const data = res.data
@@ -184,7 +175,7 @@ async function fetchDetail () {
     detail.supplierName = data.supplierName
     detail.targetWeek = data.targetWeek
     detail.requesterName = data.requesterName
-    detail.status = data.status || 'DRAFT_AUTO'
+    detail.poNumber = data.poNumber
 
     detail.items = (data.items || []).map(item => ({
       smartOrderId: item.smartOrderId,
@@ -192,43 +183,49 @@ async function fetchDetail () {
       productName: item.productName,
       forecastQty: item.forecastQty,
       recommendedOrderQty: item.recommendedOrderQty,
-      unitPrice: Number(item.unitPrice || 0), 
+      unitPrice: Number(item.unitPrice || 0),
       originalRecommendedQty: item.recommendedOrderQty,
     }))
+
+    await fetchStatusFromList()
+
   } catch (e) {
-    console.error('스마트 발주 상세 조회 실패:', e)
-    const msg = e.response?.data?.message || '상세 정보를 불러오는 중 오류가 발생했습니다.'
-    alert(msg)
+    console.error('상세 오류:', e)
+    alert('상세 정보를 불러오는 중 오류가 발생했습니다.')
   } finally {
     loading.value = false
   }
 }
 
-function formatCurrency (value) {
-  const num = Number(value || 0)
-  return num.toLocaleString('ko-KR') + '원'
+async function fetchStatusFromList() {
+  const listRes = await apiClient.get('/api/v1/smart-orders', {
+    params: { supplierId: detail.supplierId }
+  })
+
+  const rows = listRes.data || []
+
+  const matched = rows.find(r =>
+    r.supplierId === detail.supplierId &&
+    r.targetWeek === detail.targetWeek
+  )
+
+  detail.status = matched?.smartOrderStatus || 'DRAFT_AUTO'
 }
 
-// 작성자 표시 (SYSTEM / USER)
-function isEdited (row) {
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString('ko-KR') + '원'
+}
+
+function isEdited(row) {
   return row.recommendedOrderQty !== row.originalRecommendedQty
 }
 
-// 수정 + 제출 (수정 == 제출)
-async function submitAll () {
-  // 이미 SUBMITTED면 방어 로직
-  if (isSubmitted.value) {
-    alert('이미 제출된 발주입니다.')
-    return
-  }
+async function submitAll() {
+  if (isSubmitted.value) return alert('이미 제출된 발주입니다.')
 
   const changed = detail.items.filter(isEdited)
 
-
-
-  if (!confirm(`총 ${changed.length}개 품목을 수정하셨습니다. 제출하시겠습니까?`)) {
-    return
-  }
+  if (!confirm(`총 ${changed.length}개 품목을 수정하셨습니다. 제출하시겠습니까?`)) return
 
   try {
     saving.value = true
@@ -240,23 +237,24 @@ async function submitAll () {
     }
 
     alert('스마트 발주가 수정 및 제출되었습니다.')
-    // await fetchDetail()               
     router.push({ name: 'hq-smart-orders' })
+
   } catch (e) {
-    console.error('스마트 발주 제출 실패:', e)
-    const msg = e.response?.data?.message || '제출 중 오류가 발생했습니다.'
-    alert(msg)
+    console.error('제출 실패:', e)
+    alert('제출 중 오류가 발생했습니다.')
   } finally {
     saving.value = false
   }
 }
 
-function statusLabel (s) {
+function statusLabel(s) {
+  if (s === 'CONFIRMED') return '승인'
   if (s === 'SUBMITTED') return '제출'
   if (s === 'DRAFT_AUTO') return '초안'
   return s || '-'
 }
 </script>
+
 
 
 <style scoped>
