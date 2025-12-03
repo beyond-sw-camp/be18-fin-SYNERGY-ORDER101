@@ -3,6 +3,7 @@ package com.synerge.order101.purchase.model.service;
 import com.synerge.order101.common.dto.TradeSearchCondition;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
+import com.synerge.order101.inbound.model.service.InboundService;
 import com.synerge.order101.notification.model.service.NotificationService;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
@@ -65,6 +66,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     private final ProductSupplierRepository productSupplierRepository;
 
     private final InventoryService inventoryService;
+    private final InboundService inboundService;
 
     private final NotificationService notificationService;
 
@@ -210,7 +212,7 @@ public class PurchaseServiceImpl implements PurchaseService {
             // 발주 완료 이벤트 발행
             eventPublisher.publishEvent(new PurchaseSettlementReqEvent(purchase));
             // 입고 반영
-            inventoryService.increaseInventory(purchase);
+            inboundService.createInbound(purchase);
         }
 
         return PurchaseUpdateStatusResponseDto.builder()
@@ -441,7 +443,7 @@ public class PurchaseServiceImpl implements PurchaseService {
             // 정산 이벤트 발행
             eventPublisher.publishEvent(new PurchaseSettlementReqEvent(purchase));
             // 입고 반영
-            inventoryService.increaseInventory(purchase);
+            inboundService.createInbound(purchase);
         }
 
         AutoPurchaseDetailResponseDto dto = getAutoPurchaseDetail(purchaseId);
