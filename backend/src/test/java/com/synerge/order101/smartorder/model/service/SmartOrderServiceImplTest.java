@@ -11,6 +11,7 @@ import com.synerge.order101.ai.model.repository.SmartOrderRepository;
 import com.synerge.order101.ai.model.service.SmartOrderServiceImpl;
 import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.common.exception.CustomException;
+import com.synerge.order101.notification.model.service.NotificationService;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.product.model.repository.ProductSupplierRepository;
@@ -45,6 +46,9 @@ import static org.mockito.Mockito.*;
 public class SmartOrderServiceImplTest {
     @InjectMocks
     private SmartOrderServiceImpl smartOrderService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @Mock
     private SmartOrderRepository smartOrderRepository;
@@ -110,6 +114,9 @@ public class SmartOrderServiceImplTest {
         given(mapping.getLeadTimeDays()).willReturn(7);
         given(mapping.getSupplier()).willReturn(supplier);
         given(productSupplierRepository.findByProduct(product))
+                .willReturn(Optional.of(mapping));
+
+        given(productSupplierRepository.findTop1ByProduct(product))
                 .willReturn(Optional.of(mapping));
 
         // 창고 재고 + 안전재고
