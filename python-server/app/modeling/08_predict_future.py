@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import json
+from datetime import datetime, timedelta
 
 BASE = Path(__file__).resolve().parents[1] / "data_pipeline"
 FEA = BASE / "features_all.csv"
@@ -13,7 +14,7 @@ OUT = BASE / "predictions.csv"
 HORIZON_WEEKS = 12
 FORECAST_FREQ = "W-MON"
 KEYS = ["warehouse_id", "store_id", "sku_id"]
-
+BASE_DATE = datetime(2025, 12, 15)
 
 def _to_week_start_monday(dt: pd.Series) -> pd.Series:
     dt = pd.to_datetime(dt)
@@ -39,10 +40,10 @@ def main():
     fea["target_date"] = _to_week_start_monday(fea["target_date"])
     fea = fea.sort_values(KEYS + ["target_date"])
 
-    last_dt = fea["target_date"].max()
-    start = last_dt + pd.offsets.Week(weekday=0)
-    future_dates = pd.date_range(start, periods=HORIZON_WEEKS, freq=FORECAST_FREQ)
 
+    first_monday = BASE_DATE + timedelta(days=(7 - BASE_DATE.weekday()) % 7)
+    future_dates = pd.date_range(first_monday, periods=HORIZON_WEEKS, freq=FORECAST_FREQ)
+    
     lag_cols = [c for c in fea.columns if c.startswith("lag_")]
     ma_cols  = [c for c in fea.columns if c.startswith("ma_")]
 
