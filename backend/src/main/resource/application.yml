@@ -2,7 +2,6 @@ spring:
   application:
     name: order101
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/order101
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
