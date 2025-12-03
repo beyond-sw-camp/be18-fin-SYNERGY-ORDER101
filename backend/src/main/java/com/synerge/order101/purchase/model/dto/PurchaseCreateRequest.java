@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Getter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class PurchaseCreateRequest {
@@ -30,6 +31,7 @@ public class PurchaseCreateRequest {
     @NonNull
     LocalDate deadline;
 
+    @Builder.Default
     List<Item> items = List.of();
 
     @Getter
