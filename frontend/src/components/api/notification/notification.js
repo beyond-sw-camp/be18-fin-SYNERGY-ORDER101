@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import apiClient from '..'
 
 const SSE_URL = (token) =>
   `http://localhost:8080/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
@@ -44,7 +45,7 @@ export const useNotificationStore = defineStore('notification', {
       this.loadingPage = true
 
       try {
-        const { data } = await axios.get('/api/v1/notifications', { params: { page, size } })
+        const { data } = await apiClient.get('/api/v1/notifications', { params: { page, size } })
 
         const raw = data?.items?.content ?? data?.items ?? data?.content ?? data ?? []
 
