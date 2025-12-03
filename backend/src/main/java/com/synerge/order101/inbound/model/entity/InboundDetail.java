@@ -3,13 +3,19 @@ package com.synerge.order101.inbound.model.entity;
 
 import com.synerge.order101.product.model.entity.Product;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "inbound_detail")
 public class InboundDetail {
 

@@ -19,6 +19,7 @@ import com.synerge.order101.purchase.model.repository.PurchaseRepository;
 import com.synerge.order101.settlement.event.PurchaseSettlementReqEvent;
 import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.supplier.model.repository.SupplierRepository;
+import com.synerge.order101.user.exception.UserErrorCode;
 import com.synerge.order101.user.model.entity.Role;
 import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
@@ -310,6 +311,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .build();
     }
 
+    // 자동 발주서 제출
     @Override
     @Transactional
     public AutoPurchaseDetailResponseDto submitAutoPurchase (Long purchaseId, Long userId, AutoPurchaseSubmitRequestDto request){
@@ -395,7 +397,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         purchaseDetailHistoryRepository.saveAll(historyList);
 
         User submitUser = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(PurchaseErrorCode.PURCHASE_CREATION_FAILED));
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         purchase.submit(submitUser, LocalDateTime.now());
 
@@ -425,6 +427,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         );
     }
 
+    // 자동 발주 승인/반려
     @Override
     @Transactional
     public AutoPurchaseDetailResponseDto updateAutoPurchase(Long purchaseId, OrderStatus status) {
@@ -433,6 +436,13 @@ public class PurchaseServiceImpl implements PurchaseService {
                 .orElseThrow(() -> new CustomException(PurchaseErrorCode.PURCHASE_NOT_FOUND));
 
         purchase.updateOrderStatus(status);
+
+        if (status == OrderStatus.CONFIRMED) {
+            // 정산 이벤트 발행
+            eventPublisher.publishEvent(new PurchaseSettlementReqEvent(purchase));
+            // 입고 반영
+            inventoryService.increaseInventory(purchase);
+        }
 
         AutoPurchaseDetailResponseDto dto = getAutoPurchaseDetail(purchaseId);
         dto.updateStatus(status);
