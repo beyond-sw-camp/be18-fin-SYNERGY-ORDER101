@@ -3,11 +3,10 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      - cd python-server
       - echo Logging in to Amazon ECR...
       - aws --version
-      - |
-        aws ecr get-login-password --region ap-northeast-2 \
-        | docker login --username AWS --password-stdin 084375551971.dkr.ecr.ap-northeast-2.amazonaws.com
+      - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 084375551971.dkr.ecr.ap-northeast-2.amazonaws.com
       - REPO=084375551971.dkr.ecr.ap-northeast-2.amazonaws.com/order101-ai
       - TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
@@ -22,8 +21,8 @@ phases:
       - echo Build completed on $(date)
       - docker push $REPO:$TAG
       - docker push $REPO:latest
-      - printf '[{"name":"order101-ai-container","imageUri":"%s"}]' $REPO:$TAG > imagedefinitions.json
+      - printf "[{\"name\":\"order101-ai-container\",\"imageUri\":\"%s\"}]" $REPO:$TAG > imagedefinitions.json
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - python-server/imagedefinitions.json
