@@ -12,7 +12,7 @@ public interface InventoryService {
 
     void decreaseInventory(Long productId, int quantity);
 
-    void increaseInventory(Purchase purchase);
+    void increaseInventory(Long productId, int quantity);
 
     void updateDailySafetyStock();
 
