@@ -4,13 +4,19 @@ package com.synerge.order101.outbound.model.entity;
 import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "outbound")
 public class Outbound {
 

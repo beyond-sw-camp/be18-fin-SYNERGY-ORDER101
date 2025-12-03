@@ -1,6 +1,6 @@
 .idea/
 **/application-dev.yml
-application.yml
+#application.yml
 # Compiled class file
 *.class
 

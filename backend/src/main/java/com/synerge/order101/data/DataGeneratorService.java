@@ -52,14 +52,14 @@ public class DataGeneratorService {
     @Transactional
     public void generateProductSupplierData(int count) {
 
-        System.out.println("--- 🚀 테스트 데이터 생성 시작: " + count + "건 ---");
+        System.out.println("--- 테스트 데이터 생성 시작: " + count + "건 ---");
 
         // 1단계: 유효한 ID 목록 조회
         List<Product> validProductIds = productRepository.findAllProducts();
         List<Supplier> validSupplierIds = supplierRepository.findAllSuppliers();
 
         if (validProductIds.isEmpty() || validSupplierIds.isEmpty()) {
-            System.out.println("⚠️ 오류: 유효한 Product ID 또는 Supplier ID가 DB에 없어 데이터 생성을 건너뜁니다.");
+            System.out.println("오류: 유효한 Product ID 또는 Supplier ID가 DB에 없어 데이터 생성을 건너뜁니다.");
             return;
         }
 
@@ -90,7 +90,7 @@ public class DataGeneratorService {
         }
 
         productSupplierRepository.saveAll(batchList);
-        System.out.println("--- ✅ 테스트 데이터 생성 완료: " + count + "건 삽입 ---");
+        System.out.println("--- 테스트 데이터 생성 완료: " + count + "건 삽입 ---");
     }
 
     // 공급사 발주 데이터를 랜덤하게 추가합니다.
@@ -100,7 +100,7 @@ public class DataGeneratorService {
 //        List<Purchase> purchaseList = new ArrayList<>();
 //        List<PurchaseDetail> purchaseDetailList = new ArrayList<>();
 //
-//        System.out.println("--- 🚀 테스트 데이터 생성 시작: " + count + "건 ---");
+//        System.out.println("--- 테스트 데이터 생성 시작: " + count + "건 ---");
 //
 //        // created_at 범위 설정 (2000-01-01 ~ 2025-11-22)
 //        long minDay = LocalDate.of(2000, 1, 1).toEpochDay();
@@ -156,7 +156,7 @@ public class DataGeneratorService {
 //
 //
 //
-//        System.out.println("--- ✅ 테스트 데이터 생성 완료: " + count + "건 삽입 ---");
+//        System.out.println("--- 테스트 데이터 생성 완료: " + count + "건 삽입 ---");
 //    }
 
 
