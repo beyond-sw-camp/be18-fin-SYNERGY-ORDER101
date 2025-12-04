@@ -9,6 +9,7 @@ import com.synerge.order101.shipment.model.repository.ShipmentRepository;
 import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.store.model.entity.StoreInventory;
 import com.synerge.order101.store.model.repository.StoreInventoryRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+@DisplayName("ShipmentInTransitListenerTest")
 @ExtendWith(MockitoExtension.class)
 class ShipmentInTransitListenerTest {
 

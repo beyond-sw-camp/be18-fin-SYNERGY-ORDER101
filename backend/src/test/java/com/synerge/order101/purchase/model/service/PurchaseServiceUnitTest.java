@@ -53,7 +53,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PurchaseService 단위 테스트")
+@DisplayName("PurchaseServiceUnitTest")
 class PurchaseServiceUnitTest {
 
     @Mock

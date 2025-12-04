@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("Settlement Entity 테스트")
+@DisplayName("SettlementTest")
 class SettlementTest {
 
     @Test

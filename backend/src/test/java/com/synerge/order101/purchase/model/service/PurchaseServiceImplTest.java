@@ -46,7 +46,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Purchase Service Mock 테스트")
+@DisplayName("PurchaseServiceImplTest")
 class PurchaseServiceImplTest {
 
     @Mock

@@ -21,11 +21,8 @@ import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.supplier.model.repository.SupplierRepository;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
 import com.synerge.order101.warehouse.model.service.InventoryServiceImpl;
-import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
@@ -54,6 +51,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+@DisplayName("ProductServiceImplTest")
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ProductServiceImplTest {
