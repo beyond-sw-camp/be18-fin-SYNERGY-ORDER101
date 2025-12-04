@@ -157,6 +157,7 @@ public class SmartOrderServiceImplTest {
 
     @Test
     @Order(2)
+    @Step("스마트발주 생성 호출")
     @DisplayName("generateSmartOrders")
     //이미 같은 주차 스마트발주 존재 시 예외
     void generateSmartOrders_alreadyExists() {
