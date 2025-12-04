@@ -4,7 +4,7 @@ env:
   variables:
     S3_BUCKET: order101-frontend
     CLOUDFRONT_DISTRIBUTION_ID: EDTL5NOCRCLXW
-    VITE_API_BASE_URL: 'https://order101.link'
+    VITE_API_BASE_URL: 'https://api.order101.link'
 
 phases:
   install:
