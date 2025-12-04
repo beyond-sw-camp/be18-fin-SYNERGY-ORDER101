@@ -4,6 +4,7 @@ env:
   variables:
     S3_BUCKET: order101-frontend
     CLOUDFRONT_DISTRIBUTION_ID: EDTL5NOCRCLXW
+    VITE_API_BASE_URL: 'https://synergy-order101-ALB-1931850803.ap-northeast-2.elb.amazonaws.com'
 
 phases:
   install:
