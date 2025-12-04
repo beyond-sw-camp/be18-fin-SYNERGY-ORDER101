@@ -54,7 +54,7 @@
 
           <tbody>
             <tr 
-              v-for="r in filteredRows" 
+              v-for="r in rows" 
               :key="r.id"
             >
               <td class="po">{{ r.id }}</td>
@@ -74,11 +74,38 @@
               <td>{{ formatDateTime(r.requestedAt) }}</td>
             </tr>
 
-            <tr v-if="filteredRows.length === 0">
+            <tr v-if="rows.length === 0">
               <td colspan="6" class="no-data">조회 결과가 없습니다.</td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="pagination">
+        <button 
+          class="pager" 
+          :disabled="page === 0"
+          @click="goPrev"
+        >
+          ‹ Previous
+        </button>
+
+        <button
+          v-for="p in pageNumbers"
+          :key="p"
+          class="page"
+          :class="{ active: p === page + 1 }"
+          @click="changePage(p)"
+        >
+          {{ p }}
+        </button>
+
+        <button 
+          class="pager" 
+          :disabled="page + 1 >= totalPages"
+          @click="goNext"
+        >
+          Next ›
+        </button>
       </div>
     </section>
   </div>
@@ -88,14 +115,11 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-
-
 const DELIVERY_STATUS = {
   WAITING: 'WAITING',
   IN_TRANSIT: 'IN_TRANSIT',
   DELIVERED: 'DELIVERED',
 }
-
 
 const statusOptions = [
   { key: DELIVERY_STATUS.WAITING, label: '배송 대기중' },
@@ -103,6 +127,14 @@ const statusOptions = [
   { key: DELIVERY_STATUS.DELIVERED, label: '배송 완료' },
 ]
 
+const rows = ref([])
+
+const page = ref(0)         
+const size = ref(20)
+const totalPages = ref(1)
+const totalElements = ref(0)
+
+const MAX_VISIBLE_PAGES = 5  // 보여줄 페이지 버튼 개수
 
 const filters = ref({
   q: '',
@@ -110,86 +142,109 @@ const filters = ref({
   status: 'all',
 })
 
-const rows = ref([])
-
 async function fetchDeliveryList() {
   try {
     const res = await axios.get('/api/v1/shipments', {
       params: {
-        page: 0,
-        size: 20,
-      },
+        page: page.value,
+        size: size.value,
+        orderNo: filters.value.q || null,
+        storeId: filters.value.store === 'all' ? null : filters.value.store,
+        status: filters.value.status === 'all' ? null : filters.value.status,
+      }
     })
 
-    const page = res.data
-
-    rows.value = page.content.map(item => ({
-      id: item.orderNo,                 
-      store: item.storeName,           
-      warehouse: item.warehouseName || '-', 
-      qty: item.totalQty,         
-      status: item.shipmentStatus,      
+    const p = res.data
+    rows.value = p.content.map(item => ({
+      id: item.orderNo,
+      store: item.storeName,
+      warehouse: item.warehouseName || '-',
+      qty: item.totalQty,
+      status: item.shipmentStatus,
       requestedAt: item.orderDatetime,
     }))
+
+    totalPages.value = p.totalPages
+    totalElements.value = p.totalElements
+
   } catch (e) {
     console.error('배송 목록 조회 실패', e)
   }
 }
 
-onMounted(() => {
-  fetchDeliveryList()
+
+async function changePage(clientPage) {
+  if (clientPage < 1 || clientPage > totalPages.value) return
+  page.value = clientPage - 1   
+  await fetchDeliveryList()     
+function goPrev() {
+  if (page.value > 0) {
+    changePage(page.value);
+  }
+}
+
+function goNext() {
+  if (page.value + 1 < totalPages.value) {
+    changePage(page.value + 2);
+  }
+}
+
+
+const pageNumbers = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = page.value + 1 
+  const half = Math.floor(MAX_VISIBLE_PAGES / 2)
+
+  let start = Math.max(1, current - half)
+  let end = Math.min(total, start + MAX_VISIBLE_PAGES - 1)
+
+  if (end - start + 1 < MAX_VISIBLE_PAGES) {
+    start = Math.max(1, end - MAX_VISIBLE_PAGES + 1)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
 })
 
+function applyFilter() {
+  page.value = 0
+  fetchDeliveryList()
+}
+
+function resetFilter() {
+  filters.value = { q: '', store: 'all', status: 'all' }
+  page.value = 0
+  fetchDeliveryList()
+}
 
 const storeOptions = computed(() => {
   const set = new Set(rows.value.map(r => r.store))
   return [...set]
 })
 
-
-const filteredRows = computed(() => {
-  return rows.value.filter((r) => {
-    const q = filters.value.q && filters.value.q.toLowerCase()
-
-
-    if (q && !r.id.toLowerCase().includes(q)) return false
-
-
-    if (filters.value.store !== 'all' && r.store !== filters.value.store)
-      return false
-
-
-    if (filters.value.status !== 'all' && r.status !== filters.value.status)
-      return false
-
-    return true
-  })
-})
-
-
 function statusClass(s) {
   if (s === DELIVERY_STATUS.DELIVERED) return 's-delivered'
   if (s === DELIVERY_STATUS.IN_TRANSIT) return 's-intransit'
-  return 's-pending' // WAITING 등
+  return 's-pending'
 }
 
 function statusLabel(s) {
   const opt = statusOptions.find(o => o.key === s)
-  return opt ? opt.label : '알 수 없음'
+  return opt ? opt.label : s
 }
 
-
-function applyFilter() {
-}
-
-function resetFilter() {
-  filters.value = { q: '', store: 'all', status: 'all' }
-}
 function formatDateTime(dt) {
-  if (!dt) return '-'
-  return dt.replace('T', ' ').slice(0, 19)
+  return dt ? dt.replace('T', ' ').slice(0, 19) : '-'
 }
+
+onMounted(() => {
+  fetchDeliveryList()
+})
 </script>
+
 
 
 
@@ -295,5 +350,36 @@ function formatDateTime(dt) {
   color: #999;
   padding: 20px;
 }
+
+
+.pagination {
+  margin-top: 18px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pager {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+}
+
+.page {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  background: #fff;
+  cursor: pointer;
+}
+
+.page.active {
+  background: #6b46ff;
+  color: #fff;
+  border-color: #6b46ff;
+}
+
 
 </style>
