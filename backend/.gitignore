@@ -3,6 +3,7 @@
 #application.yml
 # Compiled class file
 *.class
+.allure/
 
 # Log file
 *.log
