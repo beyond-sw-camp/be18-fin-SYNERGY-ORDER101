@@ -47,11 +47,25 @@
       </div>
 
       <div class="pagination">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+          &laquo;
+        </button>
+        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+          &lsaquo;
+        </button>
+
         <div class="pages">
-          <button v-for="p in totalPages" :key="p" :class="{ active: p === currentPage }" @click="goPage(p)">
+          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
             {{ p }}
           </button>
         </div>
+
+        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+          &rsaquo;
+        </button>
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+          &raquo;
+        </button>
       </div>
     </section>
   </div>
@@ -70,6 +84,7 @@ import { formatDateTimeMinute, getPastDateString, getTodayString } from '@/compo
 const router = useRouter()
 
 // 페이지네이션
+const page = ref(1)
 const currentPage = ref(1)
 const perPage = ref(10)
 const totalElements = ref(0)
@@ -99,7 +114,7 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  console.log('🔍 필터 검색:', filterData)
+  console.log('필터 검색:', filterData)
   filters.value = {
     vendorId: filterData.vendorId === null || filterData.vendorId === 'ALL' ? null : filterData.vendorId,
     startDate: filterData.startDate,
@@ -114,7 +129,7 @@ function handleSearch(filterData) {
 // API 조회
 const searchStoreOrders = async () => {
   try {
-    // ✅ API 파라미터 구성 (Settlement과 동일한 패턴)
+    // API 파라미터 구성 (Settlement과 동일한 패턴)
     const params = {
       vendorId: filters.value.vendorId || null,
       fromDate: filters.value.startDate || null,
@@ -124,7 +139,7 @@ const searchStoreOrders = async () => {
     };
 
 
-    // ✅ 단일 API 호출 (Spring Page 객체 반환)
+    // 단일 API 호출 (Spring Page 객체 반환)
     const pageData = await getFranchiseOrderList(
       currentPage.value,
       perPage.value,
@@ -134,7 +149,7 @@ const searchStoreOrders = async () => {
     totalElements.value = pageData.totalElements || 0;
     totalPagesFromBackend.value = pageData.totalPages || 1;
 
-    // ✅ 테이블 데이터 변환
+    // 테이블 데이터 변환
     rows.value = (pageData.content || []).map(item => ({
       id: item.storeOrderId,
       No: item.orderNo || item.storeOrderId,
@@ -147,7 +162,7 @@ const searchStoreOrders = async () => {
     }));
 
   } catch (error) {
-    console.error('❌ 데이터 로드 실패:', error);
+    console.error('데이터 로드 실패:', error);
 
     let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
 
@@ -164,9 +179,43 @@ const searchStoreOrders = async () => {
 
 // 페이지 이동
 function goPage(p) {
-  currentPage.value = p
+  page.value = p
   searchStoreOrders()
 }
+
+// 표시할 페이지 번호 계산 (최대 5개)
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2 // 현재 페이지 양옆으로 보여줄 페이지 수
+  const pages = []
+
+  if (total <= 5) {
+    // 전체 페이지가 5개 이하면 모두 표시
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // 5개보다 많으면 현재 페이지 기준으로 표시
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    // 시작이 1이면 끝을 늘림
+    if (start === 1) {
+      end = Math.min(5, total)
+    }
+    // 끝이 마지막이면 시작을 줄임
+    if (end === total) {
+      start = Math.max(1, total - 4)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
 
 function openDetail(row) {
   router.push({ name: 'hq-franchise-approval-detail', params: { id: row.id } })
@@ -353,5 +402,24 @@ async function reject(row) {
   color: white;
   border-color: transparent;
   font-weight: 600;
+}
+
+.page-nav {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.page-nav:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.page-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 </style>

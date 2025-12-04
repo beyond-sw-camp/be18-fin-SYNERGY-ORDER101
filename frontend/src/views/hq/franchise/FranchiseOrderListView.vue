@@ -46,11 +46,25 @@
       </div>
 
       <div class="pagination">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+          &laquo;
+        </button>
+        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+          &lsaquo;
+        </button>
+
         <div class="pages">
-          <button v-for="p in totalPages" :key="p" :class="{ active: p === currentPage }" @click="goPage(p)">
+          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
             {{ p }}
           </button>
         </div>
+
+        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+          &rsaquo;
+        </button>
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+          &raquo;
+        </button>
       </div>
     </section>
   </div>
@@ -68,6 +82,7 @@ import { formatDateTimeMinute, getPastDateString, getTodayString } from '@/compo
 const router = useRouter()
 
 // 페이지네이션
+const page = ref(1)
 const currentPage = ref(1)
 const perPage = ref(10)
 const totalElements = ref(0)
@@ -97,7 +112,7 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  console.log('🔍 필터 검색:', filterData)
+  console.log('필터 검색:', filterData)
   filters.value = {
     vendorId: filterData.vendorId === null || filterData.vendorId === 'ALL' ? null : filterData.vendorId,
     startDate: filterData.startDate,
@@ -120,7 +135,7 @@ const searchStoreOrders = async () => {
       searchText: filters.value.keyword || null
     };
 
-    console.log('📤 요청 파라미터:', params);
+    console.log('요청 파라미터:', params);
 
     const pageData = await getFranchiseOrderList(
       currentPage.value,
@@ -128,7 +143,7 @@ const searchStoreOrders = async () => {
       params
     );
 
-    console.log('📦 API 응답:', pageData);
+    console.log('API 응답:', pageData);
 
     totalElements.value = pageData.totalElements || 0;
     totalPagesFromBackend.value = pageData.totalPages || 1;
@@ -144,10 +159,10 @@ const searchStoreOrders = async () => {
       status: mapPurchaseStatus(item.orderStatus || item.status)
     }));
 
-    console.log('✅ 변환된 데이터:', rows.value);
+    console.log('변환된 데이터:', rows.value);
 
   } catch (error) {
-    console.error('❌ 데이터 로드 실패:', error);
+    console.error('데이터 로드 실패:', error);
 
     let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
 
@@ -164,9 +179,43 @@ const searchStoreOrders = async () => {
 
 // 페이지 이동
 function goPage(p) {
-  currentPage.value = p
+  page.value = p
   searchStoreOrders()
 }
+
+// 표시할 페이지 번호 계산 (최대 5개)
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2 // 현재 페이지 양옆으로 보여줄 페이지 수
+  const pages = []
+
+  if (total <= 5) {
+    // 전체 페이지가 5개 이하면 모두 표시
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // 5개보다 많으면 현재 페이지 기준으로 표시
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    // 시작이 1이면 끝을 늘림
+    if (start === 1) {
+      end = Math.min(5, total)
+    }
+    // 끝이 마지막이면 시작을 줄임
+    if (end === total) {
+      start = Math.max(1, total - 4)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
 
 function openDetail(row) {
   router.push({ name: 'hq-franchise-order-detail', params: { id: row.id } })
@@ -301,5 +350,24 @@ function statusLabel(s) {
   color: white;
   border-color: transparent;
   font-weight: 600;
+}
+
+.page-nav {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.page-nav:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.page-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 </style>

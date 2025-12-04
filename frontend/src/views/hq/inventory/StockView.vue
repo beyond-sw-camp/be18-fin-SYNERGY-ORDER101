@@ -56,7 +56,7 @@
         </button>
 
         <div class="page-numbers">
-          <button v-for="p in pages" :key="p" class="page"
+          <button v-for="p in visiblePages" :key="p" class="page"
             :class="['page-button', { active: page === p }]" @click="changePage(p)">
             {{ p }}
           </button>
@@ -91,6 +91,40 @@ const totalPages = computed(() => inventoryStore.totalPages)
 const pages = computed(() =>
   Array.from({ length: totalPages.value }, (_, i) => i + 1)
 )
+
+// 표시할 페이지 번호 계산 (최대 5개)
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2 // 현재 페이지 양옆으로 보여줄 페이지 수
+  const pages = []
+
+  if (total <= 5) {
+    // 전체 페이지가 5개 이하면 모두 표시
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // 5개보다 많으면 현재 페이지 기준으로 표시
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    // 시작이 1이면 끝을 늘림
+    if (start === 1) {
+      end = Math.min(5, total)
+    }
+    // 끝이 마지막이면 시작을 줄임
+    if (end === total) {
+      start = Math.max(1, total - 4)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
 
 onMounted(async () => {
   largeCategories.value = await getTopCategories()
