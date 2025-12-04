@@ -604,7 +604,7 @@ onMounted(() => {
   border-radius: 6px;
   padding: 0 12px;
   cursor: pointer;
-  display: inline-flex; /* ✅ 가로 유지 + 내부 정렬만 flex */
+  display: inline-flex; /* 가로 유지 + 내부 정렬만 flex */
   align-items: center;
   justify-content: center;
 }
@@ -655,7 +655,7 @@ onMounted(() => {
   border-radius: 12px;
 }
 
-/* ✅ 사진처럼 좌(폼) / 우(이미지) */
+/* 좌(폼) / 우(이미지) 배치 */
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
@@ -804,7 +804,7 @@ onMounted(() => {
 }
 
 /* =========================
-    ✅ 재고 현황(stock) 탭 스타일
+    재고 현황(stock) 탭 스타일
     ========================= */
 .stock-card {
   padding: 22px;
@@ -949,7 +949,7 @@ onMounted(() => {
     min-width: 0;
   }
 }
-/* ✅ 편집 모드에서 form control이 div처럼 꽉 차게 */
+/* 편집 모드에서 form control이 div처럼 꽉 차게 */
 input.value,
 select.value,
 textarea.value {

@@ -34,7 +34,6 @@ public class AuthController {
         LoginResponse loginResponse = authService.login(
                 loginRequestDto.getEmail(),
                 loginRequestDto.getPassword());
-        System.out.println(loginRequestDto.getPassword());
         // 사용자 확인 후 이상없다면 토큰 발행.
         String refreshToken = authService.createRefreshToken(loginResponse.getUserId());
         ResponseCookie cookie = jwtCookieService.createRefreshTokenCookie(refreshToken, Duration.ofDays(1));

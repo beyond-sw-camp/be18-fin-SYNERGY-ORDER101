@@ -3,7 +3,7 @@
  */
 export class SettlementDataProcessor {
     constructor(pageData) {
-        // ✅ Spring Page 객체 구조 처리
+        // Spring Page 객체 구조 처리
         this.settlements = pageData.content || [];
         this.totalElements = pageData.totalElements || 0;
         this.totalPages = pageData.totalPages || 0;

@@ -34,7 +34,6 @@ const fetchSuppliers = async (page = 1) => {
     currentPage.value = data.currentPage
   } catch (error) {
     // API 서비스에서 전달받은 에러를 사용자에게 알림
-    console.error('공급업체 목록 조회 실패:', error)
     alert('공급업체 목록을 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.')
   } finally {
     isLoading.value = false

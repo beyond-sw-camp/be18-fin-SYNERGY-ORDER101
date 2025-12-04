@@ -33,7 +33,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                 this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
 
             } catch (e) {
-                console.error("자동발주 목록 조회 실패:", e)
+                // 자동발주 목록 조회 실패
             } finally {
                 this.loading = false
             }
@@ -58,7 +58,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                 this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
 
             } catch (e) {
-                console.error("자동발주 검색 실패:", e)
+                // 자동발주 검색 실패
             } finally {
                 this.loading = false
             }
@@ -90,7 +90,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                 }
 
             } catch (e) {
-                console.error("자동발주 상세 조회 실패:", e)
+                // 자동발주 상세 조회 실패
                 this.details = []
             } finally {
                 this.loading = false
@@ -120,7 +120,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                 
                 return res.data
             } catch (e) {
-                console.error("자동발주 제출 실패:", e)
+                // 자동발주 제출 실패
             }
         },
 
@@ -131,7 +131,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
                 await this.fetchAutoOrderDetail(purchaseId)
                 return res.data
             } catch (e) {
-                console.error("상태 변경 실패:", e)
+                // 상태 변경 실패
                 throw e
             }
         }

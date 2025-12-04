@@ -143,7 +143,7 @@ async function handleSearch(filters) {
   loading.value = true;
 
   try {
-    // ✅ API 파라미터 구성 (백엔드 DTO 구조에 맞춤)
+    // API 파라미터 구성
     const params = {
       // scope가 null이면 백엔드에서 AR, AP 모두 조회
       types: filters.scope,  // null | 'AR' | 'AP'
@@ -155,10 +155,10 @@ async function handleSearch(filters) {
     };
 
 
-    // ✅ 단일 API 호출 (Spring Page 객체 반환)
+    // API 호출 (Spring Page 객체 반환)
     const pageData = await getSettlements(params);
 
-    // ✅ 테이블 데이터 변환
+    // 테이블 데이터 변환
     rows.value = pageData.content.map(settlement => ({
       id: settlement.settlementNo,
       type: settlement.settlementType,  // 'AR' | 'AP'
@@ -175,8 +175,6 @@ async function handleSearch(filters) {
 
 
   } catch (error) {
-    console.error('❌ 데이터 로드 실패:', error);
-
     // 에러 메시지 상세화
     let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
 

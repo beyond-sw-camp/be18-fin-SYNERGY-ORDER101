@@ -60,17 +60,13 @@ export function franchiseOrderStatusOptions() {
 export async function updatePurchaseStatus(purchaseId, status) {
 
     const url = `/api/v1/purchase-orders/${purchaseId}/${status}`;
-    console.log("발주 상태 업데이트 URL:", url);
     try {
-        console.log("발주 상태 업데이트 요청 - purchaseId:", purchaseId, "status:", status);
         const response = await axios.patch(url, {
             status: status,
         });
-        console.log("발주 상태 업데이트 응답:", response.data);
         return response.data;
     }
     catch (error) {
-        console.error("[API Error] 발주 상태 업데이트 실패:", error.message, error.response);
         throw new Error("API 서버와의 통신에 실패했습니다.");
     }
 }
@@ -148,14 +144,11 @@ export async function getRegularPurchases(cond, page, perPage) {
         // 일반 발주 데이터를 공통 형식으로 변환
         const mappedContent = (response.data.content || []).map(mapRegularPurchase);
 
-        console.log("일반 발주 목록 조회 응답:", response);
-
         return {
             ...response.data,
             content: mappedContent
         };
     } catch (error) {
-        console.error("[API Error] 일반 발주 목록 조회 실패:", error.message);
         throw error;
     }
 }
@@ -181,8 +174,6 @@ export async function getSmartPurchases(status, from, to) {
         // 스마트 발주는 List로 반환
         const smartOrders = Array.isArray(response.data) ? response.data : [];
 
-        console.log("스마트 발주 목록 조회 응답:", response);
-
         return {
             rawData: smartOrders, // 원본 데이터 추가
             content: smartOrders.map(mapSmartPurchase),
@@ -190,7 +181,6 @@ export async function getSmartPurchases(status, from, to) {
             totalPages: 1
         };
     } catch (error) {
-        console.error("[API Error] 스마트 발주 목록 조회 실패:", error.message);
         throw error;
     }
 }
@@ -263,14 +253,12 @@ export async function updateSmartOrderStatus(smartOrderIds, status) {
         );
 
         const results = await Promise.all(promises);
-        console.log(`스마트 발주 ${status} 완료:`, results);
 
         return {
             success: true,
             count: results.length
         };
     } catch (error) {
-        console.error(`[API Error] 스마트 발주 ${status} 실패:`, error.message);
         throw new Error(`스마트 발주 ${status} 처리에 실패했습니다.`);
     }
 }
@@ -300,16 +288,13 @@ export async function getPurchases(page, perPage, q, status, vendorId, startDate
             fromDate: startDate || null,
             toDate: endDate || null
         };
-        console.log("파라미터 regularCond:", regularCond);
 
         // 두 API를 병렬로 호출 (모든 데이터 가져오기)
         const [regularData, smartData] = await Promise.all([
             getRegularPurchases(regularCond, 0, 1000).catch(err => {
-                console.warn("일반 발주 조회 실패, 빈 결과 반환:", err.message);
                 return { content: [], totalElements: 0, totalPages: 0 };
             }),
             getSmartPurchases(status, startDate, endDate).catch(err => {
-                console.warn("스마트 발주 조회 실패, 빈 결과 반환:", err.message);
                 return { rawData: [], content: [], totalElements: 0, totalPages: 0 };
             })
         ]);
@@ -344,11 +329,9 @@ export async function getPurchases(page, perPage, q, status, vendorId, startDate
             number: page
         };
 
-        console.log("통합 발주 목록 조회 응답:", result);
         return result;
 
     } catch (error) {
-        console.error("[API Error] 통합 발주 목록 조회 실패:", error.message, error.response);
         throw new Error("API 서버와의 통신에 실패했습니다.");
     }
 }
@@ -370,7 +353,6 @@ export async function getPurchaseDetail(id) {
 
     } catch (error) {
         // API 통신 실패 로그를 남기고, 에러를 다시 던집니다.
-        console.error("[API Error] 발주 상세 조회 실패:", error.message, error.response);
         throw new Error("API 서버와의 통신에 실패했습니다.");
     }
 }

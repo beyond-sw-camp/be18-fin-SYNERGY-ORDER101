@@ -144,7 +144,6 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  console.log('🔍 발주 필터 검색:', filterData)
   filters.value = {
     status: filterData.status !== 'ALL' ? filterData.status : null,
     orderType: filterData.orderType !== 'ALL' ? filterData.orderType : null,
@@ -164,8 +163,6 @@ async function search() {
   const apiPage = page.value - 1; // 0-based index로 변환
 
   try {
-    console.log("검색 조건:", filters.value);
-
     // 일반 발주 검색 조건 생성 (타입은 프론트에서 필터링)
     const regularCond = {
       types: [],
@@ -181,8 +178,6 @@ async function search() {
       apiPage,
       perPage.value
     );
-
-    console.log("API 응답 데이터:", data);
 
     // 백엔드 페이지네이션 정보 저장
     totalElements.value = data.totalElements || 0
@@ -230,7 +225,6 @@ async function search() {
     rows.value = mappedRows;
 
   } catch (err) {
-    console.error('발주 목록을 가져오는 중 오류 발생:', err);
     error.value = err.message || '발주 목록을 불러올 수 없습니다.';
   } finally {
     loading.value = false

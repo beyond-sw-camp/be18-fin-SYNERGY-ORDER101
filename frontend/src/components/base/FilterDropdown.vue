@@ -45,7 +45,6 @@ const selectedText = computed(() => {
 
 // 모달 트리거 클릭 핸들러
 function handleTriggerClick() {
-    console.log('🔍 모달 열기 이벤트 발생');
     emit('triggerSearchModal');
 }
 </script>

@@ -69,7 +69,6 @@ const vendorOptions = ref([
 const emit = defineEmits(['search']);
 
 function openVendorSearchModal() {
-    console.log('📋 모달 열기');
     isVendorModalOpen.value = true;
 }
 
@@ -78,8 +77,6 @@ function openVendorSearchModal() {
  * @param {Object} vendor - { type: 'FRANCHISE' | 'SUPPLIER', id: string, name: string, code: string }
  */
 function handleVendorSelect(vendor) {
-    console.log('✅ 선택된 업체:', vendor);
-
     const { type, id, name, code } = vendor;
 
     // 필터 값 업데이트
@@ -108,21 +105,10 @@ function handleVendorSelect(vendor) {
 }
 
 function applyFilters() {
-    console.log('🔍 필터 적용:', {
-        scope: filters.value.scope,
-        vendorType: filters.value.vendorType,
-        vendorId: filters.value.vendorId,
-        vendorName: filters.value.vendorName,
-        startDate: filters.value.startDate,
-        endDate: filters.value.endDate,
-        keyword: filters.value.keyword
-    });
-
     emit('search', filters.value);
 }
 
 function resetFilters() {
-    console.log('🔄 필터 초기화');
     filters.value = { ...initialFilters };
     vendorOptions.value = [{ text: '전체', value: 'ALL' }];
     applyFilters();
@@ -130,7 +116,6 @@ function resetFilters() {
 
 // scope 변경 시 vendorId 초기화 (선택사항)
 watch(() => filters.value.scope, (newScope) => {
-    console.log('📊 범위 변경:', newScope);
     // scope 변경 시 업체 선택 초기화 (선택사항)
     if (newScope === 'ALL') {
         // 전체 선택 시 업체도 전체로 초기화

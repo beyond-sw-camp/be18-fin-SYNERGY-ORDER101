@@ -73,7 +73,6 @@ const handleAction = async (status) => {
 
         // 스마트 발주인 경우
         if (props.sourceType === 'SMART' && props.smartOrderIds && props.smartOrderIds.length > 0) {
-            console.log('스마트 발주 처리:', props.smartOrderIds)
             await updateSmartOrderStatus(props.smartOrderIds, status)
             alert(`${props.smartOrderIds.length}개의 스마트 발주가 정상적으로 ${label} 되었습니다.`)
         }
@@ -92,7 +91,6 @@ const handleAction = async (status) => {
         emit('success', status)
 
     } catch (error) {
-        console.error(error)
         alert(`${label} 처리 중 오류가 발생했습니다.`)
         emit('error', error)
     } finally {

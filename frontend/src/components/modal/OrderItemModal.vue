@@ -107,7 +107,7 @@
 
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import apiClient from '@/components/api'
 import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
 import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
@@ -213,7 +213,7 @@ async function fetchProducts(page = 1) {
     let pageInfo = { page, pageSize: pageSize.value, totalCount: 0 }
 
     if (filters.supplierId) {
-      // ✅ 공급사 상세 API + 페이징 사용
+      // 공급사 상세 API + 페이징 사용
       const detail = await getSupplierDetail(
         filters.supplierId,
         page, // 1 기반
@@ -227,7 +227,7 @@ async function fetchProducts(page = 1) {
       pageInfo.totalCount = detail.totalCount ?? productlist.length
     } else {
       // 공급사 미지정 → 기존 products API 페이징 사용
-      const data = await axios
+      const data = await apiClient
         .get('/api/v1/products', {
           params: {
             page,
@@ -240,13 +240,11 @@ async function fetchProducts(page = 1) {
         })
         .then((r) => r.data)
 
-      const payload = data.items?.[0] ?? data
+      productlist = data.items ?? data.products ?? data.content ?? []
 
-      productlist = payload.products ?? payload.items ?? payload.content ?? []
-
-      pageInfo.page = payload.page ?? page
-      pageInfo.pageSize = payload.numOfRows ?? pageSize.value
-      pageInfo.totalCount = payload.totalCount ?? productlist.length
+      pageInfo.page = data.page ?? page
+      pageInfo.pageSize = data.numOfRows ?? pageSize.value
+      pageInfo.totalCount = data.totalCount ?? productlist.length
     }
 
     // 선택 상태 초기화
@@ -257,7 +255,6 @@ async function fetchProducts(page = 1) {
     pageSize.value = pageInfo.pageSize
     totalCount.value = pageInfo.totalCount
   } catch (e) {
-    console.error('상품 로드 실패:', e)
     error.value = e.message || '상품 목록을 불러오는 데 실패했습니다.'
     items.value = []
     totalCount.value = 0
@@ -276,7 +273,7 @@ function changePage(page) {
  */
 async function loadLargeCategories() {
   try {
-    const res = await axios.get('/api/v1/categories/top').then((r) => r.data)
+    const res = await apiClient.get('/api/v1/categories/top').then((r) => r.data)
     largeCategories.value = res || []
   } catch (e) {
     largeCategories.value = []
@@ -289,7 +286,7 @@ async function loadMediumCategories(id) {
     return
   }
   try {
-    const res = await axios.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
+    const res = await apiClient.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     mediumCategories.value = res || []
   } catch (e) {
     mediumCategories.value = []
@@ -302,7 +299,7 @@ async function loadSmallCategories(id) {
     return
   }
   try {
-    const res = await axios.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
+    const res = await apiClient.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     smallCategories.value = res || []
   } catch (e) {
     smallCategories.value = []

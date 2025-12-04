@@ -117,13 +117,13 @@ const handleClearAll = async () => {
                 <span class="notification-label">알림</span>
               </span>
 
-              <!-- ✅ 뱃지: unreadCount 바인딩 -->
+              <!-- 알림 배지 -->
               <span v-if="notiStore.unreadCount > 0" class="badge">
                 {{ notiStore.unreadCount }}
               </span>
             </button>
 
-            <!-- ✅ 네이버 스타일 드롭다운 모달 -->
+            <!-- 드롭다운 모달 -->
             <div v-if="showNotiMenu" ref="notiMenuRef">
               <NotificationModal
                 :items="notiStore.notifications"

@@ -171,7 +171,7 @@ async function handleSearch(filters) {
     loading.value = true;
 
     try {
-        // ✅ API 파라미터 구성 (백엔드 DTO 구조에 맞춤)
+        // API 파라미터 구성
         const params = {
             // scope가 null이면 백엔드에서 AR, AP 모두 조회
             types: filters.scope,  // null | 'AR' | 'AP'
@@ -182,10 +182,10 @@ async function handleSearch(filters) {
             searchText: filters.keyword || null
         };
 
-        // ✅ 단일 API 호출 (Spring Page 객체 반환)
+        // API 호출 (Spring Page 객체 반환)
         const pageData = await getSettlementReport(params);
 
-        // ✅ 빈 데이터 체크
+        // 빈 데이터 체크
         if (!pageData.content || pageData.content.length === 0) {
             summaryData.value = null;
             monthlyData.value = [];
@@ -196,7 +196,7 @@ async function handleSearch(filters) {
             return;
         }
 
-        // ✅ 프론트엔드에서 데이터 가공
+        // 프론트엔드에서 데이터 가공
         const processor = new SettlementDataProcessor(pageData);
 
         summaryData.value = processor.getSummary();
@@ -206,8 +206,6 @@ async function handleSearch(filters) {
         tableData.value = processor.getTableData();
 
     } catch (error) {
-        console.error('❌ 데이터 로드 실패:', error);
-
         // 에러 메시지 상세화
         let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
 

@@ -107,12 +107,10 @@ function handleVendorSelect(vendor) {
 }
 
 function applyFilters() {
-    console.log('🔍 발주 필터 적용:', filters.value);
     emit('search', filters.value);
 }
 
 function resetFilters() {
-    console.log('🔄 발주 필터 초기화');
     filters.value = { ...initialFilters };
     vendorOptions.value = [{ text: '전체', value: 'ALL' }];
     applyFilters();

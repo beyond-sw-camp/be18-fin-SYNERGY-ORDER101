@@ -1,6 +1,6 @@
 <template>
   <!-- 
-    ⚠️ DEPRECATED: 이 컴포넌트는 더 이상 사용되지 않습니다.
+    DEPRECATED: 이 컴포넌트는 더 이상 사용되지 않습니다.
     대신 PurchaseCreateView.vue를 사용하세요.
     BaseOrderCreateView를 상속받아 재사용 가능하게 리팩토링되었습니다.
   -->
@@ -164,13 +164,11 @@ function handleSupplierSelect(supplier) {
  * @param {Array<object>} products - 추가할 품목 배열 ({productId, sku, name, price, ...})
  */
 function onAddItems(products) {
-  // 🚨 안전성 확보: products가 배열인지 확인 (이전 오류 방지)
+  // products가 배열인지 확인
   if (!Array.isArray(products)) {
-    console.error('onAddItems: 품목 데이터는 배열 형태여야 합니다.', products);
     return;
   }
 
-  console.log('추가할 품목들:', products)
   products.forEach(p => {
     // 중복된 productId가 있으면 추가하지 않음
     if (productIdSet.value.has(p.productId)) return
@@ -248,9 +246,8 @@ async function OnCreatedPurchase() {
       resetForm() // 폼 초기화
     }
   } catch (e) {
-    console.error('발주 생성 실패 상세:', e)
     const errorMessage = e.response?.data?.message || '발주 생성 중 알 수 없는 오류가 발생했습니다.'
-    // ⚠️ 경고: 실제 운영 환경에서는 alert 대신 커스텀 모달 UI를 사용해야 합니다.
+    // 경고: 실제 운영 환경에서는 alert 대신 커스텀 모달 UI를 사용해야 합니다.
     alert(`발주 생성 실패: ${errorMessage}`)
   }
 }

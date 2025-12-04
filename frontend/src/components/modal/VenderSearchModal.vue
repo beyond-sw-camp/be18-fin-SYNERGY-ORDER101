@@ -112,7 +112,6 @@ async function fetchVendors(page = 1) {
     totalCount.value = data.totalCount || 0
     currentPage.value = data.currentPage || page
   } catch (error) {
-    console.error('목록 조회 실패:', error)
     alert(
       `${selectedType.value === 'FRANCHISE' ? '가맹점' : '공급업체'} 목록을 불러오는 데 실패했습니다.`,
     )
@@ -179,7 +178,6 @@ function confirm() {
     isActive: selectedVendor.value.isActive,
   }
 
-  console.log('✅ 선택 완료:', result)
   emit('select', result)
   close()
 }
