@@ -41,10 +41,12 @@ cloud:
       auto: false
 logging:
   level:
-    org.springframework.jdbc: DEBUG
-    org.hibernate: DEBUG
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
+    root: INFO
+    com.synergy: INFO
     org.springframework.security: INFO
     org.hibernate.resource.transaction: INFO
-    org.hibernate.orm.query: INFO
+    org.springframework.jdbc: ERROR
+    org.hibernate: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.hibernate.orm.query: ERROR
