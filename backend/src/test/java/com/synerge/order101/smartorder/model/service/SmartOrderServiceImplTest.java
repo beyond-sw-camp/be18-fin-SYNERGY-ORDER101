@@ -22,6 +22,7 @@ import com.synerge.order101.user.model.entity.User;
 import com.synerge.order101.user.model.repository.UserRepository;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
+import io.qameta.allure.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -75,7 +76,11 @@ public class SmartOrderServiceImplTest {
 
     @Test
     @Order(1)
-    @DisplayName("generateSmartOrders")
+    @Epic("SmartOrder")
+    @Feature("Generate")
+    @Story("정상 케이스 - 재고/리드타임/안전재고 반영")
+    @Severity(SeverityLevel.CRITICAL)
+    @DisplayName("generateSmartOrders - 정상 케이스")
     //정상 케이스 (재고/리드타임/안전재고 반영)
     void generateSmartOrders_success() {
         // given
@@ -152,6 +157,7 @@ public class SmartOrderServiceImplTest {
 
     @Test
     @Order(2)
+    @Step("스마트발주 생성 호출")
     @DisplayName("generateSmartOrders")
     //이미 같은 주차 스마트발주 존재 시 예외
     void generateSmartOrders_alreadyExists() {
