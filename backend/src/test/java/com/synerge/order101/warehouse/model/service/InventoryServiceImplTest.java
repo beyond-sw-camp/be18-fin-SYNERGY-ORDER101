@@ -25,106 +25,100 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceImplTest {
-// 에러나서 주석처리
-//    @Mock
-//    private WarehouseInventoryRepository warehouseInventoryRepository;
-//    @Mock
-//    private StoreOrderDetailRepository storeOrderDetailRepository;
-//
-//    @InjectMocks
-//    private InventoryServiceImpl inventoryService;
-//
-//
-//    // ========================
-//    // getInventoryList
-//    // ========================
-//    @Test
-//    void getInventoryList_shouldReturnPagedResult() {
-//        Pageable pageable = PageRequest.of(0, 10);
-//        Page<InventoryResponseDto> mockPage = new PageImpl<>(List.of(), pageable, 0);
-//
-//        when(warehouseInventoryRepository.searchInventory(null, null, null, pageable))
-//                .thenReturn(mockPage);
-//
-//        Page<InventoryResponseDto> result =
-//                inventoryService.getInventoryList(1, 10, null, null, null);
-//
-//        assertThat(result).isEqualTo(mockPage);
-//        verify(warehouseInventoryRepository, times(1))
-//                .searchInventory(null, null, null, pageable);
-//    }
-//
-//
-//    // ========================
-//    // decreaseInventory
-//    // ========================
-//    @Test
-//    void decreaseInventory_shouldDecreaseQuantity() {
-//        WarehouseInventory inventory = mock(WarehouseInventory.class);
-//
-//        when(warehouseInventoryRepository.findByProduct_ProductId(1L))
-//                .thenReturn(Optional.of(inventory));
-//
-//        inventoryService.decreaseInventory(1L, 5);
-//
-//        verify(inventory, times(1)).decrease(5);
-//    }
-//
-//
-//    // ========================
-//    // increaseInventory
-//    // ========================
-//    @Test
-//    void increaseInventory_shouldIncreaseQuantityForEachDetail() {
-//        PurchaseDetail detail = mock(PurchaseDetail.class);
-//        Product product = mock(Product.class);
-//        when(detail.getOrderQty()).thenReturn(10);
-//        when(detail.getProduct()).thenReturn(product);
-//        when(product.getProductId()).thenReturn(1L);
-//
-//        Purchase purchase = mock(Purchase.class);
-//        when(purchase.getPurchaseDetails()).thenReturn(List.of(detail));
-//
-//        WarehouseInventory inventory = mock(WarehouseInventory.class);
-//        when(warehouseInventoryRepository.findByProduct_ProductId(1L))
-//                .thenReturn(Optional.of(inventory));
-//
-//        inventoryService.increaseInventory(purchase);
-//
-//        verify(inventory, times(1)).increase(10);
-//    }
-//
-//
-//    // ========================
-//    // getAutoPurchaseItems
-//    // ========================
-//    @Test
-//    void getAutoPurchaseItems_shouldReturnCalculatedAutoItems() {
-//        Product product = mock(Product.class);
-//        when(product.getProductId()).thenReturn(1L);
-//
-//        Supplier supplier = mock(Supplier.class);
-//        when(supplier.getSupplierId()).thenReturn(100L);
-//
-//        ProductSupplier productSupplier = mock(ProductSupplier.class);
-//        when(productSupplier.getLeadTimeDays()).thenReturn(5);
-//        when(productSupplier.getSupplier()).thenReturn(supplier);
-//        when(product.getProductSupplier()).thenReturn(List.of(productSupplier));
-//
-//        WarehouseInventory inventory = mock(WarehouseInventory.class);
-//        when(inventory.getProduct()).thenReturn(product);
-//        when(inventory.getOnHandQuantity()).thenReturn(5);
-//        when(inventory.getSafetyQuantity()).thenReturn(15);
-//
-//        when(warehouseInventoryRepository.findAllWithProduct()).thenReturn(List.of(inventory));
-//        when(storeOrderDetailRepository.findDailySalesQtySince(eq(1L), any(LocalDateTime.class)))
-//                .thenReturn(List.of(10, 12, 8));   // 평균 10
-//
-//        List<CalculatedAutoItem> result = inventoryService.getAutoPurchaseItems();
-//
-//        assertThat(result).hasSize(1);
-//        assertThat(result.get(0).getProductId()).isEqualTo(1L);
-//        assertThat(result.get(0).getSupplierId()).isEqualTo(100L);
-//        assertThat(result.get(0).getOrderQty()).isEqualTo(60);
-//    }
+
+    @Mock
+    private WarehouseInventoryRepository warehouseInventoryRepository;
+    @Mock
+    private StoreOrderDetailRepository storeOrderDetailRepository;
+
+    @InjectMocks
+    private InventoryServiceImpl inventoryService;
+
+
+    // ========================
+    // getInventoryList
+    // ========================
+    @Test
+    void getInventoryList_shouldReturnPagedResult() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<InventoryResponseDto> mockPage = new PageImpl<>(List.of(), pageable, 0);
+
+        when(warehouseInventoryRepository.searchInventory(null, null, null, pageable))
+                .thenReturn(mockPage);
+
+        Page<InventoryResponseDto> result =
+                inventoryService.getInventoryList(1, 10, null, null, null);
+
+        assertThat(result).isEqualTo(mockPage);
+        verify(warehouseInventoryRepository, times(1))
+                .searchInventory(null, null, null, pageable);
+    }
+
+
+    // ========================
+    // decreaseInventory
+    // ========================
+    @Test
+    void decreaseInventory_shouldDecreaseQuantity() {
+        WarehouseInventory inventory = mock(WarehouseInventory.class);
+
+        when(warehouseInventoryRepository.findByProduct_ProductId(1L))
+                .thenReturn(Optional.of(inventory));
+
+        inventoryService.decreaseInventory(1L, 5);
+
+        verify(inventory, times(1)).decrease(5);
+    }
+
+
+    // ========================
+    // increaseInventory
+    // ========================
+    @Test
+    void increaseInventory_shouldIncreaseQuantity() {
+        Long productId = 1L;
+        int quantity = 10;
+
+        WarehouseInventory inventory = mock(WarehouseInventory.class);
+        when(warehouseInventoryRepository.findByProduct_ProductId(productId))
+                .thenReturn(Optional.of(inventory));
+
+        inventoryService.increaseInventory(productId, quantity);
+
+        verify(inventory, times(1)).increase(quantity);
+    }
+
+
+    // ========================
+    // getAutoPurchaseItems
+    // ========================
+    @Test
+    void getAutoPurchaseItems_shouldReturnCalculatedAutoItems() {
+        Product product = mock(Product.class);
+        when(product.getProductId()).thenReturn(1L);
+
+        Supplier supplier = mock(Supplier.class);
+        when(supplier.getSupplierId()).thenReturn(100L);
+
+        ProductSupplier productSupplier = mock(ProductSupplier.class);
+        when(productSupplier.getLeadTimeDays()).thenReturn(5);
+        when(productSupplier.getSupplier()).thenReturn(supplier);
+        when(product.getProductSupplier()).thenReturn(List.of(productSupplier));
+
+        WarehouseInventory inventory = mock(WarehouseInventory.class);
+        when(inventory.getProduct()).thenReturn(product);
+        when(inventory.getOnHandQuantity()).thenReturn(5);
+        when(inventory.getSafetyQuantity()).thenReturn(15);
+
+        when(warehouseInventoryRepository.findAllWithProduct()).thenReturn(List.of(inventory));
+        when(storeOrderDetailRepository.findDailySalesQtySince(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(List.of(10, 12, 8));   // 평균 10
+
+        List<CalculatedAutoItem> result = inventoryService.getAutoPurchaseItems();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getProductId()).isEqualTo(1L);
+        assertThat(result.get(0).getSupplierId()).isEqualTo(100L);
+        assertThat(result.get(0).getOrderQty()).isEqualTo(60);
+    }
 }
