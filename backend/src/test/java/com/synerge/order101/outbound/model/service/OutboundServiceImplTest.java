@@ -10,7 +10,6 @@ import com.synerge.order101.outbound.model.entity.Outbound;
 import com.synerge.order101.outbound.model.entity.OutboundDetail;
 import com.synerge.order101.outbound.model.repository.OutboundDetailRepository;
 import com.synerge.order101.outbound.model.repository.OutboundRepository;
-import com.synerge.order101.shipment.event.ShipmentInTransitEvent;
 import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import com.synerge.order101.warehouse.model.service.InventoryService;
@@ -55,14 +54,9 @@ class OutboundServiceImplTest {
     private StoreOrderRepository storeOrderRepository;
 
     @Test
-    @DisplayName("배송 이벤트 수신 후 출고 생성 및 재고 차감 테스트")
-    void createOutboundFromShipment_Success() {
+    @DisplayName("출고 생성 및 재고 차감 테스트")
+    void createOutbound_Success() {
         // given
-        Long storeOrderId = 100L;
-        Long shipmentId = 55L;
-        Long storeId = 10L;
-        ShipmentInTransitEvent event = new ShipmentInTransitEvent(shipmentId, storeOrderId, storeId);
-
         // Mock Data: Store, Warehouse, Product
         Store mockStore = Store.builder().storeId(1L).storeName("강남점").build();
         Warehouse mockWarehouse = Warehouse.builder().warehouseId(1L).warehouseName("중앙물류센터").build();
@@ -75,17 +69,14 @@ class OutboundServiceImplTest {
                 .build();
 
         StoreOrder mockOrder = StoreOrder.builder()
-                .storeOrderId(storeOrderId)
+                .storeOrderId(100L)
                 .store(mockStore)
                 .warehouse(mockWarehouse)
                 .storeOrderDetails(List.of(orderDetail))
                 .build();
 
-        // Stubbing (Repository 동작 정의)
-        given(storeOrderRepository.findById(storeOrderId)).willReturn(Optional.of(mockOrder));
-
         // when
-        outboundService.createOutboundFromShipment(event);
+        outboundService.createOutbound(mockOrder);
 
         // then
         // 1. 출고(Outbound)가 저장되었는지 검증
@@ -98,7 +89,7 @@ class OutboundServiceImplTest {
         verify(inventoryService, times(1)).decreaseInventory(mockProduct.getProductId(), 50);
 
         // 4. (Console 확인용) 실제 테스트 실행 시 SLF4J 로그가 콘솔에 찍히는지 확인
-        System.out.println(">>> 테스트 성공: createOutboundFromShipment 로직이 정상 수행되었습니다.");
+        System.out.println(">>> 테스트 성공: createOutbound 로직이 정상 수행되었습니다.");
     }
 
     @Test

@@ -75,23 +75,17 @@ class InventoryServiceImplTest {
     // increaseInventory
     // ========================
     @Test
-    void increaseInventory_shouldIncreaseQuantityForEachDetail() {
-        PurchaseDetail detail = mock(PurchaseDetail.class);
-        Product product = mock(Product.class);
-        when(detail.getOrderQty()).thenReturn(10);
-        when(detail.getProduct()).thenReturn(product);
-        when(product.getProductId()).thenReturn(1L);
-
-        Purchase purchase = mock(Purchase.class);
-        when(purchase.getPurchaseDetails()).thenReturn(List.of(detail));
+    void increaseInventory_shouldIncreaseQuantity() {
+        Long productId = 1L;
+        int quantity = 10;
 
         WarehouseInventory inventory = mock(WarehouseInventory.class);
-        when(warehouseInventoryRepository.findByProduct_ProductId(1L))
+        when(warehouseInventoryRepository.findByProduct_ProductId(productId))
                 .thenReturn(Optional.of(inventory));
 
-        inventoryService.increaseInventory(purchase);
+        inventoryService.increaseInventory(productId, quantity);
 
-        verify(inventory, times(1)).increase(10);
+        verify(inventory, times(1)).increase(quantity);
     }
 
 
