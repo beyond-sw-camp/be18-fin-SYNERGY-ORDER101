@@ -30,6 +30,7 @@ phases:
     commands:
       - echo "[build] current dir:"; pwd
       - echo "[build] files:"; ls
+      - echo "[build] VITE_API_BASE_URL=$VITE_API_BASE_URL"
       - |
         if [ -f frontend/package.json ]; then
           echo "[build] using frontend/ as project root"
