@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("Purchase 엔티티 테스트")
+@DisplayName("PurchaseTest")
 class PurchaseTest {
 
     private Supplier supplier;

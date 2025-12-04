@@ -5,6 +5,7 @@ import com.synerge.order101.common.enums.ShipmentStatus;
 import com.synerge.order101.common.exception.CustomException;
 import com.synerge.order101.shipment.model.dto.response.ShipmentResponseDto;
 import com.synerge.order101.shipment.model.repository.ShipmentListRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+@DisplayName("ShipmentListServiceTest")
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(OrderAnnotation.class)
 class ShipmentListServiceTest {
