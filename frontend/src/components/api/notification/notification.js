@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import apiClient from '..'
 
 const SSE_URL = (token) =>
   `http://localhost:8080/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
@@ -44,7 +45,7 @@ export const useNotificationStore = defineStore('notification', {
       this.loadingPage = true
 
       try {
-        const { data } = await axios.get('/api/v1/notifications', { params: { page, size } })
+        const { data } = await apiClient.get('/api/v1/notifications', { params: { page, size } })
 
         const raw = data?.items?.content ?? data?.items ?? data?.content ?? data ?? []
 
@@ -67,7 +68,7 @@ export const useNotificationStore = defineStore('notification', {
     },
 
     async fetchUnreadCount() {
-      const { data } = await axios.get('/api/v1/notifications/unread-count')
+      const { data } = await apiClient.get('/api/v1/notifications/unread-count')
       this.unreadCount = data.items?.[0]?.count ?? 0
       console.log(this.unreadCount)
     },
@@ -106,12 +107,12 @@ export const useNotificationStore = defineStore('notification', {
       this.lastEventId = null
     },
     async markAllRead() {
-      await axios.post('/api/v1/notifications/read-all')
+      await apiClient.post('/api/v1/notifications/read-all')
       this.unreadCount = 0
     },
 
     async deleteNotification(id) {
-      await axios.delete(`/api/v1/notifications/${id}`)
+      await apiClient.delete(`/api/v1/notifications/${id}`)
       const targetId = Number(id)
 
       this.notifications = this.notifications.filter(
@@ -120,7 +121,7 @@ export const useNotificationStore = defineStore('notification', {
       this.totalCount = Math.max(0, this.totalCount - 1)
     },
     async clearAll() {
-      await axios.delete('/api/v1/notifications')
+      await apiClient.delete('/api/v1/notifications')
 
       this.notifications = []
       this.unreadCount = 0

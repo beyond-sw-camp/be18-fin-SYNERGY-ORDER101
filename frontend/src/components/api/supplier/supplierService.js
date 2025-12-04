@@ -55,7 +55,7 @@ export async function getSupplierDetail(supplierId, page, pageSize, keyword) {
   }
 
   try {
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
     const apiData = response.data
 
     let detail

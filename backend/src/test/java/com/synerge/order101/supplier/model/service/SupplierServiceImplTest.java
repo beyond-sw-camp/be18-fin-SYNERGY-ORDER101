@@ -161,7 +161,7 @@ public class SupplierServiceImplTest {
         given(product.getProductName()).willReturn("TV");
 
         given(ps.getSupplierProductCode()).willReturn("SUP-001-PRD-100");
-        given(ps.getPurchasePrice()).willReturn(BigDecimal.valueOf(1500));
+        given(product.getPrice()).willReturn(BigDecimal.valueOf(1500));
         given(ps.getLeadTimeDays()).willReturn(3);
 
         Page<ProductSupplier> psPage = new PageImpl<>(
