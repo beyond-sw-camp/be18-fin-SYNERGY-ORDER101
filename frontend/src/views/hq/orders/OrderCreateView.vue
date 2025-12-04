@@ -19,7 +19,9 @@
           </div>
 
           <div class="actions">
-            <button class="btn-primary" @click="OnCreatedPurchase" :disabled="!canSubmitOrder">구매 주문 제출</button>
+            <button class="btn-primary" @click="OnCreatedPurchase" :disabled="!canSubmitOrder">
+              구매 주문 제출
+            </button>
           </div>
         </section>
 
@@ -27,7 +29,9 @@
         <section class="card">
           <div class="card-head">
             <h3 class="card-title">품목 세부 정보</h3>
-            <button class="btn" @click="openModal" :disabled="!selectedSupplier.supplierId">+ 품목 추가</button>
+            <button class="btn" @click="openModal" :disabled="!selectedSupplier.supplierId">
+              + 품목 추가
+            </button>
           </div>
 
           <!-- 품목 테이블 -->
@@ -56,7 +60,9 @@
                 <td class="numeric">
                   <Money :value="row.price" />
                 </td>
-                <td class="center"><button class="btn-delete" @click="removeRow(idx)">삭제</button></td>
+                <td class="center">
+                  <button class="btn-delete" @click="removeRow(idx)">삭제</button>
+                </td>
               </tr>
               <tr v-if="rows.length === 0">
                 <td colspan="6" class="empty">
@@ -73,9 +79,10 @@
         <div class="summary card">
           <h4>발주 금액 요약</h4>
           <div class="summary-row">
-            <span>소계:</span><span class="numeric">
-              <Money :value="subtotal" />
-            </span>1
+            <span>소계:</span
+            ><span class="numeric">
+              <Money :value="subtotal" /> </span
+            >1
           </div>
           <div class="summary-row">
             <!-- <span>배송:</span><span class="numeric">
@@ -84,7 +91,8 @@
           </div>
           <hr />
           <div class="summary-row total">
-            <span>총액:</span><span class="numeric">
+            <span>총액:</span
+            ><span class="numeric">
               <Money :value="total" />
             </span>
           </div>
@@ -93,12 +101,20 @@
     </div>
 
     <!-- 품목 추가 모달 (OrderItemModal) -->
-    <OrderItemModal v-if="showModal" @close="showModal = false" :initial-supplier-id="selectedSupplier.supplierId"
-      @add="onAddItems" />
+    <OrderItemModal
+      v-if="showModal"
+      @close="showModal = false"
+      :initial-supplier-id="selectedSupplier.supplierId"
+      @add="onAddItems"
+    />
 
     <!-- 공급업체 검색 모달 (SupplierSearchModal) -->
-    <SupplierSearchModal :is-open="isModalOpen" :selected-supplier="selectedSupplier"
-      @update:is-open="isModalOpen = $event" @select="handleSupplierSelect" />
+    <SupplierSearchModal
+      :is-open="isModalOpen"
+      :selected-supplier="selectedSupplier"
+      @update:is-open="isModalOpen = $event"
+      @select="handleSupplierSelect"
+    />
   </div>
 </template>
 
@@ -108,8 +124,8 @@ import OrderItemModal from '../../../components/modal/OrderItemModal.vue'
 import SupplierSearchModal from '../../../components/modal/SupplierSearchModal.vue'
 import SupplierSelectDisplay from './SupplierSelectDisplay.vue'
 import Money from '@/components/global/Money.vue'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
+import apiClient from '@/components/api'
 
 // --- 1. 상수 정의 (DTO 및 기본 설정) ---
 const authStore = useAuthStore()
@@ -127,20 +143,17 @@ const rows = ref([]) // 발주 품목 목록
 const selectedSupplier = ref({ supplierId: null, name: '공급업체 선택' }) // 선택된 공급업체 정보
 const productIdSet = ref(new Set()) // 품목 중복 방지용 Set (productId 기준)
 
-
 // --- 3. 계산된 속성 (Computed) ---
 const shipping = 50000 // 배송비 (임시 고정값)
 
 const subtotal = computed(() =>
-  rows.value.reduce((s, r) => s + Number(r.price || 0) * (r.qty || 0), 0)
+  rows.value.reduce((s, r) => s + Number(r.price || 0) * (r.qty || 0), 0),
 )
 
 const total = computed(() => subtotal.value + shipping)
 
 // 발주 제출 가능 여부 검사
-const canSubmitOrder = computed(() =>
-  selectedSupplier.value.supplierId && rows.value.length > 0
-)
+const canSubmitOrder = computed(() => selectedSupplier.value.supplierId && rows.value.length > 0)
 
 // --- 4. 이벤트 핸들러 (Event Handlers) ---
 
@@ -149,14 +162,14 @@ const canSubmitOrder = computed(() =>
  * @param {object} supplier - 선택된 공급업체 객체
  */
 function handleSupplierSelect(supplier) {
-  selectedSupplier.value = supplier;
+  selectedSupplier.value = supplier
 
   // 공급업체 변경 시 기존 품목 초기화
   if (rows.value.length > 0) {
-    rows.value = [];
-    productIdSet.value.clear();
+    rows.value = []
+    productIdSet.value.clear()
   }
-  isModalOpen.value = false;
+  isModalOpen.value = false
 }
 
 /**
@@ -166,12 +179,12 @@ function handleSupplierSelect(supplier) {
 function onAddItems(products) {
   // 🚨 안전성 확보: products가 배열인지 확인 (이전 오류 방지)
   if (!Array.isArray(products)) {
-    console.error('onAddItems: 품목 데이터는 배열 형태여야 합니다.', products);
-    return;
+    console.error('onAddItems: 품목 데이터는 배열 형태여야 합니다.', products)
+    return
   }
 
   console.log('추가할 품목들:', products)
-  products.forEach(p => {
+  products.forEach((p) => {
     // 중복된 productId가 있으면 추가하지 않음
     if (productIdSet.value.has(p.productId)) return
 
@@ -182,7 +195,7 @@ function onAddItems(products) {
       name: p.name,
       purchasePrice: p.purchasePrice || p.supplyPrice || 0, // 공급가
       price: p.price || 0, // 납품가
-      qty: 1 // 기본 수량 1
+      qty: 1, // 기본 수량 1
     })
   })
 }
@@ -202,19 +215,19 @@ function removeRow(idx) {
 function openModal() {
   // 공급업체가 선택되지 않았으면 알림
   if (!selectedSupplier.value.supplierId) {
-    alert('품목을 추가하려면 먼저 공급업체를 선택해야 합니다.');
-    return;
+    alert('품목을 추가하려면 먼저 공급업체를 선택해야 합니다.')
+    return
   }
   showModal.value = true
 }
 //폼 초기화
 const resetForm = () => {
-  rows.value = [];
-  productIdSet.value.clear();
-  selectedSupplier.value = { supplierId: null, name: '공급업체 선택' };
-  showModal.value = false;
-  isModalOpen.value = false;
-};
+  rows.value = []
+  productIdSet.value.clear()
+  selectedSupplier.value = { supplierId: null, name: '공급업체 선택' }
+  showModal.value = false
+  isModalOpen.value = false
+}
 
 /**
  * 발주 생성 요청(POST)을 서버로 전송합니다.
@@ -233,15 +246,15 @@ async function OnCreatedPurchase() {
     orderType: DEFAULT_ORDER_CONFIG.ORDER_TYPE,
     orderStatus: DEFAULT_ORDER_CONFIG.ORDER_STATUS,
     // requiredDate.value는 현재 정의되지 않았으므로 주석 처리
-    // deadline: requiredDate.value + 'T00:00:00', 
-    items: rows.value.map(r => ({
+    // deadline: requiredDate.value + 'T00:00:00',
+    items: rows.value.map((r) => ({
       productId: r.productId,
-      orderQty: r.qty
-    }))
+      orderQty: r.qty,
+    })),
   }
 
   try {
-    const res = await axios.post('/api/v1/purchase-orders', payload)
+    const res = await apiClient.post('/api/v1/purchase-orders', payload)
 
     if (res.status === 201) {
       alert('발주 생성 완료!')

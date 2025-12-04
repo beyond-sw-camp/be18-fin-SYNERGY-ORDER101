@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import apiClient from '..'
 
 const SSE_URL = (token) =>
-  `http://localhost:8080/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
+  `https://synergy-order101-ALB-1931850803.ap-northeast-2.elb.amazonaws.com/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
 
 export const useNotificationStore = defineStore('notification', {
   state: () => ({
@@ -22,7 +21,6 @@ export const useNotificationStore = defineStore('notification', {
   }),
 
   getters: {
-    // ✅ 더 불러올 게 남았는지 여부
     hasMore: (s) => s.notifications.length < s.totalCount,
   },
 

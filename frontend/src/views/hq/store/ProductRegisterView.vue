@@ -135,8 +135,8 @@
 <script setup>
 import { reactive, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { createProduct } from '@/components/api/product/productService'
+import apiClient from '@/components/api'
 
 const router = useRouter()
 const saving = ref(false)
@@ -182,13 +182,13 @@ const selectedMediumId = ref(null)
 const selectedSmallId = ref(null)
 
 const fetchLarge = async () => {
-  const res = await axios.get('/api/v1/categories/top')
+  const res = await apiClient.get('/api/v1/categories/top')
   largeCategories.value = res.data
 }
 
 const fetchChildren = async (parentId) => {
   if (!parentId) return []
-  const res = await axios.get(`/api/v1/categories/${parentId}/children`)
+  const res = await apiClient.get(`/api/v1/categories/${parentId}/children`)
   return res.data
 }
 
@@ -208,7 +208,7 @@ const suppliers = ref([])
 const selectedSupplierId = ref(null)
 
 const fetchSuppliers = async () => {
-  const res = await axios.get('/api/v1/suppliers', {
+  const res = await apiClient.get('/api/v1/suppliers', {
     params: { page: 1, numOfRows: 1000 },
   })
   suppliers.value = res.data.items

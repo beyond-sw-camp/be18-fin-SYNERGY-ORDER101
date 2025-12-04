@@ -4,7 +4,12 @@
       <h1>주문 상세 내역</h1>
       <button class="btn-back" @click="goBack">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M19 12H5M12 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M19 12H5M12 19l-7-7 7-7"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
         목록으로
       </button>
@@ -26,7 +31,9 @@
       <div class="card info">
         <label>배송 상태</label>
         <div class="value">
-          <span :class="['status-chip', statusClass(displayStatus)]">{{ statusLabel(displayStatus) }}</span>
+          <span :class="['status-chip', statusClass(displayStatus)]">{{
+            statusLabel(displayStatus)
+          }}</span>
         </div>
       </div>
     </section>
@@ -77,7 +84,7 @@
             class="step-icon"
             :class="{
               active: idx <= currentStepIndex,
-              rejected: isRejected
+              rejected: isRejected,
             }"
           >
             <div class="icon">
@@ -108,15 +115,12 @@
           <div class="status-title">{{ s.label }}</div>
 
           <div class="status-time">
-            <template v-if="s.key === 'REJECTED'">
-              본사에 의해 반려되었습니다.
-            </template>
+            <template v-if="s.key === 'REJECTED'"> 본사에 의해 반려되었습니다. </template>
 
             <template v-else>
               {{ s.time }}
             </template>
           </div>
-          
 
           <div v-if="s.key === 'SHIPPED'">
             <div class="status-desc">{{ trackingNumber }}</div>
@@ -134,16 +138,15 @@
 <script setup>
 import { reactive, computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute } from '@/components/global/Date.js'
+import apiClient from '@/components/api'
 
 const route = useRoute()
 const router = useRouter()
 const orderId = route.params.id
 
-const isRejected = computed(() => detail.status === "REJECTED");
-
+const isRejected = computed(() => detail.status === 'REJECTED')
 
 const detail = reactive({
   orderNo: '',
@@ -152,7 +155,7 @@ const detail = reactive({
   status: '',
   shipmentStatus: '',
   items: [],
-  logs: []
+  logs: [],
 })
 
 const findTime = (st) => {
@@ -173,42 +176,38 @@ const progressSteps = computed(() => {
   if (isRejected.value) {
     return [
       {
-        key: "SUBMITTED",
-        label: "제출됨",
-        time: findTime("SUBMITTED"),
+        key: 'SUBMITTED',
+        label: '제출됨',
+        time: findTime('SUBMITTED'),
       },
       {
-        key: "REJECTED",
-        label: "반려됨",
-        time: findTime("."),
-      }
+        key: 'REJECTED',
+        label: '반려됨',
+        time: findTime('.'),
+      },
     ]
   }
 
-
   return [
-    { key: "SUBMITTED", label: "제출됨", time: findTime("SUBMITTED") },
-    { key: "WAITING", label: "배송대기", time: findTime("WAITING") },
-    { key: "SHIPPED", label: "배송중", time: findTime("SHIPPED") },
-    { key: "DELIVERED", label: "배송완료", time: findTime("DELIVERED") }
+    { key: 'SUBMITTED', label: '제출됨', time: findTime('SUBMITTED') },
+    { key: 'WAITING', label: '배송대기', time: findTime('WAITING') },
+    { key: 'SHIPPED', label: '배송중', time: findTime('SHIPPED') },
+    { key: 'DELIVERED', label: '배송완료', time: findTime('DELIVERED') },
   ]
-});
-
-
+})
 
 const currentStepIndex = computed(() => {
-  if (isRejected.value) return 1; 
-  if (displayStatus.value === "DELIVERED") return 3;
-  if (displayStatus.value === "SHIPPED") return 2;
-  if (displayStatus.value === "WAITING") return 1;
-  return 0;
-});
-
+  if (isRejected.value) return 1
+  if (displayStatus.value === 'DELIVERED') return 3
+  if (displayStatus.value === 'SHIPPED') return 2
+  if (displayStatus.value === 'WAITING') return 1
+  return 0
+})
 
 const trackRef = ref(null)
 
 const filledPercent = computed(() => {
-  if (isRejected.value) return 37.5;
+  if (isRejected.value) return 37.5
   switch (displayStatus.value) {
     case 'WAITING':
       return 37.5
@@ -236,7 +235,7 @@ const trackingNumber = computed(() => {
  */
 async function fetchDetail() {
   try {
-    const res = await axios.get(`/api/v1/store-orders/detail/${orderId}`)
+    const res = await apiClient.get(`/api/v1/store-orders/detail/${orderId}`)
     const data = res.data
 
     detail.orderNo = data.orderNo
@@ -246,7 +245,7 @@ async function fetchDetail() {
       data.progress?.map((p) => ({
         status: p.key.toUpperCase(),
         changedAt: p.time,
-        note: p.note
+        note: p.note,
       })) || []
 
     detail.createdAt = findTime('SUBMITTED')
@@ -260,7 +259,7 @@ async function fetchDetail() {
         productName: it.name,
         stock: it.stock,
         orderQty: it.qty,
-        unitPrice: it.price
+        unitPrice: it.price,
       })) || []
 
     console.log('주문 상세 조회 완료:', detail)
@@ -272,33 +271,32 @@ async function fetchDetail() {
 
 onMounted(fetchDetail)
 
-const totalQty = computed(() =>
-  detail.items.reduce((s, it) => s + (it.orderQty || 0), 0)
-)
+const totalQty = computed(() => detail.items.reduce((s, it) => s + (it.orderQty || 0), 0))
 
 const totalAmount = computed(() =>
-  detail.items.reduce((s, it) => s + (it.orderQty || 0) * (it.unitPrice || 0), 0)
+  detail.items.reduce((s, it) => s + (it.orderQty || 0) * (it.unitPrice || 0), 0),
 )
 
 const formatMoney = (v) => Number(v).toLocaleString() + '원'
 
 const statusLabel = (s) => {
-  if (isRejected.value) return "반려됨";
+  if (isRejected.value) return '반려됨'
 
-  return {
-    WAITING: "배송대기",
-    SHIPPED: "배송중",
-    DELIVERED: "배송완료"
-  }[s] || "-";
-};
-
+  return (
+    {
+      WAITING: '배송대기',
+      SHIPPED: '배송중',
+      DELIVERED: '배송완료',
+    }[s] || '-'
+  )
+}
 
 const statusClass = (s) =>
   ({
     WAITING: 's-waiting',
     SHIPPED: 's-shipping',
-    DELIVERED: 's-delivered'
-  }[s] || '')
+    DELIVERED: 's-delivered',
+  })[s] || ''
 
 function goBack() {
   router.push({ name: 'store-purchase-list' })
@@ -534,12 +532,10 @@ function goBack() {
   margin-top: 4px;
 }
 
-
 .status-chip.rejected {
   background: #ffe5e5 !important;
   color: #d93025 !important;
 }
-
 
 .step-icon.rejected .icon {
   background: #ff4d4d !important;
@@ -547,9 +543,7 @@ function goBack() {
   color: white !important;
 }
 
-
 .track-fill.rejected {
   background: #ff4d4d !important;
 }
-
 </style>

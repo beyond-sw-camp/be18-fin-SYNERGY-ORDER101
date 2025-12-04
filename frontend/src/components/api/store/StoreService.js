@@ -1,4 +1,4 @@
-import axios from 'axios'
+import apiClient from '..'
 
 export async function getFranchiseOrderList(page, pageSize, searchParams) {
   const url = '/api/v1/store-orders' // 가맹점 API 엔드포인트
@@ -22,7 +22,7 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
   console.log('📤 실제 전송 파라미터:', params)
 
   try {
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
     const apiData = response.data
 
     // Settlement과 동일한 구조로 반환 (Spring Page 객체)
@@ -32,7 +32,6 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
     throw new Error('가맹점 API 서버와의 통신에 실패했습니다.')
   }
 }
-
 
 /**
  * [가맹점 목록 조회]
@@ -52,7 +51,7 @@ export async function getFranchiseList(page, pageSize, keyword) {
   }
 
   try {
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
     const apiData = response.data
 
     return {
@@ -77,7 +76,7 @@ export async function getStoreOrderById(storeOrderId) {
   const url = `/api/v1/store-orders/${storeOrderId}`
 
   try {
-    const response = await axios.get(url)
+    const response = await apiClient.get(url)
     console.log(`주문 ${storeOrderId} 조회 성공:`, response.data)
     return response
   } catch (error) {
@@ -96,7 +95,7 @@ export async function updateStoreOrderStatus(storeOrderId, newStatus) {
   const url = `/api/v1/store-orders/${storeOrderId}/${newStatus}`
 
   try {
-    const response = await axios.patch(url, { status: newStatus })
+    const response = await apiClient.patch(url, { status: newStatus })
     console.log(`주문 ${storeOrderId} 상태 업데이트 성공:`, response.data)
     return response.data
   } catch (error) {
@@ -114,7 +113,7 @@ export async function checkStockForOrder(storeOrderId) {
   const url = `/api/v1/store-orders/${storeOrderId}/stock-check`
 
   try {
-    const response = await axios.get(url)
+    const response = await apiClient.get(url)
     console.log(`주문 ${storeOrderId} 재고 확인 성공:`, response.data)
     return response.data
   } catch (error) {

@@ -1,4 +1,3 @@
-import axios from 'axios'
 import apiClient from '..'
 
 /**
@@ -141,7 +140,7 @@ export async function getRegularPurchases(cond, page, perPage) {
     if (cond.fromDate) params.fromDate = cond.fromDate
     if (cond.toDate) params.toDate = cond.toDate
 
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
 
     // 일반 발주 데이터를 공통 형식으로 변환
     const mappedContent = (response.data.content || []).map(mapRegularPurchase)
@@ -174,7 +173,7 @@ export async function getSmartPurchases(status, from, to) {
     if (from) params.from = from
     if (to) params.to = to
 
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
 
     // 스마트 발주는 List로 반환
     const smartOrders = Array.isArray(response.data) ? response.data : []
@@ -257,7 +256,7 @@ export function groupSmartOrdersByPoNumber(smartOrders) {
 export async function updateSmartOrderStatus(smartOrderIds, status) {
   try {
     const promises = smartOrderIds.map((id) =>
-      axios.patch(`/api/v1/smart-orders/${id}/${status.toLowerCase()}`),
+      apiClient.patch(`/api/v1/smart-orders/${id}/${status.toLowerCase()}`),
     )
 
     const results = await Promise.all(promises)
@@ -350,7 +349,7 @@ export async function getPurchaseDetail(id) {
   const url = `/api/v1/purchase-orders/${id}`
 
   try {
-    const response = await axios.get(url, {})
+    const response = await apiClient.get(url, {})
 
     // ItemsResponseDto 객체에서 'purchaseDetail' 필드를 직접 추출
     // response.data가 { "purchaseDetail": { ... } } 구조라고 가정합니다.

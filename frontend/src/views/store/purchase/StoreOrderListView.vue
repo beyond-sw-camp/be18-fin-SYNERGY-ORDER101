@@ -44,15 +44,16 @@
       </div>
 
       <div class="pagination">
-        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
-          &laquo;
-        </button>
-        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
-          &lsaquo;
-        </button>
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">&laquo;</button>
+        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">&lsaquo;</button>
 
         <div class="pages">
-          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
+          <button
+            v-for="p in visiblePages"
+            :key="p"
+            :class="{ active: p === page }"
+            @click="goPage(p)"
+          >
             {{ p }}
           </button>
         </div>
@@ -75,7 +76,7 @@ import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute, getPastDateString } from '@/components/global/Date'
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue'
-import axios from 'axios'
+import apiClient from '@/components/api'
 
 // Auth Store (storeId 가져오기)
 const authStore = useAuthStore()
@@ -88,14 +89,14 @@ const ORDER_STATUS_MAP = {
   REJECTED: { text: '반려', class: 's-rejected' },
   CANCELLED: { text: '취소', class: 's-rejected' },
   COMPLETED: { text: '완료', class: 's-accepted' },
-  DRAFT: { text: '초안', class: 's-waiting' }
+  DRAFT: { text: '초안', class: 's-waiting' },
 }
 
 const filters = ref({
   statuses: null,
   searchText: null,
   startDate: getPastDateString(30),
-  endDate: new Date().toISOString().slice(0, 10)
+  endDate: new Date().toISOString().slice(0, 10),
 })
 
 const page = ref(1)
@@ -149,7 +150,7 @@ function handleSearch(filterData) {
     statuses: filterData.status !== 'ALL' ? filterData.status : null,
     searchText: filterData.keyword || null,
     startDate: filterData.startDate,
-    endDate: filterData.endDate
+    endDate: filterData.endDate,
   }
   page.value = 1
   search()
@@ -166,7 +167,7 @@ async function search() {
     const params = {
       page: apiPage,
       size: perPage.value,
-      sort: 'createdAt,desc'
+      sort: 'createdAt,desc',
     }
 
     // Store 계정의 storeId를 vendorId로 전달 (백엔드에서 storeId 필터로 사용)
@@ -184,7 +185,7 @@ async function search() {
     console.log('📤 API 요청 파라미터:', params)
 
     // GET /api/v1/store-orders (StoreOrderController.findStoreOrders)
-    const response = await axios.get('/api/v1/store-orders', { params })
+    const response = await apiClient.get('/api/v1/store-orders', { params })
     const data = response.data
 
     console.log('📥 API 응답 데이터:', data)
@@ -193,7 +194,7 @@ async function search() {
     totalPagesFromBackend.value = data.totalPages || 1
 
     // StoreOrderSummaryResponseDto 매핑
-    rows.value = (data.content || []).map(item => {
+    rows.value = (data.content || []).map((item) => {
       const statusInfo = ORDER_STATUS_MAP[item.orderStatus] || { text: item.orderStatus, class: '' }
       return {
         id: item.storeOrderId,
@@ -204,10 +205,9 @@ async function search() {
         totalAmount: item.totalAmount || 0,
         orderDate: item.orderDate,
         orderStatus: item.orderStatus,
-        statusText: statusInfo.text
+        statusText: statusInfo.text,
       }
     })
-
   } catch (err) {
     console.error('발주 목록을 가져오는 중 오류 발생:', err)
     error.value = err.message || '발주 목록을 불러올 수 없습니다.'

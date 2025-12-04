@@ -107,10 +107,10 @@
 
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
-import axios from 'axios'
 import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
 import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
+import apiClient from '../api'
 
 const emit = defineEmits(['close', 'add'])
 const authStore = useAuthStore()
@@ -227,7 +227,7 @@ async function fetchProducts(page = 1) {
       pageInfo.totalCount = detail.totalCount ?? productlist.length
     } else {
       // 공급사 미지정 → 기존 products API 페이징 사용
-      const data = await axios
+      const data = await apiClient
         .get('/api/v1/products', {
           params: {
             page,
@@ -276,7 +276,7 @@ function changePage(page) {
  */
 async function loadLargeCategories() {
   try {
-    const res = await axios.get('/api/v1/categories/top').then((r) => r.data)
+    const res = await apiClient.get('/api/v1/categories/top').then((r) => r.data)
     largeCategories.value = res || []
   } catch (e) {
     largeCategories.value = []
@@ -289,7 +289,7 @@ async function loadMediumCategories(id) {
     return
   }
   try {
-    const res = await axios.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
+    const res = await apiClient.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     mediumCategories.value = res || []
   } catch (e) {
     mediumCategories.value = []
@@ -302,7 +302,7 @@ async function loadSmallCategories(id) {
     return
   }
   try {
-    const res = await axios.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
+    const res = await apiClient.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     smallCategories.value = res || []
   } catch (e) {
     smallCategories.value = []

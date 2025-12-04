@@ -6,29 +6,18 @@
 
     <section class="filters card">
       <div class="filters-row">
-        <input 
-          placeholder="주문 ID 검색" 
-          v-model="filters.q"
-        />
+        <input placeholder="주문 ID 검색" v-model="filters.q" />
 
         <select v-model="filters.store">
           <option value="all">모든 가맹점</option>
-          <option 
-            v-for="s in storeOptions" 
-            :value="s" 
-            :key="s"
-          >
+          <option v-for="s in storeOptions" :value="s" :key="s">
             {{ s }}
           </option>
         </select>
 
         <select v-model="filters.status">
           <option value="all">모든 상태</option>
-          <option 
-            v-for="st in statusOptions" 
-            :value="st.key" 
-            :key="st.key"
-          >
+          <option v-for="st in statusOptions" :value="st.key" :key="st.key">
             {{ st.label }}
           </option>
         </select>
@@ -53,20 +42,14 @@
           </thead>
 
           <tbody>
-            <tr 
-              v-for="r in filteredRows" 
-              :key="r.id"
-            >
+            <tr v-for="r in filteredRows" :key="r.id">
               <td class="po">{{ r.id }}</td>
               <td>{{ r.store }}</td>
               <td>{{ r.warehouse }}</td>
               <td class="numeric">{{ r.qty }}</td>
 
               <td class="status-cell">
-                <span 
-                  class="chip" 
-                  :class="statusClass(r.status)"
-                >
+                <span class="chip" :class="statusClass(r.status)">
                   {{ statusLabel(r.status) }}
                 </span>
               </td>
@@ -85,10 +68,8 @@
 </template>
 
 <script setup>
+import apiClient from '@/components/api'
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
-
-
 
 const DELIVERY_STATUS = {
   WAITING: 'WAITING',
@@ -96,13 +77,11 @@ const DELIVERY_STATUS = {
   DELIVERED: 'DELIVERED',
 }
 
-
 const statusOptions = [
   { key: DELIVERY_STATUS.WAITING, label: '배송 대기중' },
   { key: DELIVERY_STATUS.IN_TRANSIT, label: '배송 중' },
   { key: DELIVERY_STATUS.DELIVERED, label: '배송 완료' },
 ]
-
 
 const filters = ref({
   q: '',
@@ -114,7 +93,7 @@ const rows = ref([])
 
 async function fetchDeliveryList() {
   try {
-    const res = await axios.get('/api/v1/shipments', {
+    const res = await apiClient.get('/api/v1/shipments', {
       params: {
         page: 0,
         size: 20,
@@ -123,12 +102,12 @@ async function fetchDeliveryList() {
 
     const page = res.data
 
-    rows.value = page.content.map(item => ({
-      id: item.orderNo,                 
-      store: item.storeName,           
-      warehouse: item.warehouseName || '-', 
-      qty: item.totalQty,         
-      status: item.shipmentStatus,      
+    rows.value = page.content.map((item) => ({
+      id: item.orderNo,
+      store: item.storeName,
+      warehouse: item.warehouseName || '-',
+      qty: item.totalQty,
+      status: item.shipmentStatus,
       requestedAt: item.orderDatetime,
     }))
   } catch (e) {
@@ -140,32 +119,24 @@ onMounted(() => {
   fetchDeliveryList()
 })
 
-
 const storeOptions = computed(() => {
-  const set = new Set(rows.value.map(r => r.store))
+  const set = new Set(rows.value.map((r) => r.store))
   return [...set]
 })
-
 
 const filteredRows = computed(() => {
   return rows.value.filter((r) => {
     const q = filters.value.q && filters.value.q.toLowerCase()
 
-
     if (q && !r.id.toLowerCase().includes(q)) return false
 
+    if (filters.value.store !== 'all' && r.store !== filters.value.store) return false
 
-    if (filters.value.store !== 'all' && r.store !== filters.value.store)
-      return false
-
-
-    if (filters.value.status !== 'all' && r.status !== filters.value.status)
-      return false
+    if (filters.value.status !== 'all' && r.status !== filters.value.status) return false
 
     return true
   })
 })
-
 
 function statusClass(s) {
   if (s === DELIVERY_STATUS.DELIVERED) return 's-delivered'
@@ -174,13 +145,11 @@ function statusClass(s) {
 }
 
 function statusLabel(s) {
-  const opt = statusOptions.find(o => o.key === s)
+  const opt = statusOptions.find((o) => o.key === s)
   return opt ? opt.label : '알 수 없음'
 }
 
-
-function applyFilter() {
-}
+function applyFilter() {}
 
 function resetFilter() {
   filters.value = { q: '', store: 'all', status: 'all' }
@@ -190,8 +159,6 @@ function formatDateTime(dt) {
   return dt.replace('T', ' ').slice(0, 19)
 }
 </script>
-
-
 
 <style scoped>
 .page-shell {
@@ -236,12 +203,9 @@ function formatDateTime(dt) {
   cursor: pointer;
 }
 
-
 .delivery-table td.status-cell {
   padding-top: 22px !important;
 }
-
-
 
 .table-wrap {
   overflow-x: auto;
@@ -270,8 +234,6 @@ function formatDateTime(dt) {
   font-weight: 600;
 }
 
-
-
 .chip {
   padding: 6px 12px;
   display: inline-flex;
@@ -285,15 +247,19 @@ function formatDateTime(dt) {
   color: #fff;
 }
 
-
-.s-delivered { background: #0ea5a4; }
-.s-intransit { background: #2563eb; }
-.s-pending   { background: #6b7280; }
+.s-delivered {
+  background: #0ea5a4;
+}
+.s-intransit {
+  background: #2563eb;
+}
+.s-pending {
+  background: #6b7280;
+}
 
 .no-data {
   text-align: center;
   color: #999;
   padding: 20px;
 }
-
 </style>

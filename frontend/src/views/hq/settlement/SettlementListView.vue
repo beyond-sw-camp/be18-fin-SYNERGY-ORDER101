@@ -10,14 +10,15 @@
       <SettlementFilter @search="handleSearch" />
     </section>
 
-
-
     <!-- 목록 섹션 -->
     <section class="list-section">
       <div class="section-header">
         <div class="header-left">
           <h2 class="section-title">정산 내역</h2>
-          <span class="result-count">총 <strong>{{ rows.length }}</strong>건</span>
+          <span class="result-count"
+            >총 <strong>{{ rows.length }}</strong
+            >건</span
+          >
         </div>
       </div>
 
@@ -97,109 +98,110 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue';
-import axios from 'axios'
+import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue'
 import Money from '@/components/global/Money.vue'
-import { formatDateTimeMinute, getTodayString, getPastDateString } from '@/components/global/Date.js';
-import { getSettlements } from '@/components/api/settlement/SettlementService.js';
-import { SettlementDataProcessor } from '@/components/global/SettlementDataProcessor.js';
+import {
+  formatDateTimeMinute,
+  getTodayString,
+  getPastDateString,
+} from '@/components/global/Date.js'
+import { getSettlements } from '@/components/api/settlement/SettlementService.js'
+import { SettlementDataProcessor } from '@/components/global/SettlementDataProcessor.js'
 
-const loading = ref(false);
-const todayString = getTodayString();
+const loading = ref(false)
+const todayString = getTodayString()
 const rows = ref([])
 const currentFilterData = ref(null)
 
 const mapStatus = (backendStatus) => {
   switch (backendStatus) {
-    case 'ISSUED': return '발행됨';
-    case 'DRAFT': return '초안';
-    case 'VOID': return '확정';
-    case 'COMPLETED': return '완료';
-    case 'PENDING': return '대기';
-    case 'DELAYED': return '지연';
-    default: return '알 수 없음';
+    case 'ISSUED':
+      return '발행됨'
+    case 'DRAFT':
+      return '초안'
+    case 'VOID':
+      return '확정'
+    case 'COMPLETED':
+      return '완료'
+    case 'PENDING':
+      return '대기'
+    case 'DELAYED':
+      return '지연'
+    default:
+      return '알 수 없음'
   }
-};
+}
 
 const getStatusClass = (status) => {
   const statusMap = {
-    '발행됨': 'status-issued',
-    '완료': 'status-completed',
-    '초안': 'status-draft',
-    '대기': 'status-pending',
-    '지연': 'status-delayed',
-    '무효': 'status-void',
-  };
-  return statusMap[status] || 'status-default';
-};
+    발행됨: 'status-issued',
+    완료: 'status-completed',
+    초안: 'status-draft',
+    대기: 'status-pending',
+    지연: 'status-delayed',
+    무효: 'status-void',
+  }
+  return statusMap[status] || 'status-default'
+}
 
 const formatNumber = (value) => {
-  if (!value && value !== 0) return '0';
-  return Number(value).toLocaleString('ko-KR');
-};
+  if (!value && value !== 0) return '0'
+  return Number(value).toLocaleString('ko-KR')
+}
 
 async function handleSearch(filters) {
-  currentFilterData.value = filters;
-  loading.value = true;
+  currentFilterData.value = filters
+  loading.value = true
 
   try {
     // ✅ API 파라미터 구성 (백엔드 DTO 구조에 맞춤)
     const params = {
       // scope가 null이면 백엔드에서 AR, AP 모두 조회
-      types: filters.scope,  // null | 'AR' | 'AP'
-      vendorId: filters.vendorId === 'ALL'
-        ? null : filters.vendorId,
+      types: filters.scope, // null | 'AR' | 'AP'
+      vendorId: filters.vendorId === 'ALL' ? null : filters.vendorId,
       fromDate: filters.startDate,
       toDate: filters.endDate,
-      searchText: filters.keyword || null
-    };
-
+      searchText: filters.keyword || null,
+    }
 
     // ✅ 단일 API 호출 (Spring Page 객체 반환)
-    const pageData = await getSettlements(params);
+    const pageData = await getSettlements(params)
 
     // ✅ 테이블 데이터 변환
-    rows.value = pageData.content.map(settlement => ({
+    rows.value = pageData.content.map((settlement) => ({
       id: settlement.settlementNo,
-      type: settlement.settlementType,  // 'AR' | 'AP'
-      entity: settlement.storeName === null
-        ? settlement.supplierName
-        : settlement.storeName,
-      period: settlement.settledAt === null ?
-        '정산 미완료' : settlement.settledAt,
+      type: settlement.settlementType, // 'AR' | 'AP'
+      entity: settlement.storeName === null ? settlement.supplierName : settlement.storeName,
+      period: settlement.settledAt === null ? '정산 미완료' : settlement.settledAt,
       qty: settlement.settlementQty,
       total: settlement.settlementAmount,
       status: mapStatus(settlement.settlementStatus),
-      created: formatDateTimeMinute(settlement.createdAt)
-    }));
-
-
+      created: formatDateTimeMinute(settlement.createdAt),
+    }))
   } catch (error) {
-    console.error('❌ 데이터 로드 실패:', error);
+    console.error('❌ 데이터 로드 실패:', error)
 
     // 에러 메시지 상세화
-    let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
+    let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.'
 
     if (error.response) {
       // 서버 응답 에러
-      errorMessage = `서버 오류 (${error.response.status}): ${error.response.data?.message || '알 수 없는 오류'}`;
+      errorMessage = `서버 오류 (${error.response.status}): ${error.response.data?.message || '알 수 없는 오류'}`
     } else if (error.request) {
       // 네트워크 에러
-      errorMessage = '서버와 연결할 수 없습니다. 네트워크 상태를 확인해주세요.';
+      errorMessage = '서버와 연결할 수 없습니다. 네트워크 상태를 확인해주세요.'
     }
 
-    alert(errorMessage);
+    alert(errorMessage)
 
     // 에러 시 데이터 초기화
-    rows.value = [];
+    rows.value = []
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
-onMounted(() => {
-
-});
+onMounted(() => {})
 </script>
 
 <style scoped>
@@ -384,7 +386,8 @@ onMounted(() => {
   color: #334155;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Body cell alignment overrides */
