@@ -64,25 +64,11 @@ public class InventoryServiceImpl implements InventoryService {
     // 입고 반영
     @Override
     @Transactional
-    public void increaseInventory(Purchase purchase) {
-        purchase.getPurchaseDetails().forEach(detail -> {
-            Long productId = detail.getProduct().getProductId();
-            
-            // 창고 재고에서 제품 조회, 없으면 새로 생성
-            WarehouseInventory inventory = warehouseInventoryRepository.findByProduct_ProductId(productId)
-                    .orElseGet(() -> {
-                        // 새로운 창고 재고 생성
-                        WarehouseInventory newInventory = WarehouseInventory.builder()
-                                .warehouse(purchase.getWarehouse())
-                                .product(detail.getProduct())
-                                .onHandQuantity(0)
-                                .safetyQuantity(0)
-                                .build();
-                        return warehouseInventoryRepository.save(newInventory);
-                    });
+    public void increaseInventory(Long productId, int quantity) {
+        WarehouseInventory inventory = warehouseInventoryRepository.findByProduct_ProductId(productId)
+                .orElseThrow(() -> new IllegalStateException("해당 상품의 재고를 찾을 수 없습니다."));
 
-            inventory.increase(detail.getOrderQty().intValue());
-        });
+        inventory.increase(quantity);
     }
 
     // 안전재고 업데이트
@@ -93,8 +79,6 @@ public class InventoryServiceImpl implements InventoryService {
                 warehouseInventoryRepository.findAllWithProductAndSupplier();
 
         for (WarehouseInventory inv : inventoryList) {
-            System.out.println("주문량 확인 전: "+inv.getProduct().getProductId());
-
             Long productId = inv.getProduct().getProductId();
 
             List<Integer> sales = storeOrderDetailRepository.findDailySalesQtySince(
@@ -103,8 +87,6 @@ public class InventoryServiceImpl implements InventoryService {
             );
 
             if (sales.isEmpty()) continue;
-
-            System.out.println("주문량 확인 후:"+inv.getProduct().getProductId());
 
             // 최고판매량
             int dMax = sales.stream().mapToInt(i -> i).max().orElse(0);
@@ -140,7 +122,6 @@ public class InventoryServiceImpl implements InventoryService {
             Long productId = inv.getProduct().getProductId();
             int currentQty = inv.getOnHandQuantity();
             int safetyQty = inv.getSafetyQuantity();
-            System.out.println("currentQty: "+currentQty + " safetyQty: "+safetyQty);
 
             // 최근 30일 판매량 조회
             List<Integer> sales = storeOrderDetailRepository.findDailySalesQtySince(

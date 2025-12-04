@@ -14,6 +14,7 @@ import com.synerge.order101.order.model.entity.StoreOrderStatusLog;
 import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
 import com.synerge.order101.order.model.repository.StoreOrderRepository;
 import com.synerge.order101.order.model.repository.StoreOrderStatusLogRepository;
+import com.synerge.order101.outbound.model.service.OutboundService;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.repository.ProductRepository;
 import com.synerge.order101.purchase.model.dto.PurchaseSummaryResponseDto;
@@ -68,6 +69,7 @@ public class StoreOrderServiceImpl implements StoreOrderService {
     private final ShipmentRepository shipmentRepository;
 
     private final NotificationService notificationService;
+    private final OutboundService outboundService;
 
     /**
      * 주문 목록을 조회합니다.
@@ -185,6 +187,8 @@ public class StoreOrderServiceImpl implements StoreOrderService {
         OrderStatus curStatus = order.getOrderStatus();
 
         if (curStatus == OrderStatus.CONFIRMED) {
+            // 출고 처리
+            outboundService.createOutbound(order);
 
             // 주문 완료 이벤트 발행
             eventPublisher.publishEvent(new StoreOrderSettlementReqEvent(order));

@@ -15,16 +15,18 @@ public interface StoreOrderDetailRepository extends JpaRepository<StoreOrderDeta
     List<StoreOrderDetail> findByStoreOrder_StoreOrderId(Long storeOrderId);
 
     @Query("""
-        SELECT SUM(o.orderQty)
-        FROM StoreOrderDetail o
-        WHERE o.product.productId = :productId
-          AND o.storeOrder.orderStatus = 'CONFIRMED'
-          AND o.storeOrder.updatedAt >= :fromDate
-        GROUP BY FUNCTION('date', o.storeOrder.updatedAt)
-        ORDER BY FUNCTION('date', o.storeOrder.updatedAt)
+        SELECT SUM(d.orderQty)
+        FROM StoreOrderDetail d
+        WHERE d.product.productId = :productId
+          AND d.storeOrder.orderStatus = 'CONFIRMED'
+          AND d.storeOrder.orderDatetime >= :fromDate
+        GROUP BY FUNCTION('date', d.storeOrder.orderDatetime)
+        ORDER BY FUNCTION('date', d.storeOrder.orderDatetime)
     """)
-    List<Integer> findDailySalesQtySince(@Param("productId") Long productId,
-                                        @Param("fromDate") LocalDateTime fromDate
+    List<Integer> findDailySalesQtySince(
+            @Param("productId") Long productId,
+            @Param("fromDate") LocalDateTime fromDate
     );
+
 
 }

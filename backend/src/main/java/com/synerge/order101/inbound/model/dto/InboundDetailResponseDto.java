@@ -12,15 +12,15 @@ import java.util.List;
 @Builder
 public class InboundDetailResponseDto {
 
-    private String inboundNo; // INB-20230110-010
+    private String inboundNo;
 
-    private List<Item> items; // 화면 테이블에 뿌릴 리스트
+    private List<Item> items;
 
     @Getter
     @Builder
     public static class Item {
-        private String productCode;   // 제품 코드
-        private String productName;   // 제품명
-        private Integer receivedQty;  // 입고 수량
+        private String productCode;
+        private String productName;
+        private Integer receivedQty;
     }
 }

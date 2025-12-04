@@ -79,34 +79,25 @@ public class OutboundServiceImpl implements OutboundService {
 
     @Override
     @Transactional
-    public void createOutboundFromShipment(ShipmentInTransitEvent event) {
-        // 주문 조회
-        StoreOrder storeOrder = storeOrderRepository.findById(event.storeOrderId())
-                .orElseThrow(() -> new IllegalStateException("해당 주문을 찾을 수 없습니다: id=" + event.storeOrderId()));
-
+    public void createOutbound(StoreOrder storeOrder) {
         // 출고 생성
         Outbound outbound = Outbound.create(
-                storeOrder.getWarehouse(),  // 주문에 포함된 창고
-                storeOrder.getStore(),      // 주문한 가맹점
+                storeOrder.getWarehouse(),
+                storeOrder.getStore(),
                 generateOutboundNo(storeOrder),
-                "SYSTEM"                    // 작성자
+                "SYSTEM"
         );
         outboundRepository.save(outbound);
 
-        // 주문 상세 기반 출고 상세 생성
+        // 출고 상세 생성 및 재고 차감
         storeOrder.getStoreOrderDetails().forEach(detail -> {
-            OutboundDetail outboundDetail = new OutboundDetail(outbound, detail.getProduct(), detail.getOrderQty().intValue());
+            // 출고 상세 저장
+            OutboundDetail outboundDetail = new OutboundDetail(outbound, detail.getProduct(), detail.getOrderQty());
             outboundDetailRepository.save(outboundDetail);
+
+            // [중요] 재고 차감 (여기서 재고 부족 시 예외 발생하여 트랜잭션 롤백됨)
+            inventoryService.decreaseInventory(detail.getProduct().getProductId(), detail.getOrderQty());
         });
-
-        // 주문 상세 기반 재고 차감
-        storeOrder.getStoreOrderDetails().forEach(detail ->
-                inventoryService.decreaseInventory(detail.getProduct().getProductId(), detail.getOrderQty().intValue())
-        );
-
-        // 로그
-        log.info("출고 생성 및 재고 차감 완료: shipmentId={}, storeOrderId={}",
-                event.shipmentId(), event.storeOrderId());
     }
 
     @Override
@@ -144,7 +135,6 @@ public class OutboundServiceImpl implements OutboundService {
         });
     }
 
-    // 수정
     private String generateOutboundNo(StoreOrder storeOrder) {
         return "OUT-" + storeOrder.getStoreOrderId() + "-" + System.currentTimeMillis();
     }

@@ -3,82 +3,128 @@ package com.synerge.order101.warehouse.model.service;
 import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
+import com.synerge.order101.purchase.model.dto.CalculatedAutoItem;
+import com.synerge.order101.purchase.model.entity.Purchase;
+import com.synerge.order101.purchase.model.entity.PurchaseDetail;
+import com.synerge.order101.supplier.model.entity.Supplier;
+import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
-import org.junit.jupiter.api.BeforeEach;
+import com.synerge.order101.warehouse.model.service.InventoryServiceImpl;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class InventoryServiceImplTest {
 
     @Mock
-    private WarehouseInventoryRepository inventoryRepository;
-
+    private WarehouseInventoryRepository warehouseInventoryRepository;
     @Mock
     private StoreOrderDetailRepository storeOrderDetailRepository;
 
     @InjectMocks
     private InventoryServiceImpl inventoryService;
 
-    private WarehouseInventory inv;
-    private Product product;
-    private ProductSupplier productSupplier;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    // ========================
+    // getInventoryList
+    // ========================
+    @Test
+    void getInventoryList_shouldReturnPagedResult() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<InventoryResponseDto> mockPage = new PageImpl<>(List.of(), pageable, 0);
 
-        // ProductSupplier Mock
-        productSupplier = mock(ProductSupplier.class);
-        when(productSupplier.getLeadTimeDays()).thenReturn(3);
+        when(warehouseInventoryRepository.searchInventory(null, null, null, pageable))
+                .thenReturn(mockPage);
 
-        // Product Mock
-        product = mock(Product.class);
-        when(product.getProductId()).thenReturn(100L);
-        List<ProductSupplier> supplierList = List.of(productSupplier);
-        when(product.getProductSupplier()).thenReturn(supplierList);
+        Page<InventoryResponseDto> result =
+                inventoryService.getInventoryList(1, 10, null, null, null);
 
-        // Inventory Entity (실제 객체)
-        inv = WarehouseInventory.builder()
-                .inventoryId(1L)
-                .product(product)
-                .onHandQuantity(50)
-                .safetyQuantity(0)
-                .build();
-
+        assertThat(result).isEqualTo(mockPage);
+        verify(warehouseInventoryRepository, times(1))
+                .searchInventory(null, null, null, pageable);
     }
 
+
+    // ========================
+    // decreaseInventory
+    // ========================
     @Test
-    void updateDailySafetyStock() {
+    void decreaseInventory_shouldDecreaseQuantity() {
+        WarehouseInventory inventory = mock(WarehouseInventory.class);
 
-        // GIVEN
-        when(inventoryRepository.findAllWithProductAndSupplier())
-                .thenReturn(List.of(inv));
+        when(warehouseInventoryRepository.findByProduct_ProductId(1L))
+                .thenReturn(Optional.of(inventory));
 
-        // 판매량 더미데이터: 5, 10, 8, 12 → max = 12, avg=8.75
-        when(storeOrderDetailRepository.findDailySalesQtySince(
-                eq(100L),
-                any(LocalDateTime.class)
-        )).thenReturn(List.of(5, 10, 8, 12));
+        inventoryService.decreaseInventory(1L, 5);
 
-        // WHEN
-        inventoryService.updateDailySafetyStock();
+        verify(inventory, times(1)).decrease(5);
+    }
 
-        // THEN
-        // 안전재고 공식: (Dmax - Davg) × LT
-        double avg = (5 + 10 + 8 + 12) / 4.0; // 8.75
-        int expectedSafety = (int) Math.ceil((12 - avg) * 3); // (12-8.75)*3 = 9.75 → 10
 
-        assertThat(inv.getSafetyQuantity()).isEqualTo(expectedSafety);
-        System.out.println(expectedSafety);
+    // ========================
+    // increaseInventory
+    // ========================
+    @Test
+    void increaseInventory_shouldIncreaseQuantityForEachDetail() {
+        PurchaseDetail detail = mock(PurchaseDetail.class);
+        Product product = mock(Product.class);
+        when(detail.getOrderQty()).thenReturn(10);
+        when(detail.getProduct()).thenReturn(product);
+        when(product.getProductId()).thenReturn(1L);
+
+        Purchase purchase = mock(Purchase.class);
+        when(purchase.getPurchaseDetails()).thenReturn(List.of(detail));
+
+        WarehouseInventory inventory = mock(WarehouseInventory.class);
+        when(warehouseInventoryRepository.findByProduct_ProductId(1L))
+                .thenReturn(Optional.of(inventory));
+
+        inventoryService.increaseInventory(purchase);
+
+        verify(inventory, times(1)).increase(10);
+    }
+
+
+    // ========================
+    // getAutoPurchaseItems
+    // ========================
+    @Test
+    void getAutoPurchaseItems_shouldReturnCalculatedAutoItems() {
+        Product product = mock(Product.class);
+        when(product.getProductId()).thenReturn(1L);
+
+        Supplier supplier = mock(Supplier.class);
+        when(supplier.getSupplierId()).thenReturn(100L);
+
+        ProductSupplier productSupplier = mock(ProductSupplier.class);
+        when(productSupplier.getLeadTimeDays()).thenReturn(5);
+        when(productSupplier.getSupplier()).thenReturn(supplier);
+        when(product.getProductSupplier()).thenReturn(List.of(productSupplier));
+
+        WarehouseInventory inventory = mock(WarehouseInventory.class);
+        when(inventory.getProduct()).thenReturn(product);
+        when(inventory.getOnHandQuantity()).thenReturn(5);
+        when(inventory.getSafetyQuantity()).thenReturn(15);
+
+        when(warehouseInventoryRepository.findAllWithProduct()).thenReturn(List.of(inventory));
+        when(storeOrderDetailRepository.findDailySalesQtySince(eq(1L), any(LocalDateTime.class)))
+                .thenReturn(List.of(10, 12, 8));   // 평균 10
+
+        List<CalculatedAutoItem> result = inventoryService.getAutoPurchaseItems();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getProductId()).isEqualTo(1L);
+        assertThat(result.get(0).getSupplierId()).isEqualTo(100L);
+        assertThat(result.get(0).getOrderQty()).isEqualTo(60);
     }
 }

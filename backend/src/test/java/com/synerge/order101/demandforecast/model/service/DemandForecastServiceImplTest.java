@@ -56,7 +56,6 @@ class DemandForecastServiceImplTest {
     @Test
     @Order(1)
     @DisplayName("triggerForecast")
-    //Python AI 서버 예측 요청 성공
     void triggerForecast_success() {
         // given
         LocalDate targetWeek = LocalDate.of(2025, 1, 6);
@@ -148,22 +147,23 @@ class DemandForecastServiceImplTest {
 
     @Test
     @Order(4)
-    @DisplayName("triggerRetrain")
-    //Python AI 서버 오류 시 AI_SERVER_ERROR
+    @DisplayName("triggerRetrain - 오류")
     void triggerRetrain_aiError() {
-        // given
+
         given(webClient.post()).willReturn(requestBodyUriSpec);
         given(requestBodyUriSpec.uri("/internal/ai/model/retrain"))
                 .willReturn(requestBodySpec);
         given(requestBodySpec.retrieve()).willReturn(responseSpec);
-        given(responseSpec.toBodilessEntity())
+
+        // ✔ 서비스가 실제 호출하는 부분: bodyToMono()
+        given(responseSpec.bodyToMono(RetrainResultResponseDto.class))
                 .willThrow(new RuntimeException("connection error"));
 
-        // when & then
         assertThatThrownBy(() -> demandForecastService.triggerRetrain())
                 .isInstanceOf(CustomException.class)
                 .hasMessageContaining(AiErrorCode.AI_SERVER_ERROR.getMessage());
     }
+
 
     // Repo
     @Test
