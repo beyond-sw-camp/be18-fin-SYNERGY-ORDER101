@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .cors(customizer ->
                         customizer.configurationSource(getCorsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 1) 로그인 관련
                         .requestMatchers("/api/v1/auth/login", "/product-images/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
@@ -79,6 +80,10 @@ public class SecurityConfig {
 
             // CORS Preflight 요청을 브라우저가 캐싱하는 시간(초 단위)을 설정한다.
             corsConfiguration.setMaxAge(3600L);
+
+            org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
+                    new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+            source.registerCorsConfiguration("/**", corsConfiguration);
 
             return corsConfiguration;
         };
