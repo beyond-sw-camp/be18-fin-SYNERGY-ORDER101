@@ -3,31 +3,24 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo "Starting pre-build stage..."
       - echo Logging in to Amazon ECR...
       - aws --version
-      - REPOSITORY_URI=084375551971.dkr.ecr.ap-northeast-2.amazonaws.com/order101-ai
-      - echo "Repository URI: $REPOSITORY_URI"
-      - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin $REPOSITORY_URI
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - echo "Image Tag: $IMAGE_TAG"
+      - aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 084375551971.dkr.ecr.ap-northeast-2.amazonaws.com
+      - REPO=084375551971.dkr.ecr.ap-northeast-2.amazonaws.com/order101-ai
+      - TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
 
   build:
     commands:
-      - echo "Starting Docker build..."
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      - echo "Docker build and tag completed."
+      - echo Build started on $(date)
+      - docker build -t $REPO:$TAG ./python-server
+      - docker tag $REPO:$TAG $REPO:latest
 
   post_build:
     commands:
-      - echo "Pushing Docker images to ECR..."
-      - docker push $REPOSITORY_URI:latest
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo "Generating imagedefinitions.json for ECS deployment..."
-      - printf '[{"name":"order101-ai-container","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
-      - cat imagedefinitions.json
-      - echo "Post-build completed."
+      - echo Build completed on $(date)
+      - docker push $REPO:$TAG
+      - docker push $REPO:latest
+      - printf "[{\"name\":\"order101-ai-container\",\"imageUri\":\"%s\"}]" $REPO:$TAG > imagedefinitions.json
 
 artifacts:
   files:

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
 const DashboardView = () => import('../views/DashboardView.vue')
+const StoreDashboardView = () => import('../views/StoreDashboardView.vue')
 const PagePlaceholder = () => import('../views/PagePlaceholder.vue')
 const OrderCreateView = () => import('../views/hq/orders/OrderCreateView.vue')
 const OrderStatusView = () => import('../views/hq/orders/OrderStatusView.vue')
@@ -238,7 +239,7 @@ const storeRoutes = [
   {
     path: '/store/dashboard',
     name: 'store-dashboard',
-    component: PagePlaceholder,
+    component: StoreDashboardView,
     meta: { title: '스토어 대시보드' },
   },
   {

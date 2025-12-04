@@ -61,9 +61,3 @@ phases:
         echo "[post_build] syncing dist/ to S3 and invalidating CloudFront"
         aws s3 sync dist/ s3://$S3_BUCKET/ --delete
         aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
-
-# artifacts는 사실 안 써도 되지만, 쓰고 싶다면 dist 기준으로 맞춰줘야 함
-artifacts:
-  files:
-    - '**/*'
-  base-directory: dist
