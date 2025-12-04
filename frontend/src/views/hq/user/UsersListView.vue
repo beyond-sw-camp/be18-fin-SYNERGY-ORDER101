@@ -1,6 +1,6 @@
 <script setup>
+import apiClient from '@/components/api'
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 
 const users = ref([])
 const loading = ref(false)
@@ -22,7 +22,7 @@ async function loadUsers(page = 0, size = 20) {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8080/api/v1/users', { params: { page, size } })
+    const res = await apiClient.get('/api/v1/users', { params: { page, size } })
     const data = res.data || {}
     // According to your API, users are in data.content
     const rawList = Array.isArray(data.content) ? data.content : Array.isArray(data) ? data : []
@@ -63,9 +63,9 @@ async function toggleStatus(user) {
   localStatus.set(user.userId, next)
 
   try {
-    const url = `http://localhost:8080/api/v1/users/${user.userId}/toggle-active`
+    const url = `/api/v1/users/${user.userId}/toggle-active`
     // server expects PATCH without body in your spec; adjust if body required
-    const res = await axios.patch(url)
+    const res = await apiClient.patch(url)
 
     // server returns: { code, message, items: [ user ] }
     const data = res.data || {}
