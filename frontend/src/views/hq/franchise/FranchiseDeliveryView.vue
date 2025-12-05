@@ -105,7 +105,7 @@ const size = ref(20)
 const totalPages = ref(1)
 const totalElements = ref(0)
 
-const MAX_VISIBLE_PAGES = 5  // 보여줄 페이지 버튼 개수
+const MAX_VISIBLE_PAGES = 5 // 보여줄 페이지 버튼 개수
 
 const filters = ref({
   q: '',
@@ -122,11 +122,11 @@ async function fetchDeliveryList() {
         orderNo: filters.value.q || null,
         storeId: filters.value.store === 'all' ? null : filters.value.store,
         status: filters.value.status === 'all' ? null : filters.value.status,
-      }
+      },
     })
 
     const p = res.data
-    rows.value = p.content.map(item => ({
+    rows.value = p.content.map((item) => ({
       id: item.orderNo,
       store: item.storeName,
       warehouse: item.warehouseName || '-',
@@ -137,29 +137,27 @@ async function fetchDeliveryList() {
 
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
-
   } catch (e) {
     console.error('배송 목록 조회 실패', e)
   }
 }
 
-
 async function changePage(clientPage) {
   if (clientPage < 1 || clientPage > totalPages.value) return
   page.value = clientPage - 1
   await fetchDeliveryList()
-function goPrev() {
-  if (page.value > 0) {
-    changePage(page.value);
+  function goPrev() {
+    if (page.value > 0) {
+      changePage(page.value)
+    }
   }
 }
 
 function goNext() {
   if (page.value + 1 < totalPages.value) {
-    changePage(page.value + 2);
+    changePage(page.value + 2)
   }
 }
-
 
 const pageNumbers = computed(() => {
   const pages = []
@@ -192,7 +190,7 @@ function resetFilter() {
 }
 
 const storeOptions = computed(() => {
-  const set = new Set(rows.value.map(r => r.store))
+  const set = new Set(rows.value.map((r) => r.store))
   return [...set]
 })
 
@@ -203,7 +201,7 @@ function statusClass(s) {
 }
 
 function statusLabel(s) {
-  const opt = statusOptions.find(o => o.key === s)
+  const opt = statusOptions.find((o) => o.key === s)
   return opt ? opt.label : s
 }
 
