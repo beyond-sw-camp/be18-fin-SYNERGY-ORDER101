@@ -33,7 +33,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Settlement Service 단위 테스트")
+@DisplayName("SettlementServiceImplTest")
 class SettlementServiceImplTest {
 
     @Mock

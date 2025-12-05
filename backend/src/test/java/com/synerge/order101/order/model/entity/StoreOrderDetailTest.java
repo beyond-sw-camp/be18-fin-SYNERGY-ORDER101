@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("StoreOrderDetail 엔티티 테스트")
+@DisplayName("StoreOrderDetailTest")
 class StoreOrderDetailTest {
 
     private StoreOrder storeOrder;

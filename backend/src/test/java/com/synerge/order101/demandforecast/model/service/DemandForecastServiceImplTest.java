@@ -27,7 +27,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 
-
+@DisplayName("DemandForecastServiceImplTest")
 @ExtendWith(MockitoExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class DemandForecastServiceImplTest {
