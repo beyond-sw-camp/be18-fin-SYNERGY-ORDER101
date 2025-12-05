@@ -1,4 +1,4 @@
 #!/bin/bash
-
-docker stop order101-ai || true
-docker rm order101-ai || true
+echo "Stopping python-server..."
+docker stop python-server || true
+docker rm python-server || true

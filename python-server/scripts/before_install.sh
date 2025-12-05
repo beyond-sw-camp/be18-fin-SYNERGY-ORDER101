@@ -1,9 +1,7 @@
 #!/bin/bash
+echo "BeforeInstall: cleaning old containers"
 
-echo "Stopping existing python-server container (if exist)..."
+docker stop python-server || true
+docker rm python-server || true
 
-docker stop order101-ai || true
-docker rm order101-ai || true
-
-echo "Cleanup old images..."
-docker system prune -af || true
+mkdir -p /home/ec2-user/python-server
