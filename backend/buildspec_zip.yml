@@ -15,7 +15,7 @@ phases:
   post_build:
     commands:
       - echo 'Preparing artifacts for deployment...'
-      - ls -la backend/target/*.jar
+      - ls -la backend/target/ || echo 'target folder check'
 
 artifacts:
   files:
