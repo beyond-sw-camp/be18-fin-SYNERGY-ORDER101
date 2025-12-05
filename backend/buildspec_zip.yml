@@ -1,26 +1,23 @@
 version: 0.2
 
-# 빌드 과정 정의
 phases:
   install:
     commands:
-      - echo 'Installing necessary dependencies (Skipping for standard Java/Maven setup)...'
-
+      - echo 'Installing necessary dependencies...'
   build:
     commands:
-      - echo 'Starting Maven package build (Skipping tests)...'
+      - echo 'Starting Maven package build...'
       - mvn clean package -Dmaven.test.skip=true -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE
       - echo 'Build process complete.'
-      
   post_build:
     commands:
       - echo 'Preparing artifacts for deployment...'
       - ARTIFACT_NAME=$(ls target/*.jar | head -n 1)
-      - echo "Primary JAR file found: $ARTIFACT_NAME"
-      
+      - echo "Primary JAR file found - $ARTIFACT_NAME"
+
 artifacts:
   files:
     - target/*.jar
     - appspec.yml
     - scripts/*
-  name: "backend-deploy-artifact.zip"
+  name: backend-deploy-artifact.zip
