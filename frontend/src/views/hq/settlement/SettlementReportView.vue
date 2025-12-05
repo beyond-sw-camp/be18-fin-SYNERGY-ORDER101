@@ -173,10 +173,9 @@ async function handleSearch(filters) {
     try {
         // API 파라미터 구성
         const params = {
-            // scope가 null이면 백엔드에서 AR, AP 모두 조회
-            types: filters.scope,  // null | 'AR' | 'AP'
-            vendorId: filters.vendorId === 'ALL'
-                ? null : filters.vendorId,
+            // scope가 ALL이면 백엔드에서 AR, AP 모두 조회
+            types: filters.scope,  // 'ALL' | 'AR' | 'AP' (getSettlementReport에서 처리)
+            vendorId: filters.vendorId, // getSettlementReport에서 'ALL' 처리
             fromDate: filters.startDate,
             toDate: filters.endDate,
             searchText: filters.keyword || null
@@ -197,7 +196,9 @@ async function handleSearch(filters) {
         }
 
         // 프론트엔드에서 데이터 가공
-        const processor = new SettlementDataProcessor(pageData);
+        // 'ALL'이면 null로 변환하여 전체 조회
+        const scopeForProcessor = filters.scope === 'ALL' ? null : filters.scope;
+        const processor = new SettlementDataProcessor(pageData, scopeForProcessor);
 
         summaryData.value = processor.getSummary();
         monthlyData.value = processor.getMonthlyData();
