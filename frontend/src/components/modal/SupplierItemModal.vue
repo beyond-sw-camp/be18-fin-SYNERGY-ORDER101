@@ -13,8 +13,8 @@
 </template>
 
 <script setup>
+import apiClient from '../api'
 import BaseItemModal from './BaseItemModal.vue'
-import axios from 'axios'
 import { getSupplierDetail } from '@/components/api/supplier/supplierService.js'
 
 const emit = defineEmits(['close', 'add'])
@@ -22,8 +22,8 @@ const emit = defineEmits(['close', 'add'])
 const props = defineProps({
   initialSupplierId: {
     type: [String, Number],
-    default: null
-  }
+    default: null,
+  },
 })
 
 /**
@@ -39,12 +39,14 @@ async function fetchSupplierProducts(params) {
     let products = detail.products || []
 
     // 클라이언트 사이드 필터링 (카테고리, 키워드)
-    products = products.filter(item => {
+    products = products.filter((item) => {
       // 키워드 필터링 (SKU 또는 상품명)
       if (keyword) {
         const lowerKeyword = keyword.toLowerCase()
         const matchSku = (item.productCode || item.sku || '')?.toLowerCase().includes(lowerKeyword)
-        const matchName = (item.productName || item.name || '')?.toLowerCase().includes(lowerKeyword)
+        const matchName = (item.productName || item.name || '')
+          ?.toLowerCase()
+          .includes(lowerKeyword)
         if (!matchSku && !matchName) return false
       }
 
@@ -59,16 +61,18 @@ async function fetchSupplierProducts(params) {
     return products
   } else {
     // 공급사 미지정 시 기존 제품 목록 API 사용
-    const res = await axios.get('/api/v1/products', {
-      params: {
-        page: 1,
-        numOfRows: 100,
-        largeCategoryId,
-        mediumCategoryId,
-        smallCategoryId,
-        keyword: keyword || undefined
-      }
-    }).then(r => r.data)
+    const res = await apiClient
+      .get('/api/v1/products', {
+        params: {
+          page: 1,
+          numOfRows: 100,
+          largeCategoryId,
+          mediumCategoryId,
+          smallCategoryId,
+          keyword: keyword || undefined,
+        },
+      })
+      .then((r) => r.data)
 
     return res.items?.[0]?.products || res.products || res.items || []
   }

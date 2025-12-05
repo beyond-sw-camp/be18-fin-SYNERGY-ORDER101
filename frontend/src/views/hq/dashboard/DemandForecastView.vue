@@ -44,15 +44,14 @@
               <th>오차율(MAPE)</th>
               <th>차트</th>
             </tr>
-          </thead>     
-
+          </thead>
 
           <tbody>
             <tr v-for="row in detailRows" :key="row.sku">
               <td>{{ row.sku }}</td>
               <td>{{ row.name }}</td>
               <td>{{ row.forecast }}</td>
-              <td>{{ row.actual ?? "-" }}</td>
+              <td>{{ row.actual ?? '-' }}</td>
               <td>
                 <span class="chip" :class="{ danger: row.metric >= 0.08 }">
                   {{ formatPercent(row.metric) }}
@@ -65,7 +64,6 @@
               </td>
             </tr>
           </tbody>
-
         </table>
       </div>
     </section>
@@ -81,9 +79,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import axios from "axios";
-import SkuChartModal from "@/components/ai/SkuChartModal.vue";
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import SkuChartModal from '@/components/ai/SkuChartModal.vue'
 
 import {
   Chart,
@@ -96,7 +93,8 @@ import {
   BarElement,
   Tooltip,
   Legend,
-} from "chart.js";
+} from 'chart.js'
+import apiClient from '@/components/api'
 
 Chart.register(
   LineController,
@@ -107,84 +105,83 @@ Chart.register(
   BarController,
   BarElement,
   Tooltip,
-  Legend
-);
+  Legend,
+)
 
-const TARGET_WEEK = "2025-12-15";
+const TARGET_WEEK = '2025-12-15'
 
-const loading = ref(false);
-const error = ref("");
+const loading = ref(false)
+const error = ref('')
 
-const lineChartRef = ref(null);
-const barChartRef = ref(null);
-let lineChart = null;
-let barChart = null;
+const lineChartRef = ref(null)
+const barChartRef = ref(null)
+let lineChart = null
+let barChart = null
 
-const timeseries = ref([]);
-const categoryMetrics = ref([]);
-const detailRows = ref([]);
+const timeseries = ref([])
+const categoryMetrics = ref([])
+const detailRows = ref([])
 
 const modal = ref({
   show: false,
   product: null,
-});
+})
 
 function openSkuChart(row) {
-  modal.value = { show: true, product: row };
+  modal.value = { show: true, product: row }
 }
 
 // 퍼센트 표시
-const formatPercent = (v) =>
-  v == null ? "-" : (v * 100).toFixed(1) + "%";
+const formatPercent = (v) => (v == null ? '-' : (v * 100).toFixed(1) + '%')
 
 async function fetchReport() {
-  loading.value = true;
+  loading.value = true
   try {
-    const res = await axios.get("/api/v1/ai/demand-forecast/report", {
+    const res = await apiClient.get('/api/v1/ai/demand-forecast/report', {
       params: { targetWeek: TARGET_WEEK },
-    });
+    })
 
-    timeseries.value = res.data.timeseries;
-    categoryMetrics.value = res.data.categoryMetrics;
-    detailRows.value = res.data.details;
+    timeseries.value = res.data.timeseries
+    categoryMetrics.value = res.data.categoryMetrics
+    detailRows.value = res.data.details
 
-    renderCharts();
+    renderCharts()
   } catch (err) {
-    console.error(err);
-    error.value = "수요 예측 데이터를 불러오지 못했습니다.";
+    console.error(err)
+    error.value = '수요 예측 데이터를 불러오지 못했습니다.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 function renderCharts() {
-  const labels = timeseries.value.map((x) => x.date);
-  const forecast = timeseries.value.map((x) => x.forecast);
-  const actual = timeseries.value.map((x) => x.actual);
+  const labels = timeseries.value.map((x) => x.date)
+  const forecast = timeseries.value.map((x) => x.forecast)
+  const actual = timeseries.value.map((x) => x.actual)
 
   // --- line chart ---
-  if (lineChart) lineChart.destroy();
-  lineChart = new Chart(lineChartRef.value.getContext("2d"), {
-    type: "line",
+  if (lineChart) lineChart.destroy()
+  lineChart = new Chart(lineChartRef.value.getContext('2d'), {
+    type: 'line',
     data: {
       labels,
       datasets: [
         {
-          label: "예측",
+          label: '예측',
           data: forecast,
           borderWidth: 2,
           tension: 0.3,
-          borderColor: "#6366F1",
-          backgroundColor: "rgba(99, 102, 241, 0.2)",
+          borderColor: '#6366F1',
+          backgroundColor: 'rgba(99, 102, 241, 0.2)',
           pointRadius: 2,
         },
         {
-          label: "실제",
+          label: '실제',
           data: actual,
           borderWidth: 2,
           tension: 0.3,
-          borderColor: "#EF4444",
-          backgroundColor: "rgba(239, 68, 68, 0.2)",
+          borderColor: '#EF4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
           pointRadius: 2,
         },
       ],
@@ -192,45 +189,44 @@ function renderCharts() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      tension: 0.4,   
-      plugins: { legend: { position: "top" } },
+      tension: 0.4,
+      plugins: { legend: { position: 'top' } },
       scales: {
         x: {
           ticks: {
-            maxTicksLimit: 12,   
+            maxTicksLimit: 12,
             maxRotation: 0,
-          }
+          },
         },
-        y: { beginAtZero: false }
-      }
-    }
-  });
+        y: { beginAtZero: false },
+      },
+    },
+  })
 
   // --- bar chart ---
-  if (barChart) barChart.destroy();
-  barChart = new Chart(barChartRef.value.getContext("2d"), {
-    type: "bar",
+  if (barChart) barChart.destroy()
+  barChart = new Chart(barChartRef.value.getContext('2d'), {
+    type: 'bar',
     data: {
       labels: categoryMetrics.value.map((c) => c.category),
       datasets: [
         {
-          label: "오차율(%)",
+          label: '오차율(%)',
           data: categoryMetrics.value.map((c) => (c.metric ?? 0) * 100),
-          backgroundColor: "#34D399",
-          borderColor: "#059669",
+          backgroundColor: '#34D399',
+          borderColor: '#059669',
           borderWidth: 1,
         },
       ],
     },
-  });
+  })
 }
 
-
-onMounted(fetchReport);
+onMounted(fetchReport)
 onBeforeUnmount(() => {
-  if (lineChart) lineChart.destroy();
-  if (barChart) barChart.destroy();
-});
+  if (lineChart) lineChart.destroy()
+  if (barChart) barChart.destroy()
+})
 </script>
 
 <style scoped>
@@ -249,13 +245,13 @@ onBeforeUnmount(() => {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  max-height: 380px;   /* 차트가 너무 커지지 않도록 제한 */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  max-height: 380px; /* 차트가 너무 커지지 않도록 제한 */
 }
 
 .chart-card canvas {
   width: 100% !important;
-  height: 260px !important;   /* 차트 높이 고정 */
+  height: 260px !important; /* 차트 높이 고정 */
 }
 
 .card-header h2 {
@@ -274,7 +270,7 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   padding: 20px;
   margin-top: 28px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .forecast-table {
@@ -298,7 +294,6 @@ onBeforeUnmount(() => {
 .forecast-table th:nth-child(2) {
   text-align: left;
 }
-
 
 .center {
   text-align: center;
@@ -328,4 +323,3 @@ onBeforeUnmount(() => {
   color: #000;
 }
 </style>
-

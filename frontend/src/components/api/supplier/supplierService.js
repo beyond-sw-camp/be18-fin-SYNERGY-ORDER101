@@ -1,6 +1,4 @@
 // supplierService.js
-
-import axios from 'axios'
 import apiClient from '..'
 
 /**
