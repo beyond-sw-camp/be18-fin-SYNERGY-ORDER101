@@ -106,11 +106,9 @@ const handleSubmit = async () => {
   if (form.memberType === 'STORE_ADMIN') {
     payload.storeId = form.storeId
   }
-  console.log(payload)
   try {
     const resp = await apiClient.post('/api/v1/users/register', payload)
     // on success, reset form and inform user
-    console.log('user registered', resp.data)
     // show success message and navigate to dashboard
     try {
       // friendly success message in Korean
@@ -121,7 +119,6 @@ const handleSubmit = async () => {
     handleReset()
     router.push({ name: 'hq-dashboard' })
   } catch (e) {
-    console.error('registration failed', e)
     // try to surface server errors
     if (e.response && e.response.data && e.response.data.message) {
       errors.loginId = e.response.data.message

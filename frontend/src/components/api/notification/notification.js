@@ -22,7 +22,7 @@ export const useNotificationStore = defineStore('notification', {
   }),
 
   getters: {
-    // ✅ 더 불러올 게 남았는지 여부
+    // 더 불러올 게 남았는지 여부
     hasMore: (s) => s.notifications.length < s.totalCount,
   },
 
@@ -70,7 +70,6 @@ export const useNotificationStore = defineStore('notification', {
     async fetchUnreadCount() {
       const { data } = await apiClient.get('/api/v1/notifications/unread-count')
       this.unreadCount = data.items?.[0]?.count ?? 0
-      console.log(this.unreadCount)
     },
 
     connectSSE(token) {

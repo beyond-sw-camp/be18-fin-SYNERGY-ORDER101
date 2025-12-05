@@ -11,6 +11,7 @@ import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
 import com.synerge.order101.warehouse.model.service.InventoryServiceImpl;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -22,7 +23,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-
+@DisplayName("InventoryServiceImplTest")
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceImplTest {
 

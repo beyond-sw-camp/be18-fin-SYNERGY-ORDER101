@@ -79,7 +79,6 @@
     <!-- 품목 추가 모달 (OrderItemModal - 전체 품목 조회) -->
     <OrderItemModal
       v-if="showItemModal"
-      :storeId="authStore.userInfo?.storeId"
       @close="showItemModal = false"
       @add="onAddItems"
     />

@@ -114,7 +114,6 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  console.log('필터 검색:', filterData)
   filters.value = {
     vendorId: filterData.vendorId === null || filterData.vendorId === 'ALL' ? null : filterData.vendorId,
     startDate: filterData.startDate,
@@ -129,7 +128,7 @@ function handleSearch(filterData) {
 // API 조회
 const searchStoreOrders = async () => {
   try {
-    // API 파라미터 구성 (Settlement과 동일한 패턴)
+    // API 파라미터 구성
     const params = {
       vendorId: filters.value.vendorId || null,
       fromDate: filters.value.startDate || null,
@@ -139,7 +138,7 @@ const searchStoreOrders = async () => {
     };
 
 
-    // 단일 API 호출 (Spring Page 객체 반환)
+    // API 호출 (Spring Page 객체 반환)
     const pageData = await getFranchiseOrderList(
       currentPage.value,
       perPage.value,
@@ -162,8 +161,6 @@ const searchStoreOrders = async () => {
     }));
 
   } catch (error) {
-    console.error('데이터 로드 실패:', error);
-
     let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
 
     if (error.response) {
@@ -251,13 +248,12 @@ async function approve(row) {
     const { updateStoreOrderStatus } = await import('@/components/api/store/StoreService.js')
     await updateStoreOrderStatus(row.id, 'CONFIRMED')
 
-    // ✅ 목록에서 제거 (필터링)
+    // 목록에서 제거
     rows.value = rows.value.filter(r => r.id !== row.id)
     totalElements.value = Math.max(0, totalElements.value - 1)
 
     alert(`${row.store} 가맹점의 주문이 승인되었습니다.`)
   } catch (error) {
-    console.error('승인 처리 실패:', error)
     alert('승인 처리 중 오류가 발생했습니다.')
   }
 }
@@ -269,13 +265,12 @@ async function reject(row) {
     const { updateStoreOrderStatus } = await import('@/components/api/store/StoreService.js')
     await updateStoreOrderStatus(row.id, 'REJECTED')
 
-    // ✅ 목록에서 제거 (필터링)
+    // 목록에서 제거
     rows.value = rows.value.filter(r => r.id !== row.id)
     totalElements.value = Math.max(0, totalElements.value - 1)
 
     alert(`${row.store} 가맹점의 주문이 반려되었습니다.`)
   } catch (error) {
-    console.error('반려 처리 실패:', error)
     alert('반려 처리 중 오류가 발생했습니다.')
   }
 }

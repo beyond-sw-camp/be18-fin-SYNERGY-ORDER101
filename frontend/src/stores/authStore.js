@@ -116,7 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return true
     } catch (error) {
-      console.error('토큰 재발급 실패')
+      // 토큰 재발급 실패 - 로그인 페이지로 리다이렉트 필요
     }
   }
 

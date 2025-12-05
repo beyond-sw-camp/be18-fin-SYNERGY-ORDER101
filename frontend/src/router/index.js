@@ -316,7 +316,7 @@ router.beforeEach(async (to, from, next) => {
         loggedIn = !!(authStore.userInfo.accessToken && newExpires > Date.now())
       }
     } catch (err) {
-      console.debug('refresh failed', err)
+      // refresh failed - user needs to log in again
     }
   }
 

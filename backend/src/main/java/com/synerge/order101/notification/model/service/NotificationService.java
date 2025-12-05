@@ -40,7 +40,6 @@ public class NotificationService {
     private final UserRepository userRepository;
 
     public ItemsResponseDto<Notification> getNotifications(User user, int page, int size) {
-        System.out.println(user);
         if(user == null) {
             throw new CustomException(CommonErrorCode.ACCESS_DENIED);
         }

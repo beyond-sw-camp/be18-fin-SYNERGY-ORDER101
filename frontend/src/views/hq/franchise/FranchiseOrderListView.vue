@@ -112,7 +112,6 @@ onMounted(() => {
 
 // 필터 검색 이벤트 핸들러
 function handleSearch(filterData) {
-  console.log('필터 검색:', filterData)
   filters.value = {
     vendorId: filterData.vendorId === null || filterData.vendorId === 'ALL' ? null : filterData.vendorId,
     startDate: filterData.startDate,
@@ -135,15 +134,11 @@ const searchStoreOrders = async () => {
       searchText: filters.value.keyword || null
     };
 
-    console.log('요청 파라미터:', params);
-
     const pageData = await getFranchiseOrderList(
       currentPage.value,
       perPage.value,
       params
     );
-
-    console.log('API 응답:', pageData);
 
     totalElements.value = pageData.totalElements || 0;
     totalPagesFromBackend.value = pageData.totalPages || 1;
@@ -159,11 +154,7 @@ const searchStoreOrders = async () => {
       status: mapPurchaseStatus(item.orderStatus || item.status)
     }));
 
-    console.log('변환된 데이터:', rows.value);
-
   } catch (error) {
-    console.error('데이터 로드 실패:', error);
-
     let errorMessage = '데이터를 불러오는 중 오류가 발생했습니다.';
 
     if (error.response) {

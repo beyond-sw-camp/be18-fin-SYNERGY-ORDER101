@@ -284,7 +284,7 @@ onMounted(() => {
 
 /* 검색 버튼 */
 .search-btn {
-  flex: 0 0 80px; /* ✅ 버튼 폭 고정 (원하면 70~100px 사이로 조절) */
+  flex: 0 0 80px; /* 버튼 폭 고정 */
   padding: 8px 0; /* 위아래만 패딩 → 폭은 flex가 결정 */
   border-radius: 8px;
   border: 1px solid #6b46ff;

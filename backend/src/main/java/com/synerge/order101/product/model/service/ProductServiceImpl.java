@@ -234,7 +234,6 @@ public class ProductServiceImpl implements ProductService {
                         .occurredAt(((Timestamp) r[3]).toLocalDateTime())
                         .build())
                 .toList();
-        System.out.println(items);
         return ProductInventoryDetailRes.builder()
                 .summary(summary)
                 .items(items)

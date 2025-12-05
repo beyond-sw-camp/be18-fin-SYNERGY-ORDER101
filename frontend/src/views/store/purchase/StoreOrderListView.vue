@@ -144,7 +144,6 @@ onMounted(() => {
 })
 
 function handleSearch(filterData) {
-  console.log('🔍 발주 필터 검색:', filterData)
   filters.value = {
     statuses: filterData.status !== 'ALL' ? filterData.status : null,
     searchText: filterData.keyword || null,
@@ -181,13 +180,9 @@ async function search() {
     if (filters.value.startDate) params.fromDate = filters.value.startDate
     if (filters.value.endDate) params.toDate = filters.value.endDate
 
-    console.log('📤 API 요청 파라미터:', params)
-
     // GET /api/v1/store-orders (StoreOrderController.findStoreOrders)
     const response = await axios.get('/api/v1/store-orders', { params })
     const data = response.data
-
-    console.log('📥 API 응답 데이터:', data)
 
     totalElements.value = data.totalElements || 0
     totalPagesFromBackend.value = data.totalPages || 1
@@ -209,7 +204,6 @@ async function search() {
     })
 
   } catch (err) {
-    console.error('발주 목록을 가져오는 중 오류 발생:', err)
     error.value = err.message || '발주 목록을 불러올 수 없습니다.'
   } finally {
     loading.value = false

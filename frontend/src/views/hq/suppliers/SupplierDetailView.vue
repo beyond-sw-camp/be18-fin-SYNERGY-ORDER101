@@ -208,7 +208,7 @@ onMounted(() => {
 })
 
 const handleSearch = () => {
-  fetchSupplierDetail(1) // ✅ 항상 1페이지부터 다시
+  fetchSupplierDetail(1) // 항상 1페이지부터 다시
 }
 </script>
 

@@ -100,9 +100,7 @@ export async function getWarehouseList(page = 1, pageSize = 100) {
       currentPage: apiData.page ?? page,
     }
   } catch (error) {
-    console.error('[API Error] 창고 목록 조회 실패:', error.message, error.response)
     // API 실패 시 기본 창고 데이터로 fallback
-    console.warn('기본 창고 데이터를 사용합니다.')
     return {
       warehouses: DEFAULT_WAREHOUSE_LIST,
       totalCount: DEFAULT_WAREHOUSE_LIST.length,
@@ -148,7 +146,6 @@ export async function getInventoryList(page = 1, pageSize = 10) {
       currentPage: apiData.page ?? page,
     }
   } catch (error) {
-    console.error('[API Error] 창고 재고 목록 조회 실패:', error.message, error.response)
     throw new Error('창고 재고 API 서버와의 통신에 실패했습니다.')
   }
 }
@@ -174,7 +171,6 @@ export async function updateInventoryQuantity(productId, quantity) {
     const response = await apiClient.post(url, requestDto)
     return response.data
   } catch (error) {
-    console.error('[API Error] 재고 수량 변경 실패:', error.message, error.response)
     throw new Error('재고 수량 변경에 실패했습니다.')
   }
 }

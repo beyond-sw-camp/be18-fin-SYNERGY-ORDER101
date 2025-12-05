@@ -22,7 +22,6 @@ const showWareHouseModal = ref(false)
 const selectedWareHouse = ref(null)
 
 function onWareHouseSelect(result) {
-  console.log('Warehouse selected:', result)
   selectedWareHouse.value = result
   // Check for both possible property names
   form.defaultWarehouseId = result.warehouseId || result.id || ''
@@ -47,8 +46,6 @@ const canSubmit = computed(() => {
 })
 
 const handleSubmit = async () => {
-  console.log('handleSubmit called')
-
   // basic validation
   errors.storeName = ''
   errors.address = ''
@@ -79,17 +76,13 @@ const handleSubmit = async () => {
     defaultWarehouseId: form.defaultWarehouseId,
   }
 
-  console.log('Submitting payload:', payload)
   try {
     const resp = await apiClient.post('/api/v1/stores', payload)
-    console.log('store registered', resp.data)
     window.alert('가맹점을 등록하였습니다.')
     handleReset()
     // 창고 선택 상태도 초기화
     selectedWareHouse.value = null
   } catch (e) {
-    console.error('registration failed', e)
-    console.error('error response:', e.response)
     // try to surface server errors
     const errorMsg = e.response?.data?.message || e.message || '등록에 실패했습니다.'
     window.alert(errorMsg)

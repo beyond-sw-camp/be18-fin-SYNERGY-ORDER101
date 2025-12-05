@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("StoreOrder 엔티티 테스트")
+@DisplayName("StoreOrderTest")
 class StoreOrderTest {
 
     private Store store;

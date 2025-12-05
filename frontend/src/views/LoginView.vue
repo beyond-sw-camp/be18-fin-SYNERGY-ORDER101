@@ -29,7 +29,6 @@ const handleLogin = async () => {
       router.push('/hq/dashboard')
     }
   } catch (err) {
-    console.error('login error', err)
     window.alert('로그인 중 오류가 발생했습니다.')
   }
 }

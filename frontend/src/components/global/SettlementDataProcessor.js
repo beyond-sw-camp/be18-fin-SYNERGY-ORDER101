@@ -2,13 +2,14 @@
  * 정산 데이터 가공 유틸리티
  */
 export class SettlementDataProcessor {
-    constructor(pageData) {
-        // ✅ Spring Page 객체 구조 처리
+    constructor(pageData, filterScope = null) {
+        // Spring Page 객체 구조 처리
         this.settlements = pageData.content || [];
         this.totalElements = pageData.totalElements || 0;
         this.totalPages = pageData.totalPages || 0;
         this.currentPage = pageData.number || 0;
         this.pageSize = pageData.size || 20;
+        this.filterScope = filterScope; // 'AR' | 'AP' | null
     }
 
     /**
@@ -85,7 +86,12 @@ export class SettlementDataProcessor {
     getRatioData() {
         const vendorMap = new Map();
 
-        this.settlements.forEach(item => {
+        // 필터 scope에 따라 데이터 필터링
+        const filteredSettlements = this.filterScope
+            ? this.settlements.filter(item => item.settlementType === this.filterScope)
+            : this.settlements;
+
+        filteredSettlements.forEach(item => {
             // settlementType에 따라 이름 선택
             const name = item.settlementType === 'AR'
                 ? item.storeName      // 가맹점
@@ -128,7 +134,12 @@ export class SettlementDataProcessor {
     getTableData() {
         const vendorMap = new Map();
 
-        this.settlements.forEach(item => {
+        // 필터 scope에 따라 데이터 필터링
+        const filteredSettlements = this.filterScope
+            ? this.settlements.filter(item => item.settlementType === this.filterScope)
+            : this.settlements;
+
+        filteredSettlements.forEach(item => {
             const key = item.settlementType === 'AR'
                 ? item.storeName
                 : item.supplierName;
@@ -153,11 +164,14 @@ export class SettlementDataProcessor {
             vendor.statuses.add(item.settlementStatus);
         });
 
-        return Array.from(vendorMap.values()).map(vendor => ({
-            ...vendor,
-            status: this._determineOverallStatus(vendor.statuses),
-            statuses: Array.from(vendor.statuses)  // Set → Array
-        }));
+        // 금액 기준 내림차순 정렬
+        return Array.from(vendorMap.values())
+            .map(vendor => ({
+                ...vendor,
+                status: this._determineOverallStatus(vendor.statuses),
+                statuses: Array.from(vendor.statuses)  // Set → Array
+            }))
+            .sort((a, b) => b.netAmount - a.netAmount);
     }
 
     // ========== Private Methods ==========

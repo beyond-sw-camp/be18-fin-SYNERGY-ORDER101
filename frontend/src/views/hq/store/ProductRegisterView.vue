@@ -264,14 +264,12 @@ const onSave = async () => {
     alert('상품이 등록되었습니다.')
 
     const newId = created?.productId
-    console.log(newId)
     if (newId) {
       router.push({ name: 'hq-product-detail', params: { id: newId } })
     } else {
       router.push({ name: 'hq-products-list' })
     }
   } catch (e) {
-    console.error(e)
     alert(e?.response?.data?.message || '상품 등록에 실패했습니다.')
   } finally {
     saving.value = false

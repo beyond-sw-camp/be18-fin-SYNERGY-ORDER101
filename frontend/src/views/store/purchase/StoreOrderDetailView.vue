@@ -262,10 +262,7 @@ async function fetchDetail() {
         orderQty: it.qty,
         unitPrice: it.price
       })) || []
-
-    console.log('주문 상세 조회 완료:', detail)
   } catch (error) {
-    console.error('주문 상세 조회 실패:', error)
     alert('주문 상세 정보를 불러오는데 실패했습니다.')
   }
 }

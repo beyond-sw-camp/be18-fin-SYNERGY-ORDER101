@@ -38,7 +38,6 @@ async function loadUsers(page = 0, size = 20) {
       localStatus.set(u.userId, u.isActive ? '활성' : '비활성화')
     })
   } catch (err) {
-    console.error('loadUsers error', err)
     error.value = err.response?.data?.message || err.message || '사용자 목록을 불러오지 못했습니다.'
   } finally {
     loading.value = false
@@ -90,7 +89,6 @@ async function toggleStatus(user) {
     const msg = err.response?.data?.message || err.message || '상태 변경에 실패했습니다.'
     // show a simple alert for now
     window.alert(msg)
-    console.error('toggleStatus error', err)
   }
 }
 </script>
