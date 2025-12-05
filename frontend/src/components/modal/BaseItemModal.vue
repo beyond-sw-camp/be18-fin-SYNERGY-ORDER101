@@ -15,23 +15,36 @@
             </option>
           </select>
 
-          <select v-model="filters.mediumCategoryId" class="select" :disabled="!filters.largeCategoryId"
-            @change="onMediumCategoryChange">
+          <select
+            v-model="filters.mediumCategoryId"
+            class="select"
+            :disabled="!filters.largeCategoryId"
+            @change="onMediumCategoryChange"
+          >
             <option :value="null">전체 중분류</option>
             <option v-for="cat in mediumCategories" :key="cat.id" :value="cat.id">
               {{ cat.name }}
             </option>
           </select>
 
-          <select v-model="filters.smallCategoryId" class="select" :disabled="!filters.mediumCategoryId"
-            @change="fetchProducts">
+          <select
+            v-model="filters.smallCategoryId"
+            class="select"
+            :disabled="!filters.mediumCategoryId"
+            @change="fetchProducts"
+          >
             <option :value="null">전체 소분류</option>
             <option v-for="cat in smallCategories" :key="cat.id" :value="cat.id">
               {{ cat.name }}
             </option>
           </select>
 
-          <input v-model="filters.keyword" placeholder="제품 SKU 또는 이름 검색..." class="search" @input="onSearchInput" />
+          <input
+            v-model="filters.keyword"
+            placeholder="제품 SKU 또는 이름 검색..."
+            class="search"
+            @input="onSearchInput"
+          />
         </div>
 
         <div v-if="loading" class="loading-state">
@@ -61,7 +74,9 @@
             <tbody>
               <tr v-for="item in items" :key="item.sku">
                 <td><input type="checkbox" v-model="selectedMap[item.sku]" /></td>
-                <td><code class="sku">{{ item.sku }}</code></td>
+                <td>
+                  <code class="sku">{{ item.sku }}</code>
+                </td>
                 <td>{{ item.name }}</td>
                 <td v-if="showPrice" class="numeric">
                   <Money :value="item.price" />
@@ -70,7 +85,12 @@
                 <td v-if="showLeadTime" class="numeric">{{ item.lead }}일</td>
               </tr>
               <tr v-if="!items.length">
-                <td :colspan="3 + (showPrice ? 1 : 0) + (showStock ? 1 : 0) + (showLeadTime ? 1 : 0)" class="empty-state">검색 결과가 없습니다.</td>
+                <td
+                  :colspan="3 + (showPrice ? 1 : 0) + (showStock ? 1 : 0) + (showLeadTime ? 1 : 0)"
+                  class="empty-state"
+                >
+                  검색 결과가 없습니다.
+                </td>
               </tr>
             </tbody>
           </table>
@@ -92,46 +112,46 @@
 
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
-import axios from 'axios'
 import Money from '@/components/global/Money.vue'
+import apiClient from '../api'
 
 const emit = defineEmits(['close', 'add'])
 
 const props = defineProps({
   title: {
     type: String,
-    default: '품목 추가'
+    default: '품목 추가',
   },
   // 상품 목록을 로드하는 함수 (외부에서 주입)
   fetchProductsFn: {
     type: Function,
-    required: true
+    required: true,
   },
   // 추가적인 필터 파라미터 (공급사 ID 등)
   additionalFilters: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   // 단가 칸럼 표시 여부
   showPrice: {
     type: Boolean,
-    default: true
+    default: true,
   },
   // 가격 칸럼 라벨 (단가 또는 가격)
   priceLabel: {
     type: String,
-    default: '단가'
+    default: '단가',
   },
   // 재고 칸럼 표시 여부
   showStock: {
     type: Boolean,
-    default: true
+    default: true,
   },
   // 리드타임 칸럼 표시 여부
   showLeadTime: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 })
 
 // --- State (반응형 데이터) ---
@@ -150,7 +170,7 @@ const filters = reactive({
   largeCategoryId: null,
   mediumCategoryId: null,
   smallCategoryId: null,
-  keyword: ''
+  keyword: '',
 })
 
 // 검색 디바운스 타이머
@@ -162,10 +182,10 @@ const selectedCount = computed(() => {
 })
 
 const isAllSelected = computed(() => {
-  const productSkus = items.value.map(item => item.sku)
+  const productSkus = items.value.map((item) => item.sku)
   if (productSkus.length === 0) return false
 
-  return productSkus.every(sku => selectedMap[sku])
+  return productSkus.every((sku) => selectedMap[sku])
 })
 
 // --- Utilities (유틸리티) ---
@@ -179,7 +199,7 @@ function normalizeProduct(p) {
     price: Number(p.price || p.unitPrice || 0),
     stock: p.stockQuantity ?? p.stock ?? null,
     lead: Number(p.leadTimeDays || p.lead_time_days || 1),
-    _raw: p
+    _raw: p,
   }
 }
 
@@ -199,14 +219,13 @@ async function fetchProducts() {
       largeCategoryId: filters.largeCategoryId,
       mediumCategoryId: filters.mediumCategoryId,
       smallCategoryId: filters.smallCategoryId,
-      keyword: filters.keyword.trim() || undefined
+      keyword: filters.keyword.trim() || undefined,
     }
 
     const productlist = await props.fetchProductsFn(params)
 
     // items.value에 정규화된 상품 목록 저장
     items.value = productlist.map(normalizeProduct)
-
   } catch (e) {
     console.error('상품 로드 실패:', e)
     error.value = e.message || '상품 목록을 불러오는 데 실패했습니다.'
@@ -221,7 +240,7 @@ async function fetchProducts() {
  */
 async function loadLargeCategories() {
   try {
-    const res = await axios.get('/api/v1/categories/top').then(r => r.data)
+    const res = await apiClient.get('/api/v1/categories/top').then((r) => r.data)
     largeCategories.value = res || []
   } catch (e) {
     console.warn('대분류 로드 실패:', e)
@@ -230,9 +249,12 @@ async function loadLargeCategories() {
 }
 
 async function loadMediumCategories(id) {
-  if (!id) { mediumCategories.value = []; return }
+  if (!id) {
+    mediumCategories.value = []
+    return
+  }
   try {
-    const res = await axios.get(`/api/v1/categories/${id}/children`).then(r => r.data)
+    const res = await apiClient.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     mediumCategories.value = res || []
   } catch (e) {
     console.warn('중분류 로드 실패:', e)
@@ -241,9 +263,12 @@ async function loadMediumCategories(id) {
 }
 
 async function loadSmallCategories(id) {
-  if (!id) { smallCategories.value = []; return }
+  if (!id) {
+    smallCategories.value = []
+    return
+  }
   try {
-    const res = await axios.get(`/api/v1/categories/${id}/children`).then(r => r.data)
+    const res = await apiClient.get(`/api/v1/categories/${id}/children`).then((r) => r.data)
     smallCategories.value = res || []
   } catch (e) {
     console.warn('소분류 로드 실패:', e)
@@ -280,12 +305,14 @@ function onSearchInput() {
 // 전체 선택/해제 토글
 function toggleSelectAll(e) {
   const checked = e.target.checked
-  items.value.forEach(i => { selectedMap[i.sku] = checked })
+  items.value.forEach((i) => {
+    selectedMap[i.sku] = checked
+  })
 }
 
 // 선택된 품목 추가 및 모달 닫기
 function addSelected() {
-  const selected = items.value.filter(i => selectedMap[i.sku])
+  const selected = items.value.filter((i) => selectedMap[i.sku])
 
   if (!selected.length) {
     alert('품목을 선택하세요.')
