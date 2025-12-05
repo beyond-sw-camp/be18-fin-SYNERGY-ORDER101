@@ -1,5 +1,9 @@
 #!/bin/bash
-sudo systemctl stop order101-ai || true
+
+echo "Stopping existing python-server container (if exist)..."
+
 docker stop order101-ai || true
 docker rm order101-ai || true
-docker rmi $(docker images -q "order101-ai") || true
+
+echo "Cleanup old images..."
+docker system prune -af || true

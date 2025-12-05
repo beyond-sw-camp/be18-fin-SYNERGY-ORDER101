@@ -1,23 +1,17 @@
 #!/bin/bash
+
 REGION="ap-northeast-2"
-PARAM_PREFIX="/prod/synergy"
+PREFIX="/prod/synergy"
 
-echo "Loading environment variables from SSM Parameter Store..."
+echo "Loading parameters from SSM..."
 
-export DB_HOST=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_host" --with-decryption --region $REGION --query Parameter.Value --output text)
-export DB_PORT=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_port" --with-decryption --region $REGION --query Parameter.Value --output text)
-export DB_NAME=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_name" --with-decryption --region $REGION --query Parameter.Value --output text)
-export DB_USERNAME=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_username" --with-decryption --region $REGION --query Parameter.Value --output text)
-export DB_PASSWORD=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_password" --with-decryption --region $REGION --query Parameter.Value --output text)
+DB_HOST=$(aws ssm get-parameter --name "$PREFIX/db_host" --with-decryption --region $REGION --query "Parameter.Value" --output text)
+DB_PORT=$(aws ssm get-parameter --name "$PREFIX/db_port" --region $REGION --query "Parameter.Value" --output text)
+DB_NAME=$(aws ssm get-parameter --name "$PREFIX/db_name" --region $REGION --query "Parameter.Value" --output text)
+DB_USER=$(aws ssm get-parameter --name "$PREFIX/db_username" --region $REGION --query "Parameter.Value" --output text)
+DB_PASSWORD=$(aws ssm get-parameter --name "$PREFIX/db_password" --with-decryption --region $REGION --query "Parameter.Value" --output text)
 
-export AI_HOST=$(aws ssm get-parameter --name "${PARAM_PREFIX}/ai_host" --region $REGION --query Parameter.Value --output text)
-export AI_PORT=$(aws ssm get-parameter --name "${PARAM_PREFIX}/ai_port" --region $REGION --query Parameter.Value --output text)
-
-export REDIS_HOST=$(aws ssm get-parameter --name "${PARAM_PREFIX}/redis_host" --region $REGION --query Parameter.Value --output text)
-export REDIS_PORT=$(aws ssm get-parameter --name "${PARAM_PREFIX}/redis_port" --region $REGION --query Parameter.Value --output text)
-export REDIS_PASSWORD=$(aws ssm get-parameter --name "${PARAM_PREFIX}/redis_password" --region $REGION --query Parameter.Value --output text)
-
-echo "Starting Python container..."
+echo "Starting python-server container..."
 
 docker run -d \
   --name order101-ai \
@@ -25,6 +19,6 @@ docker run -d \
   -e DB_HOST=$DB_HOST \
   -e DB_PORT=$DB_PORT \
   -e DB_NAME=$DB_NAME \
-  -e DB_USER=$DB_USERNAME \
+  -e DB_USER=$DB_USER \
   -e DB_PASSWORD=$DB_PASSWORD \
-  order101-ai
+  084375551971.dkr.ecr.ap-northeast-2.amazonaws.com/order101-ai:latest
