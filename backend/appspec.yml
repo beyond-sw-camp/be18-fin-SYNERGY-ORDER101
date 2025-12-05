@@ -1,0 +1,36 @@
+version: 0.0
+os: linux 
+
+files:
+  # source: target/*.jar (Artifact ZIP의 루트 기준)
+  # JAR 파일이 이제 Artifact ZIP의 루트에서 'target/' 경로로 바로 보입니다.
+  - source: target/*.jar  
+    destination: /opt/synergy-backend/
+  
+  # scripts 폴더도 Artifact ZIP의 루트에서 바로 보입니다.
+  - source: scripts/ 
+    destination: /opt/synergy-backend/scripts/
+
+permissions:
+  - object: /opt/synergy-backend/scripts/
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
+
+hooks:
+  # hooks 섹션의 location 경로도 'scripts/'로 시작합니다.
+  ApplicationStop:
+    - location: scripts/stop_app.sh 
+      timeout: 60
+      runas: ec2-user 
+
+  AfterInstall:
+    - location: scripts/chmod_jar.sh
+      timeout: 60
+      runas: ec2-user
+      
+  ApplicationStart:
+    - location: scripts/start_app.sh
+      timeout: 120
+      runas: ec2-user

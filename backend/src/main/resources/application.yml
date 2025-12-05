@@ -9,9 +9,9 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
-    show-sql: true
+    show-sql: false
     properties:
-      hibernate.format_sql: true
+      hibernate.format_sql: false
   cache:
     type: redis
   data:
@@ -41,10 +41,10 @@ cloud:
       auto: false
 logging:
   level:
-    root: INFO
-    com.synergy: INFO
-    org.springframework.security: INFO
-    org.hibernate.resource.transaction: INFO
+    root: WARN
+    com.synerge: INFO
+    org.springframework.security: WARN
+    org.hibernate.resource.transaction: ERROR
     org.springframework.jdbc: ERROR
     org.hibernate: ERROR
     org.hibernate.SQL: ERROR

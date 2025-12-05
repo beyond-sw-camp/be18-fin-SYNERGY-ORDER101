@@ -1,0 +1,32 @@
+version: 0.2
+
+# 빌드 과정 정의
+phases:
+  install:
+    commands:
+      - echo 'Installing necessary dependencies (Skipping for standard Java/Maven setup)...'
+
+  build:
+    commands:
+      - echo 'Starting Maven package build (Skipping tests)...'
+      # 1. -Dmaven.test.skip=true로 테스트 스킵
+      # 2. -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE 변수를 Maven 빌드에 전달
+      - mvn clean package -Dmaven.test.skip=true -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE
+      - echo 'Build process complete.'
+      
+  post_build:
+    commands:
+      - echo 'Preparing artifacts for deployment...'
+      - ARTIFACT_NAME=$(ls target/*.jar | head -n 1)
+      - echo "Primary JAR file found: $ARTIFACT_NAME"
+      
+# 아티팩트 정의 (최종 ZIP 파일 생성 지침)
+artifacts:
+  # 최종 배포 ZIP에 포함할 파일 목록입니다.
+  files:
+    - target/*.jar                  # 빌드된 JAR 파일을 포함합니다.
+    - appspec.yml                   # CodeDeploy를 위한 설정 파일을 포함합니다.
+    - scripts/* # (선택 사항) 배포 후 실행할 셸 스크립트 폴더를 포함합니다.
+    
+  # CodePipeline의 다음 단계(배포)로 전달될 최종 ZIP 파일의 이름을 지정합니다.
+  name: "backend-deploy-artifact.zip"
