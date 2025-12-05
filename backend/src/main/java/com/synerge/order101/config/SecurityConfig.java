@@ -15,15 +15,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
@@ -31,16 +30,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
+                .cors(customizer ->
+                        customizer.configurationSource(getCorsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // 프리플라이트는 무조건 허용
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 로그인/이미지 공개
+                        // 1) 로그인 관련
                         .requestMatchers("/api/v1/auth/login", "/product-images/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
 
-                        // 나머지는 일단 전부 허용 (운영 가서는 tighten)
+                        // 나머지 요청은 일단 모두 허용.
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(e -> e
@@ -53,38 +50,42 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
 
-        // 허용할 Origin (실서비스 + 로컬)
-        config.setAllowedOrigins(List.of(
-                "https://order101.link",
-                "https://www.order101.link",
-                "http://localhost:5173",
-                "http://localhost:5174"
-        ));
+    private static CorsConfigurationSource getCorsConfigurationSource() {
 
-        // 허용할 메서드
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        return (request) -> {
+            // CorsConfiguration 객체를 생성해서 CORS 설정을 한다.
+            CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-        // 어떤 헤더들이 와도 허용 (프리플라이트 때문에 * 로 두는 게 안전)
-        config.setAllowedHeaders(List.of("*"));
+            // CORS 요청에서 허용할 출처를 지정한다.
+            corsConfiguration.setAllowedOrigins(Arrays.asList(
+                    "http://localhost:5173",
+                    "http://localhost:5174",
+                    "https://order101.link",
+                    "https://www.order101.link"
+            ));
 
-        // 응답에서 노출할 헤더
-        config.setExposedHeaders(List.of("Authorization"));
+            // CORS 요청에서 허용할 HTTP 메소드를 지정한다.
+            corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-        // 쿠키/Authorization 헤더 허용
-        config.setAllowCredentials(true);
+            // 클라이언트가 요청 시 사용할 수 있는 헤더를 지정한다.
+            corsConfiguration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
 
-        config.setMaxAge(3600L);
+            // 클라이언트가 응답에서 접근할 수 있는 헤더를 지정한다.
+            corsConfiguration.setExposedHeaders(List.of("Authorization"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // 모든 경로에 CORS 적용
-        source.registerCorsConfiguration("/**", config);
-        return source;
+            // 자격 증명(쿠키, 세션) 허용 여부를 설정한다.
+            corsConfiguration.setAllowCredentials(true);
+
+            // CORS Preflight 요청을 브라우저가 캐싱하는 시간(초 단위)을 설정한다.
+            corsConfiguration.setMaxAge(3600L);
+
+            return corsConfiguration;
+        };
     }
+
 }
