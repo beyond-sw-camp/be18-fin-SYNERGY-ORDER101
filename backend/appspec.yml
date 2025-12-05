@@ -2,15 +2,21 @@ version: 0.0
 os: linux 
 
 files:
-  # target/ 폴더 전체를 복사 (와일드카드 미지원)
+  # 이 설정은 buildspec.yml에서 target/**을 아티팩트에 포함시켰다면 정상 작동합니다.
+  # ZIP 파일 안의 'target/' 폴더 내용 전체를 /opt/synergy-backend/ 에 복사합니다.
   - source: target/
     destination: /opt/synergy-backend/
   
-  # scripts 폴더도 Artifact ZIP의 루트에서 바로 보입니다.
   - source: scripts/ 
     destination: /opt/synergy-backend/scripts/
 
 permissions:
+  # 모든 복사된 파일과 폴더에 대해 ec2-user가 실행 및 읽기/쓰기 권한을 갖도록 보장합니다.
+  - object: /opt/synergy-backend/
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
   - object: /opt/synergy-backend/scripts/
     pattern: "**"
     owner: ec2-user
@@ -18,18 +24,22 @@ permissions:
     mode: 755
 
 hooks:
-  # hooks 섹션의 location 경로도 'scripts/'로 시작합니다.
   ApplicationStop:
     - location: scripts/stop_app.sh 
       timeout: 60
       runas: ec2-user 
 
   AfterInstall:
+    # AfterInstall 후크가 JAR 파일의 권한을 755로 설정해주는 역할도 하므로,
+    # chmod_jar.sh 스크립트 내부에서 /opt/synergy-backend/*.jar 파일에 대해
+    # 권한을 확실히 설정해 주는지 확인해 주세요.
     - location: scripts/chmod_jar.sh
       timeout: 60
       runas: ec2-user
       
   ApplicationStart:
+    # start_app.sh 스크립트 내부에서 /opt/synergy-backend/ 경로에 복사된
+    # 새 JAR 파일(예: *.jar)을 찾아서 실행하는 코드가 정확한지 확인해야 합니다.
     - location: scripts/start_app.sh
       timeout: 120
       runas: ec2-user

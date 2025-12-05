@@ -6,7 +6,12 @@
 DEPLOY_PATH="/opt/synergy-backend"
 LOG_PATH="/var/log/synergy/backend.log"
 # JAR 파일 찾기 (배포 시 target/ 폴더 내용물이 직접 복사됨)
-JAR_FILE=$(ls $DEPLOY_PATH/*.jar 2>/dev/null | head -n 1)
+JAR_FILE=$(ls -t $DEPLOY_PATH/*.jar 2>/dev/null | head -n 1)
+
+if [ -z "$JAR_FILE" ]; then
+    echo "ERROR: [$DEPLOY_PATH] 경로에서 실행할 JAR 파일을 찾을 수 없습니다."
+    exit 1
+fi
 
 # 로그 디렉토리 생성 (CodeDeploy는 파일만 복사하므로 디렉토리 생성은 스크립트가 담당)
 mkdir -p $(dirname "$LOG_PATH")
