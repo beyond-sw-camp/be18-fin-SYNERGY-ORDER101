@@ -1,6 +1,6 @@
 <script setup>
+import apiClient from '@/components/api'
 import { ref, onMounted, computed } from 'vue'
-import axios from 'axios'
 
 const stores = ref([])
 const loading = ref(false)
@@ -34,7 +34,7 @@ async function loadStores(requestPage = page.value) {
     if (searchName.value) params.store_name = searchName.value
     if (selectedAddress.value) params.address = selectedAddress.value
 
-    const res = await axios.get('http://localhost:8080/api/v1/stores/search', { params })
+    const res = await apiClient.get('/api/v1/stores/search', { params })
     const data = res.data || {}
     const list = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : []
 
@@ -66,7 +66,7 @@ function goToPage(n) {
 
 async function loadAddresses() {
   try {
-    const res = await axios.get('http://localhost:8080/api/v1/stores/addresses')
+    const res = await apiClient.get('/api/v1/stores/addresses')
     const data = res.data || {}
     addresses.value = Array.isArray(data.items) ? data.items : []
   } catch (err) {
@@ -107,8 +107,8 @@ async function toggleStatus(store) {
   localStatus.set(store.storeId, next)
 
   try {
-    const url = `http://localhost:8080/api/v1/stores/${store.storeId}/toggle-active`
-    const res = await axios.patch(url)
+    const url = `/api/v1/stores/${store.storeId}/toggle-active`
+    const res = await apiClient.patch(url)
     const data = res.data || {}
     const updated = Array.isArray(data.items) && data.items.length > 0 ? data.items[0] : data
     if (updated && typeof updated.isActive === 'boolean') {

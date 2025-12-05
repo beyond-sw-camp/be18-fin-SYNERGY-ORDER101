@@ -1,4 +1,3 @@
-import axios from 'axios'
 import apiClient from '..'
 
 export async function getTopCategories() {

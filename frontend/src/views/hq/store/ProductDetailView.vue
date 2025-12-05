@@ -299,7 +299,7 @@ import {
   updateProduct,
   deleteProduct,
 } from '@/components/api/product/productService'
-import axios from 'axios'
+import apiClient from '@/components/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -358,13 +358,13 @@ const selectedMediumId = ref(null)
 const selectedSmallId = ref(null)
 
 const fetchLarge = async () => {
-  const res = await axios.get('/api/v1/categories/top')
+  const res = await apiClient.get('/api/v1/categories/top')
   largeCategories.value = res.data
 }
 
 const fetchChildren = async (parentId) => {
   if (!parentId) return []
-  const res = await axios.get(`/api/v1/categories/${parentId}/children`)
+  const res = await apiClient.get(`/api/v1/categories/${parentId}/children`)
   return res.data
 }
 
@@ -421,7 +421,7 @@ const activeTab = ref('basic')
 // sample product data, in real app fetch by code
 const product = ref(null)
 
-const API_BASE = axios.defaults.baseURL || 'http://localhost:8080'
+const API_BASE = apiClient.defaults.baseURL || 'https://order101.link'
 
 const imageSrc = computed(() => {
   const url = product.value?.imageUrl
