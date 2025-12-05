@@ -5,8 +5,8 @@
 # appspec.yml의 destination과 동일
 DEPLOY_PATH="/opt/synergy-backend"
 
-# target/ 폴더 안에서 JAR 파일 찾기
-JAR_FILE=$(ls $DEPLOY_PATH/target/*.jar 2>/dev/null | head -n 1)
+# JAR 파일 찾기 (배포 시 target/ 폴더 내용물이 직접 복사됨)
+JAR_FILE=$(ls $DEPLOY_PATH/*.jar 2>/dev/null | head -n 1)
 
 echo "Changing execution permissions for $JAR_FILE"
 # JAR 파일에 실행 권한 부여
