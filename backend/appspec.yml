@@ -2,9 +2,8 @@ version: 0.0
 os: linux 
 
 files:
-  # source: target/*.jar (Artifact ZIP의 루트 기준)
-  # JAR 파일이 이제 Artifact ZIP의 루트에서 'target/' 경로로 바로 보입니다.
-  - source: target/*.jar  
+  # target/ 폴더 전체를 복사 (와일드카드 미지원)
+  - source: target/
     destination: /opt/synergy-backend/
   
   # scripts 폴더도 Artifact ZIP의 루트에서 바로 보입니다.
