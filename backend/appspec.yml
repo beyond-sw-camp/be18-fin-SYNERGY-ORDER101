@@ -2,7 +2,6 @@ version: 0.0
 os: linux 
 
 files:
-  # 이 설정은 buildspec.yml에서 target/**을 아티팩트에 포함시켰다면 정상 작동합니다.
   # ZIP 파일 안의 'target/' 폴더 내용 전체를 /opt/synergy-backend/ 에 복사합니다.
   - source: target/
     destination: /opt/synergy-backend/
@@ -11,17 +10,21 @@ files:
     destination: /opt/synergy-backend/scripts/
 
 permissions:
-  # 모든 복사된 파일과 폴더에 대해 ec2-user가 실행 및 읽기/쓰기 권한을 갖도록 보장합니다.
+  # --- 오류 발생 지점 수정 및 통합 ---
+  # /opt/synergy-backend/ 경로 및 그 하위의 모든 파일/폴더에 대해
+  # ec2-user가 권한을 갖도록 설정합니다.
   - object: /opt/synergy-backend/
     pattern: "**"
     owner: ec2-user
     group: ec2-user
-    mode: 755
-  - object: /opt/synergy-backend/scripts/
-    pattern: "**"
-    owner: ec2-user
-    group: ec2-user
-    mode: 755
+    # mode를 755로 설정하여 소유자에게 실행 권한을 부여합니다.
+    # 스크립트 실행을 위해 755는 적절합니다.
+    mode: 755 
+    
+    # ⚠️ 이전 appspec.yml에는 이와 유사한 설정이 두 번 있어서 오류가 발생했습니다.
+    # (scripts/ 하위 경로에 대한 권한 설정이 상위 경로 설정과 중복되었습니다.)
+    # 하나의 상위 경로 설정으로 모두 커버 가능하므로 통합했습니다.
+  # -----------------------------------
 
 hooks:
   ApplicationStop:
@@ -30,22 +33,21 @@ hooks:
       runas: ec2-user 
 
   AfterInstall:
-    # AfterInstall 후크가 JAR 파일의 권한을 755로 설정해주는 역할도 하므로,
-    # chmod_jar.sh 스크립트 내부에서 /opt/synergy-backend/*.jar 파일에 대해
-    # 권한을 확실히 설정해 주는지 확인해 주세요.
+    # chmod_jar.sh 스크립트가 JAR 파일의 권한을 명시적으로 설정해 주는 역할도 합니다.
+    # JAR 파일에 대한 실행 권한(755)을 보장하기 위해 유지합니다.
     - location: scripts/chmod_jar.sh
       timeout: 60
       runas: ec2-user
       
   ApplicationStart:
-    # start_app.sh 스크립트 내부에서 /opt/synergy-backend/ 경로에 복사된
-    # 새 JAR 파일(예: *.jar)을 찾아서 실행하는 코드가 정확한지 확인해야 합니다.
+    # start_app.sh 스크립트가 백그라운드 실행 및 PID 파일 저장을 담당합니다.
     - location: scripts/start_app.sh
       timeout: 120
       runas: ec2-user
 
   ValidateService:
-    # 배포 후 서비스 헬스체크를 수행합니다.
+    # ALB 헬스 체크가 최종적으로 성공했는지 검증하는 역할입니다.
+    # (스크립트 내부에서 localhost:8080/health 경로로 curl 요청을 보내는 로직이 포함되어야 합니다.)
     - location: scripts/validate_service.sh
       timeout: 60
       runas: ec2-user
