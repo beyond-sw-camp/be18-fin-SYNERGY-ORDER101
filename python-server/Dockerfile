@@ -24,7 +24,7 @@ COPY app /app/app
 COPY scripts /app/scripts
 
 # data_pipeline 파일들 명시적으로 복사
-COPY app/data_pipeline /app/app/data_pipeline
+COPY app /app/app
 
 # FastAPI 실행 포트
 EXPOSE 8000
