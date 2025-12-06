@@ -17,6 +17,12 @@ import java.util.Optional;
 @Repository
 public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInventory,Long> {
 
+    @Query("""
+        select count(wi)
+        from WarehouseInventory wi
+        where wi.onHandQuantity <= wi.safetyQuantity
+    """)
+    long countLowStockSku();
     // 전체 리스트 조회
     @Query("""
         select wi
