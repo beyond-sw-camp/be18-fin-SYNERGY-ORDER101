@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+    commands:
+      - echo 'Java version check...'
+      - java -version
+  build:
+    commands:
+      - echo 'Starting Maven package build...'
+      - cd backend && mvn clean package -Dmaven.test.skip=true -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE
+      - echo 'Build process complete.'
+  post_build:
+    commands:
+      - echo 'Preparing artifacts for deployment...'
+      - ls -la backend/target/ || echo 'target folder check'
+
+artifacts:
+  files:
+    - target/*.jar
+    - appspec.yml
+    - scripts/*
+  base-directory: backend
+  name: backend-deploy-artifact.zip
