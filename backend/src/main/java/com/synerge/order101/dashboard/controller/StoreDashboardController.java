@@ -1,6 +1,6 @@
 package com.synerge.order101.dashboard.controller;
 
-import com.synerge.order101.dashboard.model.dto.response.StoreDashboardSummaryResponse;
+import com.synerge.order101.dashboard.model.dto.response.StoreDashboardSummaryResponseDto;
 import com.synerge.order101.dashboard.model.service.StoreDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ public class StoreDashboardController {
     private final StoreDashboardService storeDashboardService;
 
     @GetMapping("/summary")
-    public StoreDashboardSummaryResponse getSummary() {
+    public StoreDashboardSummaryResponseDto getSummary() {
 
         Long storeId = 1L;
 
