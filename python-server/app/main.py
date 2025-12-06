@@ -48,7 +48,7 @@ def run_full_pipeline_endpoint():
     }
 
 
-@app.post("/internal/ai/add-actual-sales")
+@app.post("/api/v1/internal/ai/add-actual-sales")
 def add_actual_sales(data: List[dict] = Body(...)):
     try:
         from app.service.sales_append_service import append_actual_sales
@@ -60,7 +60,7 @@ def add_actual_sales(data: List[dict] = Body(...)):
 
 
 @app.post(
-    "/internal/ai/forecasts",
+    "/api/v1/internal/ai/forecasts",
     response_model=ForecastTriggerResponse,
     status_code=202,
 )
@@ -92,7 +92,7 @@ def trigger_forecasts(
 
 
 @app.post(
-    "/internal/ai/model/retrain",
+    "/api/v1/internal/ai/model/retrain",
     response_model=RetrainResponse,
     status_code=200,
 )
