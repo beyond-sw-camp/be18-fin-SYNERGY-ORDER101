@@ -9,19 +9,19 @@ hooks:
   BeforeInstall:
     - location: python-server/scripts/before_install.sh
       timeout: 300
-      runas: ec2-user
+      runas: root
 
   AfterInstall:
     - location: python-server/scripts/after_install.sh
       timeout: 300
-      runas: ec2-user
+      runas: root
 
   ApplicationStart:
     - location: python-server/scripts/start.sh
       timeout: 300
-      runas: ec2-user
+      runas: root
 
   ApplicationStop:
     - location: python-server/scripts/stop.sh
       timeout: 300
-      runas: ec2-user
+      runas: root
