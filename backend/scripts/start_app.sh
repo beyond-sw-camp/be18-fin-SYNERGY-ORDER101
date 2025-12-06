@@ -3,6 +3,8 @@
 # 새 버전의 JAR 파일을 백그라운드에서 실행합니다.
 
 # appspec.yml의 destination과 동일
+export PATH=$PATH:/usr/local/bin:/usr/bin
+
 DEPLOY_PATH="/opt/synergy-backend"
 LOG_PATH="/var/log/synergy/backend.log"
 # JAR 파일 찾기 (배포 시 target/ 폴더 내용물이 직접 복사됨)

@@ -43,3 +43,9 @@ hooks:
     - location: scripts/start_app.sh
       timeout: 120
       runas: ec2-user
+
+  ValidateService:
+    # 배포 후 서비스 헬스체크를 수행합니다.
+    - location: scripts/validate_service.sh
+      timeout: 60
+      runas: ec2-user
