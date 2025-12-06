@@ -16,6 +16,7 @@ import java.util.List;
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     List<Shipment> findByShipmentStatus(ShipmentStatus status);
 
+    int countByStore_StoreIdAndShipmentStatus(Long storeId, ShipmentStatus shipmentStatus);
     List<Shipment> findByStoreOrder(StoreOrder storeOrder);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

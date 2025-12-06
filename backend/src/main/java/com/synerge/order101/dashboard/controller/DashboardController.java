@@ -1,6 +1,6 @@
 package com.synerge.order101.dashboard.controller;
 
-import com.synerge.order101.dashboard.model.dto.response.DashboardSummaryResponse;
+import com.synerge.order101.dashboard.model.dto.response.DashboardSummaryResponseDto;
 import com.synerge.order101.dashboard.model.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping("/summary")
-    public DashboardSummaryResponse summary() {
+    public DashboardSummaryResponseDto summary() {
         return dashboardService.getSummary();
     }
 }

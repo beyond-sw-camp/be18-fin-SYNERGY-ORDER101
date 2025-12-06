@@ -4,7 +4,7 @@ import com.synerge.order101.ai.model.entity.DemandForecast;
 import com.synerge.order101.ai.model.repository.DemandForecastRepository;
 import com.synerge.order101.ai.model.repository.SmartOrderRepository;
 import com.synerge.order101.common.enums.OrderStatus;
-import com.synerge.order101.dashboard.model.dto.response.DashboardSummaryResponse;
+import com.synerge.order101.dashboard.model.dto.response.DashboardSummaryResponseDto;
 import com.synerge.order101.purchase.model.repository.PurchaseRepository;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class DashboardService {
     private final SmartOrderRepository smartOrderRepository;
     private final DemandForecastRepository demandForecastRepository;
 
-    public DashboardSummaryResponse getSummary() {
+    public DashboardSummaryResponseDto getSummary() {
 
         long pendingPurchase =
                 purchaseRepository.countByOrderStatus(OrderStatus.SUBMITTED);
@@ -36,7 +36,7 @@ public class DashboardService {
 
         double recentForecastAccuracy = calculateRecentForecastAccuracy();
 
-        return new DashboardSummaryResponse(
+        return new DashboardSummaryResponseDto(
                 pendingPurchase,
                 lowStockSku,
                 draftAutoSmartOrder,

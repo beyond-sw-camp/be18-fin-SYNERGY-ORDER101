@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class DashboardSummaryResponse {
+public class DashboardSummaryResponseDto {
 
     private long pendingPurchaseCount;
     private long lowStockSkuCount;
