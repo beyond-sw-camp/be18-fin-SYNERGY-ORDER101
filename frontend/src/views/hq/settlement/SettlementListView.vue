@@ -17,7 +17,7 @@
       <div class="section-header">
         <div class="header-left">
           <h2 class="section-title">정산 내역</h2>
-          <span class="result-count">총 <strong>{{ rows.length }}</strong>건</span>
+          <span class="result-count">총 <strong>{{ totalElements }}</strong>건</span>
         </div>
       </div>
 
@@ -91,23 +91,75 @@
           </tbody>
         </table>
       </div>
+
+      <!-- 페이지네이션 -->
+      <div v-if="totalPages > 1" class="pagination">
+        <button
+          class="pager"
+          :disabled="currentPage === 0"
+          @click="changePage(currentPage - 1)"
+        >
+          ‹ 이전
+        </button>
+
+        <button
+          v-for="page in pageNumbers"
+          :key="page"
+          class="page-btn"
+          :class="{ active: page === currentPage }"
+          @click="changePage(page)"
+        >
+          {{ page + 1 }}
+        </button>
+
+        <button
+          class="pager"
+          :disabled="currentPage === totalPages - 1"
+          @click="changePage(currentPage + 1)"
+        >
+          다음 ›
+        </button>
+      </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue';
-import axios from 'axios'
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute, getTodayString, getPastDateString } from '@/components/global/Date.js';
 import { getSettlements } from '@/components/api/settlement/SettlementService.js';
-import { SettlementDataProcessor } from '@/components/global/SettlementDataProcessor.js';
 
 const loading = ref(false);
 const todayString = getTodayString();
 const rows = ref([])
 const currentFilterData = ref(null)
+
+// 페이지네이션 상태
+const currentPage = ref(0)  // 0-based
+const pageSize = ref(10)
+const totalElements = ref(0)
+const totalPages = ref(0)
+const MAX_VISIBLE_PAGES = 5
+
+// 페이지 번호 배열 계산
+const pageNumbers = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  const half = Math.floor(MAX_VISIBLE_PAGES / 2)
+
+  let start = Math.max(0, current - half)
+  let end = Math.min(total - 1, start + MAX_VISIBLE_PAGES - 1)
+
+  if (end - start + 1 < MAX_VISIBLE_PAGES) {
+    start = Math.max(0, end - MAX_VISIBLE_PAGES + 1)
+  }
+
+  for (let i = start; i <= end; i++) pages.push(i)
+  return pages
+})
 
 const mapStatus = (backendStatus) => {
   switch (backendStatus) {
@@ -138,17 +190,16 @@ const formatNumber = (value) => {
   return Number(value).toLocaleString('ko-KR');
 };
 
-async function handleSearch(filters) {
+async function handleSearch(filters, page = 0) {
   currentFilterData.value = filters;
   loading.value = true;
 
   try {
     // API 파라미터 구성
     const params = {
-      // scope가 null이면 백엔드에서 AR, AP 모두 조회
-      types: filters.scope,  // null | 'AR' | 'AP'
-      vendorId: filters.vendorId === 'ALL'
-        ? null : filters.vendorId,
+      // scope가 ALL이면 백엔드에서 AR, AP 모두 조회
+      types: filters.scope,  // 'ALL' | 'AR' | 'AP' (getSettlements에서 처리)
+      vendorId: filters.vendorId, // getSettlements에서 'ALL' 처리
       fromDate: filters.startDate,
       toDate: filters.endDate,
       searchText: filters.keyword || null
@@ -156,7 +207,12 @@ async function handleSearch(filters) {
 
 
     // API 호출 (Spring Page 객체 반환)
-    const pageData = await getSettlements(params);
+    const pageData = await getSettlements(params, page, pageSize.value);
+
+    // 페이지네이션 정보 업데이트
+    currentPage.value = pageData.number ?? page;
+    totalElements.value = pageData.totalElements ?? 0;
+    totalPages.value = pageData.totalPages ?? 1;
 
     // 테이블 데이터 변환
     rows.value = pageData.content.map(settlement => ({
@@ -190,9 +246,18 @@ async function handleSearch(filters) {
 
     // 에러 시 데이터 초기화
     rows.value = [];
+    totalElements.value = 0;
+    totalPages.value = 0;
   } finally {
     loading.value = false;
   }
+}
+
+// 페이지 변경
+function changePage(page) {
+  if (page < 0 || page >= totalPages.value || page === currentPage.value) return;
+  if (!currentFilterData.value) return;
+  handleSearch(currentFilterData.value, page);
 }
 
 onMounted(() => {
@@ -333,7 +398,6 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   color: #475569;
-  text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -342,18 +406,22 @@ onMounted(() => {
 /* Column Widths */
 .col-id {
   width: 12%;
+  text-align: center;
 }
 
 .col-type {
   width: 10%;
+  text-align: center;
 }
 
 .col-vendor {
   width: 18%;
+  text-align: left;
 }
 
 .col-period {
   width: 12%;
+  text-align: center;
 }
 
 .col-qty {
@@ -373,6 +441,7 @@ onMounted(() => {
 
 .col-date {
   width: 13%;
+  text-align: center;
 }
 
 /* Table Body */
@@ -386,12 +455,35 @@ onMounted(() => {
 }
 
 /* Body cell alignment overrides */
-.settlement-table tbody .col-qty,
+.settlement-table tbody .col-id {
+  text-align: center;
+}
+
+.settlement-table tbody .col-type {
+  text-align: center;
+}
+
+.settlement-table tbody .col-vendor {
+  text-align: left;
+}
+
+.settlement-table tbody .col-period {
+  text-align: center;
+}
+
+.settlement-table tbody .col-qty {
+  text-align: right;
+}
+
 .settlement-table tbody .col-amount {
   text-align: right;
 }
 
 .settlement-table tbody .col-status {
+  text-align: center;
+}
+
+.settlement-table tbody .col-date {
   text-align: center;
 }
 
@@ -570,6 +662,61 @@ onMounted(() => {
   font-size: 14px;
   color: #94a3b8;
   margin: 0;
+}
+
+/* ============ Pagination ============ */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pager {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.pager:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.pager:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(.active) {
+  background: #f8fafc;
+  border-color: #d1d5db;
+}
+
+.page-btn.active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+  font-weight: 600;
 }
 
 /* ============ Responsive ============ */

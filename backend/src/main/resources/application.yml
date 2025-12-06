@@ -2,16 +2,18 @@ spring:
   application:
     name: order101
   datasource:
-    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/order101
+    driver-class-name: org.mariadb.jdbc.Driver
+    # 이 부분에 환경 변수가 빈 값인지 아닌지 확인합니다.
+    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none
     open-in-view: false
-    show-sql: true
+    show-sql: true # 변경: 실행되는 SQL 쿼리를 출력합니다.
     properties:
-      hibernate.format_sql: true
+      hibernate.format_sql: true # 변경: SQL 쿼리를 보기 좋게 포맷합니다.
   cache:
     type: redis
   data:
@@ -20,10 +22,13 @@ spring:
       port: ${REDIS_PORT}
       username: default
       password: ${REDIS_PASSWORD}
+
 server:
   port: 8080
+
 jwt:
   secret: ${JWT_SECRET}
+
 ai:
   python:
     base-url: http://${AI_HOST}:${AI_PORT}/
@@ -39,12 +44,17 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
 logging:
   level:
-    org.springframework.jdbc: DEBUG
-    org.hibernate: DEBUG
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
-    org.springframework.security: INFO
-    org.hibernate.resource.transaction: INFO
-    org.hibernate.orm.query: INFO
+    root: INFO # 변경: INFO 레벨로 올려서 전반적인 시작 과정을 확인합니다.
+    com.synerge: DEBUG # 변경: 자체 패키지 상세 로그를 확인합니다.
+    org.springframework.security: INFO # 변경: 시큐리티 필터 체인 과정을 확인합니다.
+    
+    # DB/JPA 디버깅을 위한 핵심 변경
+    org.hibernate.resource.transaction: DEBUG # 변경
+    org.springframework.jdbc: DEBUG # 변경: JDBC 연결 시도 관련 상세 로그
+    org.hibernate: DEBUG # 변경: 하이버네이트 전체 상세 로그
+    org.hibernate.SQL: DEBUG # 변경: 실행되는 모든 SQL 쿼리
+    org.hibernate.orm.jdbc.bind: TRACE # 변경: SQL에 바인딩되는 변수까지 확인 (가장 중요)
+    org.hibernate.orm.query: DEBUG # 변경

@@ -37,8 +37,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
                     typeIn(cond.getTypes()),
                     searchTextContains(cond.getSearchText()),
                     DateBetween(cond.getFromDate(), cond.getToDate()),
-                    supplierIdEq(cond.getVendorId()),
-                    storeIdEq(cond.getVendorId())
+                    vendorIdEq(cond.getVendorId())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -52,14 +51,15 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
                         statusIn(cond.getStatuses()),
                         typeIn(cond.getTypes()),
                         searchTextContains(cond.getSearchText()),
-                        DateBetween(cond.getFromDate(), cond.getToDate())
+                        DateBetween(cond.getFromDate(), cond.getToDate()),
+                        vendorIdEq(cond.getVendorId())
                 )
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
-    // --- 동적 쿼리 조건을 생성하는 BooleanExpression 메소드들 ---}
+    // --- 동적 쿼리 조건을 생성하는 BooleanExpression 메소드들 ---
     private BooleanExpression DateBetween(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null) {
             return null;
@@ -71,7 +71,7 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         LocalDate nextDay = endDate.plusDays(1);
         LocalDateTime end = nextDay.atStartOfDay();
 
-        return storeOrder.createdAt.goe(start).and(storeOrder.createdAt.lt(end));
+        return settlement.createdAt.goe(start).and(settlement.createdAt.lt(end));
     }
     private BooleanExpression statusIn(List<String> statuses) {
         if (statuses == null || statuses.isEmpty()) {
@@ -94,29 +94,35 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
         return settlement.settlementType.in(enumTypes);
     }
 
-    private BooleanExpression supplierIdEq(Long supplierId) {
-        if (supplierId == null) {
+    private BooleanExpression vendorIdEq(Long vendorId) {
+        if (vendorId == null) {
             return null;
         }
-        return settlement.supplier.supplierId.eq(supplierId);
-    }
-
-    private BooleanExpression storeIdEq(Long storeId) {
-        if (storeId == null) {
-            return null;
-        }
-        return settlement.store.storeId.eq(storeId);
+        // AR(미수금)은 store, AP(미지급금)은 supplier에 연결되므로 OR 조건으로 처리
+        return settlement.supplier.supplierId.eq(vendorId)
+                .or(settlement.store.storeId.eq(vendorId));
     }
 
     private BooleanExpression searchTextContains(String searchText) {
         if (!StringUtils.hasText(searchText)) {
             return null;
         }
-        // 검색어(ID 또는 공급사 이름)를 OR 조건으로 처리
-        // settlement_no (DB), supplier_id/store_id (DB)를 사용해야 함
-        return settlement.settlementNo.contains(searchText)
-                .or(settlement.supplier.supplierName.contains(searchText));
-        // 관계 엔티티 조회는 복잡할 수 있으므로, 실+제 DB 스키마에 따라 JOIN 필요
+        // 검색어(ID 또는 공급사/가맹점 이름)를 OR 조건으로 처리
+        BooleanExpression searchCondition = settlement.settlementNo.contains(searchText);
+        
+        // supplier가 null이 아닌 경우 (AP)
+        searchCondition = searchCondition.or(
+            settlement.supplier.isNotNull()
+                .and(settlement.supplier.supplierName.contains(searchText))
+        );
+        
+        // store가 null이 아닌 경우 (AR)
+        searchCondition = searchCondition.or(
+            settlement.store.isNotNull()
+                .and(settlement.store.storeName.contains(searchText))
+        );
+        
+        return searchCondition;
     }
 
 

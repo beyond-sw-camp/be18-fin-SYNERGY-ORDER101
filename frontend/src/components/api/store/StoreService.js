@@ -1,4 +1,4 @@
-import axios from 'axios'
+import apiClient from '..'
 
 export async function getFranchiseOrderList(page, pageSize, searchParams) {
   const url = '/api/v1/store-orders' // 가맹점 API 엔드포인트
@@ -19,7 +19,7 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
   }
 
   try {
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
     const apiData = response.data
 
     // Settlement과 동일한 구조로 반환 (Spring Page 객체)
@@ -28,7 +28,6 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
     throw new Error('가맹점 API 서버와의 통신에 실패했습니다.')
   }
 }
-
 
 /**
  * [가맹점 목록 조회]
@@ -48,7 +47,7 @@ export async function getFranchiseList(page, pageSize, keyword) {
   }
 
   try {
-    const response = await axios.get(url, { params })
+    const response = await apiClient.get(url, { params })
     const apiData = response.data
 
     return {
@@ -72,7 +71,7 @@ export async function getStoreOrderById(storeOrderId) {
   const url = `/api/v1/store-orders/${storeOrderId}`
 
   try {
-    const response = await axios.get(url)
+    const response = await apiClient.get(url)
     return response
   } catch (error) {
     throw new Error('주문 정보를 불러올 수 없습니다.')
@@ -89,7 +88,7 @@ export async function updateStoreOrderStatus(storeOrderId, newStatus) {
   const url = `/api/v1/store-orders/${storeOrderId}/${newStatus}`
 
   try {
-    const response = await axios.patch(url, { status: newStatus })
+    const response = await apiClient.patch(url, { status: newStatus })
     return response.data
   } catch (error) {
     throw new Error('주문 상태 업데이트에 실패했습니다.')
@@ -105,7 +104,7 @@ export async function checkStockForOrder(storeOrderId) {
   const url = `/api/v1/store-orders/${storeOrderId}/stock-check`
 
   try {
-    const response = await axios.get(url)
+    const response = await apiClient.get(url)
     return response.data
   } catch (error) {
     throw new Error('재고 확인에 실패했습니다.')
