@@ -177,15 +177,16 @@ async function changePage(clientPage) {
   if (clientPage < 1 || clientPage > totalPages.value) return
   page.value = clientPage - 1   
   await fetchDeliveryList()     
-function goPrev() {
-  if (page.value > 0) {
-    changePage(page.value);
+  function goPrev() {
+    if (page.value > 0) {
+      changePage(page.value);
+    }
   }
-}
 
-function goNext() {
-  if (page.value + 1 < totalPages.value) {
-    changePage(page.value + 2);
+  function goNext() {
+    if (page.value + 1 < totalPages.value) {
+      changePage(page.value + 2);
+    }
   }
 }
 
