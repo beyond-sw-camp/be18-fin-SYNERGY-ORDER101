@@ -1,0 +1,27 @@
+version: 0.0
+os: linux
+
+files:
+  - source: python-server/
+    destination: /home/ec2-user/python-server
+
+hooks:
+  BeforeInstall:
+    - location: python-server/scripts/before_install.sh
+      timeout: 300
+      runas: root
+
+  AfterInstall:
+    - location: python-server/scripts/after_install.sh
+      timeout: 300
+      runas: root
+
+  ApplicationStart:
+    - location: python-server/scripts/start.sh
+      timeout: 300
+      runas: root
+
+  ApplicationStop:
+    - location: python-server/scripts/stop.sh
+      timeout: 300
+      runas: root

@@ -6,7 +6,7 @@ application.yml
 
 
 # === data & artifacts ===
-*.csv
+
 *.zip
 *.json
 *.pkl
