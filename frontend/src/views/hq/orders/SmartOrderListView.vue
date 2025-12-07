@@ -60,9 +60,7 @@
       <h3 class="card-title">스마트 발주 목록</h3>
 
       <div class="table-wrap">
-        <div v-if="loading" class="loading-box">
-          데이터를 가져오는 중입니다...
-        </div>
+        <div v-if="loading" class="loading-box">데이터를 가져오는 중입니다...</div>
 
         <table v-else class="smart-table">
           <thead>
@@ -108,9 +106,9 @@
 </template>
 
 <script setup>
+import apiClient from '@/components/api'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 
 const router = useRouter()
 
@@ -124,20 +122,18 @@ const groupedRows = ref([])
 const loading = ref(false)
 
 const totalRecommendedAmount = computed(() =>
-  groupedRows.value.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+  groupedRows.value.reduce((sum, r) => sum + (r.totalAmount || 0), 0),
 )
 
 const totalForecastQty = computed(() =>
-  groupedRows.value.reduce((sum, r) => sum + r.totalForecastQty, 0)
+  groupedRows.value.reduce((sum, r) => sum + r.totalForecastQty, 0),
 )
 const totalRecommendedQty = computed(() =>
-  groupedRows.value.reduce((sum, r) => sum + r.totalRecommendedQty, 0)
+  groupedRows.value.reduce((sum, r) => sum + r.totalRecommendedQty, 0),
 )
-const draftCount = computed(() =>
-  groupedRows.value.filter(r => r.status === 'DRAFT_AUTO').length
-)
-const submittedCount = computed(() =>
-  groupedRows.value.filter(r => r.status === 'SUBMITTED').length
+const draftCount = computed(() => groupedRows.value.filter((r) => r.status === 'DRAFT_AUTO').length)
+const submittedCount = computed(
+  () => groupedRows.value.filter((r) => r.status === 'SUBMITTED').length,
 )
 
 onMounted(() => {
@@ -164,8 +160,7 @@ onMounted(() => {
   fetchSmartOrders()
 })
 
-
-async function fetchSmartOrders () {
+async function fetchSmartOrders() {
   try {
     const params = {}
 
@@ -183,7 +178,7 @@ async function fetchSmartOrders () {
     }
 
     loading.value = true
-    const res = await axios.get('/api/v1/smart-orders', { params })
+    const res = await apiClient.get('/api/v1/smart-orders', { params })
 
     rawRows.value = res.data || []
     groupBySupplierAndWeek()
@@ -195,11 +190,10 @@ async function fetchSmartOrders () {
   }
 }
 
-function formatCurrency (value) {
+function formatCurrency(value) {
   const num = Number(value || 0)
   return num.toLocaleString('ko-KR') + '원'
 }
-
 
 function groupBySupplierAndWeek() {
   const map = new Map()
@@ -219,7 +213,7 @@ function groupBySupplierAndWeek() {
         totalForecastQty: 0,
         totalRecommendedQty: 0,
         totalAmount: 0,
-        status: status, 
+        status: status,
       })
     }
 
@@ -230,7 +224,6 @@ function groupBySupplierAndWeek() {
     g.totalRecommendedQty += row.recommendedOrderQty
     g.totalAmount += Number(row.unitPrice) * Number(row.recommendedOrderQty)
 
-    
     if (status === 'SUBMITTED') {
       g.status = 'SUBMITTED'
     } else if (status === 'CONFIRMED' && g.status !== 'SUBMITTED') {
@@ -241,8 +234,7 @@ function groupBySupplierAndWeek() {
   groupedRows.value = [...map.values()]
 }
 
-
-function openDetail (row) {
+function openDetail(row) {
   router.push({
     name: 'hq-smart-order-detail',
     params: {
@@ -259,7 +251,7 @@ function statusLabel(s) {
   return s || '-'
 }
 
-function statusClass (s) {
+function statusClass(s) {
   if (s === 'CONFIRMED') return 's-confirmed'
   if (s === 'SUBMITTED') return 's-submitted'
   if (s === 'DRAFT_AUTO') return 's-draft'

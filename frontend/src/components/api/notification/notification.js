@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import apiClient from '..'
 
 const SSE_URL = (token) =>
-  `http://localhost:8080/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
+  `https://order101.link/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
 
 export const useNotificationStore = defineStore('notification', {
   state: () => ({

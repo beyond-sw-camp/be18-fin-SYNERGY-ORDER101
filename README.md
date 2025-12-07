@@ -349,7 +349,7 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 11. 프론트엔드 테스트 결과서
 
-
+[UI/UX 테스트 결과서](https://www.notion.so/playdatacademy/UI-UX-2bfd943bcac2801390ecde7eb9f1fb4a?source=copy_link)
 
 ## 12. CICD
 

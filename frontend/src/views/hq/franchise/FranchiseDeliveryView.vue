@@ -6,29 +6,18 @@
 
     <section class="filters card">
       <div class="filters-row">
-        <input 
-          placeholder="주문 ID 검색" 
-          v-model="filters.q"
-        />
+        <input placeholder="주문 ID 검색" v-model="filters.q" />
 
         <select v-model="filters.store">
           <option value="all">모든 가맹점</option>
-          <option 
-            v-for="s in storeOptions" 
-            :value="s" 
-            :key="s"
-          >
+          <option v-for="s in storeOptions" :value="s" :key="s">
             {{ s }}
           </option>
         </select>
 
         <select v-model="filters.status">
           <option value="all">모든 상태</option>
-          <option 
-            v-for="st in statusOptions" 
-            :value="st.key" 
-            :key="st.key"
-          >
+          <option v-for="st in statusOptions" :value="st.key" :key="st.key">
             {{ st.label }}
           </option>
         </select>
@@ -53,20 +42,14 @@
           </thead>
 
           <tbody>
-            <tr 
-              v-for="r in rows" 
-              :key="r.id"
-            >
+            <tr v-for="r in rows" :key="r.id">
               <td class="po">{{ r.id }}</td>
               <td>{{ r.store }}</td>
               <td>{{ r.warehouse }}</td>
               <td class="numeric">{{ r.qty }}</td>
 
               <td class="status-cell">
-                <span 
-                  class="chip" 
-                  :class="statusClass(r.status)"
-                >
+                <span class="chip" :class="statusClass(r.status)">
                   {{ statusLabel(r.status) }}
                 </span>
               </td>
@@ -81,13 +64,7 @@
         </table>
       </div>
       <div class="pagination">
-        <button 
-          class="pager" 
-          :disabled="page === 0"
-          @click="goPrev"
-        >
-          ‹ Previous
-        </button>
+        <button class="pager" :disabled="page === 0" @click="goPrev">‹ Previous</button>
 
         <button
           v-for="p in pageNumbers"
@@ -99,19 +76,14 @@
           {{ p }}
         </button>
 
-        <button 
-          class="pager" 
-          :disabled="page + 1 >= totalPages"
-          @click="goNext"
-        >
-          Next ›
-        </button>
+        <button class="pager" :disabled="page + 1 >= totalPages" @click="goNext">Next ›</button>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
+import apiClient from '@/components/api'
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
@@ -129,12 +101,12 @@ const statusOptions = [
 
 const rows = ref([])
 
-const page = ref(0)         
+const page = ref(0)
 const size = ref(20)
 const totalPages = ref(1)
 const totalElements = ref(0)
 
-const MAX_VISIBLE_PAGES = 5  // 보여줄 페이지 버튼 개수
+const MAX_VISIBLE_PAGES = 5 // 보여줄 페이지 버튼 개수
 
 const filters = ref({
   q: '',
@@ -144,18 +116,18 @@ const filters = ref({
 
 async function fetchDeliveryList() {
   try {
-    const res = await axios.get('/api/v1/shipments', {
+    const res = await apiClient.get('/api/v1/shipments', {
       params: {
         page: page.value,
         size: size.value,
         orderNo: filters.value.q || null,
         storeId: filters.value.store === 'all' ? null : filters.value.store,
         status: filters.value.status === 'all' ? null : filters.value.status,
-      }
+      },
     })
 
     const p = res.data
-    rows.value = p.content.map(item => ({
+    rows.value = p.content.map((item) => ({
       id: item.orderNo,
       store: item.storeName,
       warehouse: item.warehouseName || '-',
@@ -166,35 +138,33 @@ async function fetchDeliveryList() {
 
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
-
   } catch (e) {
     console.error('배송 목록 조회 실패', e)
   }
 }
 
-
 async function changePage(clientPage) {
   if (clientPage < 1 || clientPage > totalPages.value) return
-  page.value = clientPage - 1   
-  await fetchDeliveryList()     
-  function goPrev() {
-    if (page.value > 0) {
-      changePage(page.value);
-    }
-  }
+  page.value = clientPage - 1
+  await fetchDeliveryList()
+}
 
-  function goNext() {
-    if (page.value + 1 < totalPages.value) {
-      changePage(page.value + 2);
-    }
+function goPrev() {
+  if (page.value > 0) {
+    changePage(page.value)
   }
 }
 
+function goNext() {
+  if (page.value + 1 < totalPages.value) {
+    changePage(page.value + 2)
+  }
+}
 
 const pageNumbers = computed(() => {
   const pages = []
   const total = totalPages.value
-  const current = page.value + 1 
+  const current = page.value + 1
   const half = Math.floor(MAX_VISIBLE_PAGES / 2)
 
   let start = Math.max(1, current - half)
@@ -222,7 +192,7 @@ function resetFilter() {
 }
 
 const storeOptions = computed(() => {
-  const set = new Set(rows.value.map(r => r.store))
+  const set = new Set(rows.value.map((r) => r.store))
   return [...set]
 })
 
@@ -233,7 +203,7 @@ function statusClass(s) {
 }
 
 function statusLabel(s) {
-  const opt = statusOptions.find(o => o.key === s)
+  const opt = statusOptions.find((o) => o.key === s)
   return opt ? opt.label : s
 }
 
@@ -245,9 +215,6 @@ onMounted(() => {
   fetchDeliveryList()
 })
 </script>
-
-
-
 
 <style scoped>
 .page-shell {
@@ -292,12 +259,9 @@ onMounted(() => {
   cursor: pointer;
 }
 
-
 .delivery-table td.status-cell {
   padding-top: 22px !important;
 }
-
-
 
 .table-wrap {
   overflow-x: auto;
@@ -326,8 +290,6 @@ onMounted(() => {
   font-weight: 600;
 }
 
-
-
 .chip {
   padding: 6px 12px;
   display: inline-flex;
@@ -341,17 +303,21 @@ onMounted(() => {
   color: #fff;
 }
 
-
-.s-delivered { background: #0ea5a4; }
-.s-intransit { background: #2563eb; }
-.s-pending   { background: #6b7280; }
+.s-delivered {
+  background: #0ea5a4;
+}
+.s-intransit {
+  background: #2563eb;
+}
+.s-pending {
+  background: #6b7280;
+}
 
 .no-data {
   text-align: center;
   color: #999;
   padding: 20px;
 }
-
 
 .pagination {
   margin-top: 18px;
@@ -381,6 +347,4 @@ onMounted(() => {
   color: #fff;
   border-color: #6b46ff;
 }
-
-
 </style>

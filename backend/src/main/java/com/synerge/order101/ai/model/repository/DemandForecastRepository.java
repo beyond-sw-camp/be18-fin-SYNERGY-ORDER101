@@ -13,6 +13,16 @@ public interface DemandForecastRepository extends JpaRepository<DemandForecast, 
     List<DemandForecast> findByTargetWeekBetween(LocalDate from, LocalDate to);
 
     @Query("""
+    select df
+    from DemandForecast df
+    where df.snapshotAt = (
+        select max(df2.snapshotAt)
+        from DemandForecast df2
+    )
+    """)
+    List<DemandForecast> findLatestSnapshotForecasts();
+
+    @Query("""
     SELECT df 
     FROM DemandForecast df
     JOIN FETCH df.product p
