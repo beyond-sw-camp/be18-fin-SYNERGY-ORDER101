@@ -16,10 +16,6 @@ notebooks/
 *.zip
 *.json
 
-# 중요한 원본 데이터
-app/data_pipeline/*.csv
-app/data_pipeline/*.zip
-app/data_pipeline/*.json
 
 # ML 모델 파일
 *.pkl

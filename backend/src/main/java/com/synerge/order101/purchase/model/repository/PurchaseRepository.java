@@ -1,5 +1,6 @@
 package com.synerge.order101.purchase.model.repository;
 
+import com.synerge.order101.common.enums.OrderStatus;
 import com.synerge.order101.purchase.model.dto.AutoPurchaseListResponseDto;
 import com.synerge.order101.purchase.model.entity.Purchase;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface PurchaseRepository extends JpaRepository<Purchase, Long>, QuerydslPredicateExecutor<Purchase> , PurchaseRepositoryCustom{
+    long countByOrderStatus(OrderStatus status);
     /**
      * PO 번호 또는 Supplier의 이름 중 하나라도 키워드를 포함하는 Purchase 목록을 조회합니다.
      * 대소문자 구분 없이 (IgnoreCase), 페이징 처리 (Pageable)를 적용합니다.

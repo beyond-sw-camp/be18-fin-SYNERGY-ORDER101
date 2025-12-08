@@ -6,9 +6,9 @@
         <h2 class="title">매장 발주 생성</h2>
 
         <!-- 발주 세부 정보 카드 -->
-        <section class="card">
+        <!-- <section class="card">
           <h3 class="card-title">발주 세부 정보</h3>
-        </section>
+        </section> -->
 
         <!-- 품목 세부 정보 카드 -->
         <section class="card">

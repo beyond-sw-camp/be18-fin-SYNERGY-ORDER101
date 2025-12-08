@@ -64,11 +64,10 @@
       </div>
     </section>
 
-    <!-- 매장 성과 분석 -->
+    <!-- 매장 성과 분석 
     <section class="store-analysis-section">
       <h2 class="section-title">매장 성과 분석</h2>
       <div class="store-tables">
-        <!-- 상위 5개 매장 -->
         <div class="store-table-wrapper">
           <h3 class="table-title">상위 5개 매장</h3>
           <table class="store-table">
@@ -94,7 +93,6 @@
           </table>
         </div>
 
-        <!-- 하위 5개 매장 -->
         <div class="store-table-wrapper">
           <h3 class="table-title">하위 5개 매장</h3>
           <table class="store-table">
@@ -121,7 +119,7 @@
         </div>
       </div>
     </section>
-
+ -->
     <!-- 가맹점 검색 모달 -->
     <VenderSearchModal
       v-if="showStoreModal"

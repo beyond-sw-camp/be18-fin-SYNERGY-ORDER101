@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SmartOrderRepository extends JpaRepository<SmartOrder,Long> {
+    long countBySmartOrderStatus(OrderStatus status);
     List<SmartOrder> findBySmartOrderStatus(OrderStatus status);
     List<SmartOrder> findAllByOrderByTargetWeekDesc();
     List<SmartOrder> findByTargetWeek(LocalDate targetWeek);

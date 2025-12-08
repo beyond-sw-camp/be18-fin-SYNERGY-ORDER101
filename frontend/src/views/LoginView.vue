@@ -16,208 +16,277 @@ const handleLogin = async () => {
   try {
     const stayLoggedIn = true
     const result = await auth.login(form.email, form.password, stayLoggedIn)
+
     if (!result || !result.success) {
-      window.alert(result && result.message ? result.message : '로그인에 실패했습니다.')
+      window.alert(result?.message ?? '로그인에 실패했습니다.')
       return
     }
 
     const role =
-      auth.userInfo.role || (auth.userInfo.roles && auth.userInfo.roles[0]) || auth.userInfo.type
+      auth.userInfo.role ||
+      (auth.userInfo.roles && auth.userInfo.roles[0]) ||
+      auth.userInfo.type
+
     if (role === 'STORE_ADMIN') {
       router.push('/store/dashboard')
     } else {
       router.push('/hq/dashboard')
     }
-  } catch (err) {
+  } catch {
     window.alert('로그인 중 오류가 발생했습니다.')
   }
 }
 </script>
 
 <template>
-  <div class="login-page">
-    <div class="warning-box">
-      <div class="warning-icon">⚠️</div>
-      <div>
-        <p class="warning-title">보안 경고</p>
-        <p class="warning-text">
-          회사 인트라넷 또는 VPN에 접속되어 있지 않습니다. 보안을 위해 주의하세요.
-        </p>
-      </div>
+  <div class="login-layout">
+    <!-- 상단 보안 배너 -->
+    <div class="security-banner">
+      <strong>보안 알림</strong>
+      <span>사내 인트라넷 또는 VPN 연결 상태를 확인하세요.</span>
     </div>
 
-    <main class="login-card-wrap">
-      <div class="login-card">
-        <div class="logo-wrap">
-          <!-- simple SVG mark similar to project style -->
-          <div><img :src="logoUrl" alt="ORDER 101" class="logo-image" /></div>
-        </div>
+    <!-- 가운데 정렬 영역 -->
+    <div class="center-wrap">
+      <div class="login-container">
+        <!-- 좌측 브랜드 패널 -->
+        <section class="brand-panel">
+          <div class="brand-inner">
+            <h1>ORDER 101</h1>
+            <p class="brand-desc">
+              주문 · 재고 · 공급을 하나로<br />
+              통합 관리하는 주문관리 시스템
+            </p>
+            <ul class="brand-points">
+              <li>실시간 주문 흐름 관리</li>
+              <li>매장 · 본사 통합 대시보드</li>
+              <li>AI 수요 예측 기반 스마트 발주</li>
+            </ul>
+          </div>
+        </section>
 
-        <h2 class="login-heading">로그인</h2>
-        <p class="login-sub">Order101에 로그인하여 주문을 관리하세요.</p>
+        <!-- 로그인 카드 -->
+        <section class="login-card">
+          <div class="login-logo-wrap">
+            <img :src="logoUrl" class="login-logo" alt="ORDER101" />
+          </div>
 
-        <form class="login-form" @submit.prevent="handleLogin">
-          <label class="field">
-            <div class="field-label">이메일</div>
-            <div class="input-wrap">
-              <span class="icon">✉️</span>
-              <input v-model="form.email" placeholder="Hallu@hallu.com" />
-            </div>
-          </label>
+          <h2 class="login-title">로그인</h2>
+          <p class="login-sub">Order101 시스템에 접속합니다</p>
 
-          <label class="field">
-            <div class="field-label">비밀번호</div>
-            <div class="input-wrap">
-              <span class="icon">🔒</span>
-              <input v-model="form.password" type="password" placeholder="********" />
-            </div>
-          </label>
+          <form class="login-form" @submit.prevent="handleLogin">
+            <label>
+              이메일
+              <input
+                v-model="form.email"
+                type="email"
+                placeholder="order101@email.com"
+              />
+            </label>
 
-          <button class="btn-primary" type="submit">로그인</button>
-        </form>
+            <label>
+              비밀번호
+              <input
+                v-model="form.password"
+                type="password"
+                placeholder="비밀번호 입력"
+              />
+            </label>
+
+            <button class="login-btn" type="submit">
+              시스템 접속
+            </button>
+          </form>
+        </section>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.login-page {
-  min-height: calc(100vh - 0px);
+/* Layout */
+.login-layout {
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      rgba(248, 250, 252, 0.92),
+      rgba(238, 242, 255, 0.95)
+    ),
+    url('https://images.unsplash.com/photo-1581091870622-7c54c1f4f28b?auto=format&fit=crop&w=2400&q=80')
+      center / cover no-repeat;
+
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 48px 24px;
-  background: #fbfbfd;
 }
 
-.warning-box {
-  width: 640px;
-  max-width: calc(100% - 48px);
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  border: 1px solid #eef0f3;
-  border-radius: 10px;
-  padding: 14px 18px;
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.02);
-  margin-bottom: 28px;
-}
-.warning-icon {
-  font-size: 20px;
-}
-.warning-title {
-  font-weight: 700;
-  margin: 0;
-}
-.warning-text {
-  margin: 0;
-  color: #6b7280;
+/* Security banner */
+.security-banner {
+  background: #0f172a;
+  color: #e5e7eb;
   font-size: 14px;
+  padding: 12px 28px;
+  display: flex;
+  gap: 12px;
 }
 
-.login-card-wrap {
-  width: 100%;
+/* 중앙 정렬 래퍼 */
+.center-wrap {
+  flex: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-.login-card {
-  width: 420px;
-  background: #fff;
-  border-radius: 10px;
-  padding: 28px 28px 36px 28px;
-  border: 1px solid #eef0f3;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+/* Main container */
+.login-container {
+  max-width: 1850px;
+  width: 100%;
+  padding: 0 40px;
   display: flex;
-  flex-direction: column;
+  gap: 64px;
   align-items: stretch;
 }
 
-.logo-wrap {
+/* Brand panel */
+.brand-panel {
+  flex: 1;
+  background: linear-gradient(180deg, #1e1b4b, #17143a);
+  border-radius: 28px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+}
+
+.brand-inner {
+  padding: 72px;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+}
+
+.brand-panel h1 {
+  font-size: 38px;
+  color: #ffffff;
+  margin-bottom: 18px;
+}
+
+.brand-desc {
+  font-size: 16.5px;
+  color: #c7d2fe;
+  line-height: 1.75;
+}
+
+.brand-points {
+  list-style: none;
+  padding: 0;
+  margin-top: 32px;
+}
+
+.brand-points li {
+  font-size: 15.5px;
+  color: #e0e7ff;
+  margin-bottom: 14px;
+}
+
+/* Login card */
+.login-card {
+  flex: 1.4;
+  width: auto; 
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 48px 64px;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.22);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.login-logo {
+  height: 56px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 14px;
+}
+
+.login-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #111827;
   margin-bottom: 8px;
-}
-.logo-mark {
-  width: 48px;
-  height: 48px;
-}
-.brand-title {
-  font-weight: 700;
-  color: #6b63f6;
-  font-size: 20px;
+  text-align: center;
 }
 
-.login-heading {
-  text-align: center;
-  margin: 8px 0 4px 0;
-  font-size: 18px;
-}
 .login-sub {
+  font-size: 14.5px;
+  color: #4b5563;
+  margin-bottom: 30px;
   text-align: center;
-  margin: 0 0 16px 0;
-  color: #6b7280;
-  font-size: 13px;
 }
 
+/* Form */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
-.field {
+
+.login-form label {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #111827;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.field-label {
-  font-weight: 600;
-  color: #111827;
-  font-size: 14px;
-}
-.input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #e6e9ee;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-.input-wrap .icon {
-  opacity: 0.7;
-}
-.input-wrap input {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 14px;
-  background: transparent;
+
+.login-form input {
+  padding: 15px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
 }
 
-.btn-primary {
-  margin-top: 8px;
-  background: #6b63f6;
-  color: white;
-  border: none;
-  padding: 10px 12px;
-  border-radius: 8px;
+.login-form input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+/* Button */
+.login-btn {
+  margin-top: 16px;
+  padding: 18px;
+  font-size: 15.5px;
   font-weight: 700;
+  border-radius: 14px;
+  border: none;
+  background: #4f46e5;
+  color: white;
   cursor: pointer;
 }
 
-@media (max-width: 480px) {
-  .warning-box {
-    width: calc(100% - 32px);
-  }
-  .login-card {
-    width: calc(100% - 32px);
-  }
+.login-btn:hover {
+  background: #4338ca;
 }
-.logo-image {
-  height: 55px;
-  object-fit: cover;
+
+/* Responsive */
+@media (max-width: 960px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-card {
+    width: 100%;
+    padding: 40px;
+  }
+
+  .brand-inner {
+    padding: 48px;
+  }
 }
 </style>

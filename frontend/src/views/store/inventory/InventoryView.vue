@@ -171,9 +171,9 @@ onMounted(() => fetchInventory())
 .inventory-table {
   width: 100%;
   border-collapse: collapse;
+  text-align: center;
 }
 .inventory-table thead th {
-  text-align: left;
   padding: 14px;
   background: #fbfbfd;
   color: #6b7280;
@@ -215,21 +215,11 @@ onMounted(() => fetchInventory())
 
 .table-container {
   overflow-x: auto;
-}
-
-.inventory-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.inventory-table th,
-.inventory-table td {
-  padding: 16px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  text-align: center;
 }
 
 /* ---- 컬럼 폭/정렬 ---- */
-.col-code {
+/* .col-code {
   width: 240px;
   white-space: nowrap;
 }
@@ -248,7 +238,7 @@ onMounted(() => fetchInventory())
   background: #f9fafb;
   color: #6b7280;
   font-weight: 600;
-}
+} */
 
 .no-data {
   text-align: center;
