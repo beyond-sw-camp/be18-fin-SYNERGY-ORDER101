@@ -67,16 +67,17 @@
 
 <img width="2070" height="584" alt="image" src="https://github.com/user-attachments/assets/8584b2b4-d285-43de-b129-f8dc7a47d311" />
 “stockouts (품절)이 전세계 리테일러에 연간 약 1조 달러(약 1,000 조 원) 이상 손실을 안겨주고 있다”  <br>
--> 수요 예측 실패, 재고관리 부정확성, 발주 프로세스 지연 등이 주요 원인  <br>
-[출처](https://www.mirakl.com/blog/out-of-stocks-ecommerce-inventory-management-problem?)
+-> 수요 예측 실패, 재고관리 부정확성, 발주 프로세스 지연 등이 주요 원인  <br>  
+<a href="https://www.mirakl.com/blog/out-of-stocks-ecommerce-inventory-management-problem?">출처</a>
 <br></br>
 <img width="1584" height="463" alt="image" src="https://github.com/user-attachments/assets/9cc90bbf-9f30-4d7c-8d15-c6999f3753c6" />
-매장의 과거 판매·발주·재고 데이터 + 외부 변수를 사용하여 최적 발주량을 계산한다.<br>
-[출처](https://www.etnews.com/20250331000062?)
+매장의 과거 판매·발주·재고 데이터 + 외부 변수를 사용하여 최적 발주량을 계산한다.<br>  
+<a href="https://www.etnews.com/20250331000062?">출처</a>
 <br></br>
 <img width="1621" height="406" alt="image" src="https://github.com/user-attachments/assets/d9c56de2-f8d7-4f06-9b1d-62dd6eb8c10c" />
-AI가 팔릴 상품 수량 예측하고, 발주까지 자동으로 넣는다.<br>
-[출처](https://biz.chosun.com/site/data/html_dir/2020/04/06/2020040602892.html?)
+AI가 팔릴 상품 수량 예측하고, 발주까지 자동으로 넣는다.<br>  
+<a href="https://biz.chosun.com/site/data/html_dir/2020/04/06/2020040602892.html?">출처</a>
+
 
 <br></br>
 ### 1.3 기존 서비스와의 차별점
@@ -370,7 +371,7 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 [UI/UX 테스트 결과서](https://www.notion.so/playdatacademy/UI-UX-2bfd943bcac2801390ecde7eb9f1fb4a?source=copy_link)
 
 ## 12. CICD
-
+[CICD 계획서](https://docs.google.com/document/d/1-79JuduMko7PyVVVVHkhjOkVK2aWvqL65Bw6ZQA6s5g/edit?usp=sharing)
 
 
 ## 13. 트러블 슈팅
