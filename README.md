@@ -333,7 +333,7 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 9. 화면 기능 설계서 
 
-[화면 기능 설계서](https://app.visily.ai/projects/76f025b6-c743-4fe3-8bea-7c5e958c9d20/boards/2283842)
+[화면 기능 설계서](https://www.figma.com/design/8mX2qcFswjZHQQIoh3RJ8x/ORDER101?node-id=0-1&p=f&t=gZyv3W4HDc5EMKRX-0)
 
 <br/>
 
