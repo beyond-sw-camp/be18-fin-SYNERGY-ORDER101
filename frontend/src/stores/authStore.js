@@ -66,10 +66,10 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { success: true }
     } catch (error) {
-      if (error.response && error.response.status === 404) {
-        return { success: false, message: '이메일 또는 비밀번호를 확인하세요.' }
-      } else {
-        return { success: false, message: '로그인 중 오류가 발생했습니다.' }
+      console.log(error)
+      return {
+        success: false,
+        message: error.response.data.message || '로그인 중 오류가 발생했습니다.',
       }
     }
   }
