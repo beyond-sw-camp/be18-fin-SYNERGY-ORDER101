@@ -347,6 +347,24 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
   </div>
 </details>
 
+<details>
+  <summary><b>통합 테스트</b></summary>
+  <div>
+    <ul>
+      <li>
+        <a href="https://docs.google.com/spreadsheets/d/1zyB0iD03mgLm-BNBLT5-Q5ppBiXPDqPmvfoJyA0rz2U/edit?gid=0#gid=0" target="_blank">
+          통합 테스트 결과서
+        </a>
+        <br>
+      </li>
+      <img width="722" height="1137" alt="image" src="https://github.com/user-attachments/assets/5bfd7014-fbe7-4d22-b06a-7c6a07163056" />
+    </ul>
+  </div>
+</details>
+
+
+
+
 ## 11. 프론트엔드 테스트 결과서
 
 [UI/UX 테스트 결과서](https://www.notion.so/playdatacademy/UI-UX-2bfd943bcac2801390ecde7eb9f1fb4a?source=copy_link)
