@@ -18,6 +18,7 @@ const roleOptions = [
 const adminSidebar = [
   {
     id: 'orders',
+    icon: 'shoppingCart',
     title: '발주 관리',
     children: [
       { title: '발주서 생성', path: '/hq/orders/create' },
@@ -30,6 +31,7 @@ const adminSidebar = [
   },
   {
     id: 'warehouse',
+    icon: 'warehouse',
     title: '창고 관리',
     children: [
       { title: '재고 상태', path: '/hq/inventory/stock' },
@@ -38,6 +40,7 @@ const adminSidebar = [
   },
   {
     id: 'product',
+    icon: 'tag',
     title: '상품 관리',
     children: [
       { title: '상품 목록', path: '/hq/product/list' },
@@ -46,6 +49,7 @@ const adminSidebar = [
   },
   {
     id: 'settlement',
+    icon: 'creditCard',
     title: '정산 관리',
     children: [
       { title: '정산 목록', path: '/hq/settlement/list' },
@@ -55,6 +59,7 @@ const adminSidebar = [
   },
   {
     id: 'users',
+    icon: 'users',
     title: '사용자 관리',
     children: [
       { title: '사용자 목록', path: '/hq/users/' },
@@ -63,6 +68,7 @@ const adminSidebar = [
   },
   {
     id: 'franchise',
+    icon: 'home',
     title: '가맹점 관리',
     children: [
       { title: '가맹점 등록', path: '/hq/franchise/registration' },
@@ -73,6 +79,7 @@ const adminSidebar = [
   },
   {
     id: 'dashboard',
+    icon: 'chartpie',
     title: '대시보드',
     children: [
       { title: '수요 예측', path: '/hq/dashboard/forecast' },
@@ -84,6 +91,7 @@ const adminSidebar = [
 const storeSidebar = [
   {
     id: 'store-orders',
+    icon: 'shoppingCart',
     title: '발주 관리',
     children: [
       { title: '발주 생성', path: '/store/purchase/create' },
@@ -92,6 +100,7 @@ const storeSidebar = [
   },
   {
     id: 'store-inventory',
+    icon: 'box',
     title: '재고 관리',
     children: [{ title: '재고 조회', path: '/store/inventory/stock' }],
   },
