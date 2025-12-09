@@ -14,11 +14,10 @@ const form = reactive({
 
 const handleLogin = async () => {
   try {
-    const stayLoggedIn = true
-    const result = await auth.login(form.email, form.password, stayLoggedIn)
+    const result = await auth.login(form.email, form.password, true)
 
-    if (!result || !result.success) {
-      window.alert(result?.message ?? '로그인에 실패했습니다.')
+    if (!result?.success) {
+      handleAuthError(result)
       return
     }
 
@@ -27,15 +26,40 @@ const handleLogin = async () => {
       (auth.userInfo.roles && auth.userInfo.roles[0]) ||
       auth.userInfo.type
 
-    if (role === 'STORE_ADMIN') {
-      router.push('/store/dashboard')
-    } else {
-      router.push('/hq/dashboard')
-    }
-  } catch {
-    window.alert('로그인 중 오류가 발생했습니다.')
+    router.push(
+      role === 'STORE_ADMIN'
+        ? '/store/dashboard'
+        : '/hq/dashboard'
+    )
+
+  } catch (e) {
+
+    const errorCode = e?.response?.data?.code
+    const errorMessage = e?.response?.data?.message
+
+    handleAuthError({ code: errorCode, message: errorMessage })
   }
 }
+
+const handleAuthError = ({ code, message }) => {
+  switch (code) {
+    case 'USER_NOT_FOUND':
+      window.alert('이메일 정보가 올바르지 않습니다.')
+      break
+
+    case 'INVALID_PASSWORD':
+      window.alert('비밀번호가 올바르지 않습니다.')
+      break
+
+    case 'ACCOUNT_DISABLED':
+      window.alert('비활성화된 계정입니다. 관리자에게 문의하세요.')
+      break
+
+    default:
+      window.alert(message ?? '로그인에 실패했습니다.')
+  }
+}
+
 </script>
 
 <template>
