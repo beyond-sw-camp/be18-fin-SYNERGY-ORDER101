@@ -9,20 +9,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
+// implementation is detected by Spring Data JPA by naming convention (SettlementRepositoryImpl)
+// no @Repository annotation to avoid it being created as an independent repository bean
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.synerge.order101.order.model.entity.QStoreOrder.storeOrder;
+// unused imports removed
 import static com.synerge.order101.settlement.model.entity.QSettlement.settlement;
 
 @RequiredArgsConstructor
-@Repository
 public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;

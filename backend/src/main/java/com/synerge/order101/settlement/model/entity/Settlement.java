@@ -101,5 +101,20 @@ public class Settlement {
         VOID, //확정
     }
 
+    public void markAsIssued() {
+        this.settlementStatus = SettlementStatus.ISSUED;
+        this.settledDate = LocalDateTime.now();
+    }
+
+    public void markAsDraft() {
+        this.settlementStatus = SettlementStatus.DRAFT;
+        this.settledDate = null;
+    }
+
+    public void markAsVoid() {
+        this.settlementStatus = SettlementStatus.VOID;
+        this.settledDate = LocalDateTime.now();
+    }
+
 
 }

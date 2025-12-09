@@ -199,6 +199,22 @@ function normalizeProduct(p) {
   }
 }
 
+// 상품이 활성인지 검사 (백엔드에서 내려오는 다양한 필드명에 대응)
+function isProductActive(p) {
+  if (!p) return false
+  // 직접 status 필드가 boolean인 경우
+  if (typeof p.status === 'boolean') return p.status === true
+  // nested product object (supplier detail 등)
+  if (p.product && typeof p.product.status === 'boolean') return p.product.status === true
+  // raw payload wrapper
+  if (p._raw && typeof p._raw.status === 'boolean') return p._raw.status === true
+  // 일부 API에서는 active / isActive 사용
+  if (typeof p.active === 'boolean') return p.active === true
+  if (typeof p.isActive === 'boolean') return p.isActive === true
+  // 기본: 활성으로 간주
+  return true
+}
+
 // --- API Calls (데이터 로드 함수) ---
 
 /**
@@ -251,7 +267,9 @@ async function fetchProducts(page = 1) {
     // 페이지 변경 시 선택 상태 유지하기 위해 초기화 로직 제거
     // Object.keys(selectedMap).forEach((k) => delete selectedMap[k])
 
-    items.value = productlist.map(normalizeProduct)
+    // 백엔드에서 status=false로 내려온 상품은 발주 목록에서 제외
+    const activeList = (productlist || []).filter(isProductActive)
+    items.value = activeList.map(normalizeProduct)
     currentPage.value = pageInfo.page
     pageSize.value = pageInfo.pageSize
     totalCount.value = pageInfo.totalCount
