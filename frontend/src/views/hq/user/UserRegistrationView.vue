@@ -3,6 +3,7 @@ import { reactive, computed, ref } from 'vue'
 import apiClient from '@/components/api'
 import router from '@/router'
 import VenderSearchModal from '@/components/modal/VenderSearchModal.vue'
+import { Mail, User, Phone, Lock, Home } from 'lucide-vue-next'
 
 const form = reactive({
   memberType: 'HQ',
@@ -170,7 +171,7 @@ const handleReset = () => {
         <div class="field">
           <label for="email">이메일</label>
           <div class="input-wrapper">
-            <span class="leading-icon">✉️</span>
+            <Mail class="leading-icon" aria-hidden />
             <input
               id="loginId"
               v-model="form.loginId"
@@ -186,7 +187,7 @@ const handleReset = () => {
         <div class="field">
           <label for="name">이름</label>
           <div class="input-wrapper">
-            <span class="leading-icon">👤</span>
+            <User class="leading-icon" aria-hidden />
             <input id="name" v-model="form.name" type="text" placeholder="이름을 입력하세요" />
           </div>
           <div v-if="errors.name" style="color: #ef4444; font-size: 13px">{{ errors.name }}</div>
@@ -195,7 +196,7 @@ const handleReset = () => {
         <div class="field">
           <label for="phone">연락처</label>
           <div class="input-wrapper">
-            <span class="leading-icon">📞</span>
+            <Phone class="leading-icon" aria-hidden />
             <input id="phone" v-model="form.phone" type="text" placeholder="010-0000-0000" />
           </div>
           <div v-if="errors.phone" style="color: #ef4444; font-size: 13px">{{ errors.phone }}</div>
@@ -204,7 +205,7 @@ const handleReset = () => {
         <div class="field">
           <label for="password">비밀번호</label>
           <div class="input-wrapper">
-            <span class="leading-icon">🔒</span>
+            <Lock class="leading-icon" aria-hidden />
             <input
               id="password"
               v-model="form.password"
@@ -217,7 +218,7 @@ const handleReset = () => {
         <div class="field">
           <label for="passwordConfirm">비밀번호 확인</label>
           <div class="input-wrapper">
-            <span class="leading-icon">🔒</span>
+            <Lock class="leading-icon" aria-hidden />
             <input
               id="passwordConfirm"
               v-model="form.passwordConfirm"
@@ -233,7 +234,7 @@ const handleReset = () => {
         <div v-if="form.memberType === 'STORE_ADMIN'" class="field">
           <label for="storeId">가맹점 선택</label>
           <div class="input-wrapper" style="gap: 8px">
-            <span class="leading-icon">🏬</span>
+            <Home class="leading-icon" aria-hidden />
             <input
               id="storeId"
               :value="selectedStore ? selectedStore.name : form.storeId"
@@ -396,7 +397,9 @@ h1 {
 }
 
 .leading-icon {
-  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
   opacity: 0.7;
 }
 
