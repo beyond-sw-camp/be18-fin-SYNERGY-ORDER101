@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import apiClient from '..'
 
 const SSE_URL = (token) =>
-  `https://order101.link/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
+  `https://api.order101.link/api/v1/sse/notifications?token=${encodeURIComponent(token)}`
 
 export const useNotificationStore = defineStore('notification', {
   state: () => ({
