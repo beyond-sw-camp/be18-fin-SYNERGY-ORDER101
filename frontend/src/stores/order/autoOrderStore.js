@@ -26,10 +26,13 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
         })
 
         this.items = res.data.items
-        this.page = res.data.page
-        this.totalCount = res.data.totalCount
-        this.numOfRows = res.data.numOfRows
-        this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
+        this.page = res.data.page ?? 1
+        this.totalCount = res.data.totalCount ?? 0
+        this.numOfRows = res.data.numOfRows ?? numOfRows
+
+        const total = Number(this.totalCount) || 0
+        const rows = Number(this.numOfRows) || 1
+        this.totalPages = Math.max(1, Math.ceil(total / rows))
       } catch (e) {
         // 자동발주 목록 조회 실패
       } finally {
@@ -54,12 +57,15 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
           page,
           numOfRows,
         })
-
+        
         this.items = res.data.items
-        this.page = res.data.page
-        this.totalCount = res.data.totalCount
+        this.page = res.data.page ?? 1
+        this.totalCount = res.data.totalCount ?? 0
         this.numOfRows = numOfRows
-        this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
+
+        const total = Number(this.totalCount) || 0
+        const rows = Number(this.numOfRows) || 1
+        this.totalPages = Math.max(1, Math.ceil(total / rows))
       } catch (e) {
         // 자동발주 검색 실패
       } finally {
