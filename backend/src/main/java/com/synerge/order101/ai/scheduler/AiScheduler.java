@@ -32,7 +32,7 @@ public class AiScheduler {
     // 스마트 발주 생성은 일주일에 한번
     // 매주 월요일 새벽 03:00에 그 주차의 스마트 발주 생성
     // targetWeek은 그럼 다음주 월요일 날짜
-    @Scheduled(cron = "0 0 3 ? * MON")
+    @Scheduled(cron = "0 0 17 ? * SUN")
     public void weeklySmartOrderGenerate() {
         LocalDate today = LocalDate.now();
         // 다음 주 월요일 기준
@@ -47,7 +47,7 @@ public class AiScheduler {
         smartOrderService.generateSmartOrders(nextWeekMonday);
     }
 
-    @Scheduled(cron = "0 0 1 ? * MON")
+    @Scheduled(cron = "0 0 12 ? * SUN")
     public void weeklyForecastGenerate() {
         LocalDate today = LocalDate.now();
         // 다음 주 월요일
