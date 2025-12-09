@@ -44,9 +44,11 @@
                 v-for="item in items"
                 :key="item.productId"
                 @click="toggleSelect(item)"
-                class="clickable-row"
+                :class="['clickable-row', { inactive: !item.isActive }]"
               >
-                <td @click.stop><input type="checkbox" :checked="!!selectedMap[item.productId]" @change="toggleSelect(item)" /></td>
+                <td @click.stop>
+                  <input type="checkbox" :checked="!!selectedMap[item.productId]" @change="toggleSelect(item)" :disabled="!item.isActive" />
+                </td>
                 <td>
                   <code class="sku">{{ item.sku }}</code>
                 </td>
@@ -187,7 +189,21 @@ const pageNumbers = computed(() => {
 
 // API 응답 객체를 컴포넌트에서 사용할 형식으로 정규화 (normalize)
 function normalizeProduct(p) {
-  return {
+  // 백엔드에서 전달되는 여러 형태의 상태 필드를 확인하여 isActive로 정규화
+  const rawStatus = p.status ?? p.product?.status ?? p.isActive ?? p.active
+  let isActive = true
+  if (rawStatus !== undefined && rawStatus !== null) {
+    if (typeof rawStatus === 'boolean') {
+      isActive = rawStatus
+    } else if (typeof rawStatus === 'number') {
+      isActive = rawStatus !== 0
+    } else {
+      const s = String(rawStatus).toLowerCase()
+      isActive = s !== '0' && s !== 'false'
+    }
+  }
+
+  const normalized = {
     productId: p.productId || p.id,
     sku: p.productCode || p.sku || p.code,
     name: p.productName || p.name || p.product_name,
@@ -196,23 +212,10 @@ function normalizeProduct(p) {
     stock: p.stockQuantity ?? p.stock ?? null,
     lead: Number(p.leadTimeDays || p.lead_time_days || 1),
     _raw: p,
+    isActive,
   }
-}
 
-// 상품이 활성인지 검사 (백엔드에서 내려오는 다양한 필드명에 대응)
-function isProductActive(p) {
-  if (!p) return false
-  // 직접 status 필드가 boolean인 경우
-  if (typeof p.status === 'boolean') return p.status === true
-  // nested product object (supplier detail 등)
-  if (p.product && typeof p.product.status === 'boolean') return p.product.status === true
-  // raw payload wrapper
-  if (p._raw && typeof p._raw.status === 'boolean') return p._raw.status === true
-  // 일부 API에서는 active / isActive 사용
-  if (typeof p.active === 'boolean') return p.active === true
-  if (typeof p.isActive === 'boolean') return p.isActive === true
-  // 기본: 활성으로 간주
-  return true
+  return normalized
 }
 
 // --- API Calls (데이터 로드 함수) ---
@@ -267,9 +270,9 @@ async function fetchProducts(page = 1) {
     // 페이지 변경 시 선택 상태 유지하기 위해 초기화 로직 제거
     // Object.keys(selectedMap).forEach((k) => delete selectedMap[k])
 
-    // 백엔드에서 status=false로 내려온 상품은 발주 목록에서 제외
-    const activeList = (productlist || []).filter(isProductActive)
-    items.value = activeList.map(normalizeProduct)
+    // 모든 상품을 목록에 노출하되, isActive 플래그로 선택 가능 여부를 제어
+    items.value = (productlist || []).map(normalizeProduct)
+    // 디버그: 로드된 항목의 isActive 상태 요약을 콘솔에 출력
     currentPage.value = pageInfo.page
     pageSize.value = pageInfo.pageSize
     totalCount.value = pageInfo.totalCount
@@ -369,10 +372,13 @@ function goToPage(page) {
   fetchProducts()
 }
 
-// 전체 선택/해제 토글
+// 전체 선택/해제 토글 (비활성 항목은 선택하지 않음)
 function toggleSelectAll(e) {
   const checked = e.target.checked
   items.value.forEach((i) => {
+    if (!i.isActive) {
+      return
+    }
     if (checked) {
       selectedMap[i.productId] = i
     } else {
@@ -381,7 +387,7 @@ function toggleSelectAll(e) {
   })
 }
 
-// 개별 항목 선택 토글 (행 클릭 시)
+// 개별 항목 선택 토글 (행 클릭 시) — 비활성 항목은 선택 불가
 function toggleSelect(item) {
   if (selectedMap[item.productId]) {
     delete selectedMap[item.productId]
@@ -639,6 +645,21 @@ onMounted(async () => {
 
 .items-table tbody tr.clickable-row:hover {
   background: #eef2ff;
+}
+
+.items-table tbody tr.inactive {
+  opacity: 0.5;
+  background: #fafafa;
+  cursor: default;
+}
+
+.items-table tbody tr.inactive:hover {
+  background: #fafafa;
+}
+
+.items-table tbody tr.inactive .sku {
+  background: transparent;
+  color: #94a3b8;
 }
 
 .numeric {
