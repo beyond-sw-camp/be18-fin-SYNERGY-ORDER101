@@ -64,7 +64,6 @@ const canSubmit = computed(() => {
 })
 
 const handleSubmit = async () => {
-  // basic validation
   errors.loginId = ''
   errors.password = ''
   errors.name = ''
@@ -109,18 +108,12 @@ const handleSubmit = async () => {
   }
   try {
     const resp = await apiClient.post('/api/v1/users/register', payload)
-    // on success, reset form and inform user
-    // show success message and navigate to dashboard
     try {
-      // friendly success message in Korean
       window.alert('사용자를 등록하였습니다.')
-    } catch (e) {
-      // ignore if alert is blocked
-    }
+    } catch (e) {}
     handleReset()
     router.push({ name: 'hq-dashboard' })
   } catch (e) {
-    // try to surface server errors
     if (e.response && e.response.data && e.response.data.message) {
       errors.loginId = e.response.data.message
     }
@@ -298,7 +291,6 @@ const handleReset = () => {
           </div>
         </div>
 
-        <!-- store search modal -->
         <VenderSearchModal
           v-if="showStoreModal"
           :currentType="'FRANCHISE'"
@@ -308,7 +300,7 @@ const handleReset = () => {
 
         <div class="form-actions">
           <button type="button" class="ghost" @click="handleReset">초기화</button>
-          <button type="submit" class="primary" :disabled="!canSubmit">저장</button>
+          <button type="submit" class="primary">저장</button>
         </div>
       </form>
     </section>
@@ -338,7 +330,6 @@ h1 {
 }
 
 .form-wrapper {
-  /* center the card horizontally and give room on the left for the sidebar */
   display: flex;
   justify-content: center;
   padding: 8px 0 40px 0;
@@ -353,7 +344,7 @@ h1 {
   flex-direction: column;
   gap: 20px;
   box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
-  width: 680px; /* fixed card width like the design */
+  width: 680px;
   max-width: calc(100% - 48px);
 }
 
@@ -439,7 +430,6 @@ input[type='password'] {
   border-color: #6b63f6;
 }
 
-/* Compact button used inside input fields (select / clear) */
 .btn-compact {
   display: inline-flex;
   align-items: center;
