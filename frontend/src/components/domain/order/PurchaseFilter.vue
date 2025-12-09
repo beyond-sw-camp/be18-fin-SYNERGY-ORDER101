@@ -1,14 +1,14 @@
 <template>
     <div class="purchase-filter-container">
         <div class="filter-row">
-            <FilterDropdown label="상태" :options="statusOptions" v-model="filters.status" />
+                    <FilterDropdown v-if="showStatusFilter" label="상태" :options="statusOptions" v-model="filters.status" />
 
             <FilterDropdown v-if="showTypeFilter" label="타입" :options="typeOptions" v-model="filters.orderType" />
 
             <FilterDropdown v-if="showVendorFilter" label="공급업체" :options="vendorOptions" v-model="filters.vendorId" :searchMode="true"
                 placeholder="전체" @triggerSearchModal="openVendorSearchModal" />
 
-            <FilterDateRange label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
+            <FilterDateRange v-if="showDateRange" label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
 
             <div class="search-group">
                 <FilterSearchInput label="검색" placeholder="PO 번호, 요청자 검색..." v-model="filters.keyword" />
@@ -53,7 +53,16 @@ const props = defineProps({
     showVendorFilter: {
         type: Boolean,
         default: true
-    }
+    },
+    // 새 props: 특정 뷰에서 상태 또는 날짜 범위 필터를 숨기기 위해 사용
+    showStatusFilter: {
+        type: Boolean,
+        default: true,
+    },
+    showDateRange: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 const initialFilters = {

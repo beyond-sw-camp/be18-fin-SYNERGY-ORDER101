@@ -7,6 +7,9 @@
     <section class="card">
       <h3 class="card-title">발주 요청 목록</h3>
 
+      <!-- 필터 영역: 타입 필터만 사용하도록 PurchaseFilter 구성 (상태/날짜 비표시) -->
+      <PurchaseFilter @search="onFilterSearch" :showTypeFilter="true" :showVendorFilter="false" :showStatusFilter="false" :showDateRange="false" />
+
       <div class="table-wrap">
         <table class="approval-table">
           <thead>
@@ -42,7 +45,7 @@
               </td>
             </tr>
             <tr v-if="rows.length === 0">
-              <td colspan="7" class="no-data">발주 요청이 없습니다.</td>
+              <td colspan="8" class="no-data">발주 요청이 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -80,10 +83,20 @@ import Money from '@/components/global/Money.vue'
 import { getPurchases, updatePurchaseStatus, updateSmartOrderStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
+import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue'
 
 const perPage = ref(10)
 const page = ref(1)
 const totalPagesFromBackend = ref(0)
+
+// 현재 적용된 필터 (이 페이지는 날짜 범위 및 상태 검색 불필요 — 타입만 사용)
+const activeFilters = ref({
+  orderType: 'ALL',
+  status: null,
+  startDate: null,
+  endDate: null,
+  keyword: ''
+})
 
 // 총 페이지 수
 const totalPages = computed(() => totalPagesFromBackend.value || 1)
@@ -128,21 +141,80 @@ function handleProcessSuccess() {
   searchPurchases()
 }
 
+// PurchaseFilter에서 전달되는 검색 필터를 처리합니다.
+function onFilterSearch(filters) {
+  // 이 페이지는 날짜 범위와 상태 검색을 사용하지 않음 — 타입 필터만 적용
+  const orderType = filters.orderType || 'ALL'
+
+  activeFilters.value = {
+    orderType,
+    status: null,
+    startDate: null,
+    endDate: null,
+    keyword: filters.keyword || ''
+  }
+
+  page.value = 1
+  searchPurchases()
+}
+
 const searchPurchases = async () => {
   // 발주 목록을 다시 불러오는 함수
+  // 검색 조건 적용
+  const q = activeFilters.value.keyword || ''
+  const statusParam = activeFilters.value.status && activeFilters.value.status !== 'ALL' ? activeFilters.value.status : null
+  const startDate = activeFilters.value.startDate || null
+  const endDate = activeFilters.value.endDate || null
+
   const data = await getPurchases(
     page.value - 1,
     perPage.value,
-    '',
+    q,
+    // 승인 페이지는 SUBMITTED 상태만 조회하도록 기본 고정
     'SUBMITTED',
     null,
-    null,
-    null
+    startDate,
+    endDate
   );
+
+  // Debug logs: 필터와 서버 응답 확인용
+  console.log('[DEBUG] getPurchases called with filters:', {
+    page: page.value,
+    perPage: perPage.value,
+    q,
+    statusParam,
+    startDate,
+    endDate,
+    activeFilters: activeFilters.value
+  })
+  console.log('[DEBUG] getPurchases response (raw):', data)
+
+  // 서버에서 받은 통합 목록(일반+스마트)을 클라이언트에서 타입으로 필터링
+  let content = data.content || []
+  if (activeFilters.value.orderType && activeFilters.value.orderType !== 'ALL') {
+    const wanted = (activeFilters.value.orderType || '').toString().toUpperCase()
+    content = content.filter(it => ((it.orderType || '').toString().toUpperCase()) === wanted)
+  }
+
+  // 클라이언트 사이드 검색어 필터링: PO 번호, 공급사명, 요청자
+  const keyword = (activeFilters.value.keyword || '').toString().trim()
+  if (keyword) {
+    const k = keyword.toLowerCase()
+    content = content.filter(it => {
+      const po = (it.poNo || '').toString().toLowerCase()
+      const supplier = (it.supplierName || '').toString().toLowerCase()
+      const requester = (it.requesterName || '').toString().toLowerCase()
+      return po.includes(k) || supplier.includes(k) || requester.includes(k)
+    })
+  }
+
+  // Debug: 필터 적용 후 내용과 orderType 분포 확인
+  console.log('[DEBUG] content after orderType filter - length:', content.length)
+  console.log('[DEBUG] content sample orderTypes:', content.slice(0, 10).map(it => ({ id: it.purchaseId, orderType: it.orderType })))
 
   totalPagesFromBackend.value = data.totalPages || 1
 
-  rows.value = (data.content || []).map(item => ({
+  rows.value = content.map(item => ({
     id: item.purchaseId,
     No: item.poNo,
     vendor: item.supplierName,
@@ -152,6 +224,8 @@ const searchPurchases = async () => {
     status: mapPurchaseStatus(item.status),
     orderType: mapPurchaseStatus(item.orderType),
     sourceType: item.sourceType,
+    supplierId: item.supplierId,
+    targetWeek: item.targetWeek,
     smartOrderIds: item.smartOrderIds // 스마트 발주인 경우 ID 배열
   }));
 }
@@ -166,8 +240,12 @@ function goPage(p) {
 }
 
 function openDetail(row) {
-  // navigate to approval detail page for this PO
-  router.push({ name: 'hq-orders-approval-detail', params: { id: row.id } })
+  // 항상 발주 상세 페이지로 이동하되, SMART인 경우에는 query로 메타 정보를 전달합니다.
+  if (row.sourceType === 'SMART') {
+    router.push({ name: 'hq-orders-approval-detail', params: { id: row.id }, query: { sourceType: 'SMART', supplierId: row.supplierId, targetWeek: row.targetWeek } })
+  } else {
+    router.push({ name: 'hq-orders-approval-detail', params: { id: row.id } })
+  }
 }
 
 function statusClass(s) {
