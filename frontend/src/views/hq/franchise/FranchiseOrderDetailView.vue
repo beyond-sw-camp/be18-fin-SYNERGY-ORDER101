@@ -176,7 +176,7 @@ const displayStatus = computed(() => {
 const formatServerTime = (time) => {
   if (!time) return '';
 
-  const d = new Date(time); // ✅ Z 절대 붙이지 말 것
+  const d = new Date(time);
 
   return d.toLocaleString('ko-KR', {
     year: 'numeric',
