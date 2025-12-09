@@ -22,7 +22,7 @@ public interface StoreOrderRepository extends JpaRepository<StoreOrder, Long>,St
         select count(o)
         from StoreOrder o
         where o.store.storeId = :storeId
-          and o.orderStatus = com.synerge.order101.common.enums.OrderStatus.CANCELLED
+          and o.orderStatus = com.synerge.order101.common.enums.OrderStatus.REJECTED
           and o.updatedAt between :from and :to
     """)
     int countCanceledThisMonth(
@@ -30,33 +30,4 @@ public interface StoreOrderRepository extends JpaRepository<StoreOrder, Long>,St
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
-
-
-
-
-//    String BASE_QUERY = """
-//        select new com.synerge.order101.order.model.dto.StoreOrderSummaryResponseDto(
-//                so.storeOrderId,
-//                so.orderNo,
-//                s.storeName,
-//                size(so.storeOrderDetails),
-//                cast(
-//                (
-//                    select coalesce(sum(detail.orderQty),0)
-//                    from StoreOrderDetail detail
-//                    where detail.storeOrder = so
-//                ) as integer),
-//                so.createdAt,
-//                so.orderStatus)
-//            from StoreOrder so
-//            left join so.store s
-//            """;
-//
-//    @Query(value = BASE_QUERY + " WHERE so.orderStatus = :status",
-//            countQuery = "SELECT COUNT(so.storeOrderId) FROM StoreOrder so WHERE so.orderStatus = :status")
-//    Page<StoreOrderSummaryResponseDto> findByOrderStatus(OrderStatus status, Pageable pageable);
-//
-//    @Query(value = BASE_QUERY,
-//            countQuery = "SELECT COUNT(so.storeOrderId) FROM StoreOrder so")
-//    Page<StoreOrderSummaryResponseDto> findOrderAllStatus(Pageable pageable);
 }
