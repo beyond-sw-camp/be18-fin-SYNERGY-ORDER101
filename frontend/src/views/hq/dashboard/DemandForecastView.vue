@@ -58,8 +58,8 @@
                 </span>
               </td>
               <td class="center">
-                <button class="icon-button" @click="openSkuChart(row)">
-                  <span class="material-icons-outlined">insights</span>
+                <button class="detail-button" @click="openSkuChart(row)">
+                  상세
                 </button>
               </td>
             </tr>
@@ -80,6 +80,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { BarChart3 } from 'lucide-vue-next'
 import SkuChartModal from '@/components/ai/SkuChartModal.vue'
 
 import {
@@ -313,13 +314,49 @@ onBeforeUnmount(() => {
 }
 
 .icon-button {
-  background: none;
-  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
-  color: #666;
+  color: #6b7280;
+  transition: all 0.15s ease;
 }
 
 .icon-button:hover {
-  color: #000;
+  background: #f3f4f6;
+  color: #111827;
 }
+
+
+.icon-button:active {
+  transform: scale(0.95);
+}
+.detail-button {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+
+  background-color: #d599f8; 
+  border: none;
+
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.detail-button:hover {
+  background-color: #4f46e5; 
+}
+
+.detail-button:active {
+  transform: scale(0.96);
+}
+
 </style>
