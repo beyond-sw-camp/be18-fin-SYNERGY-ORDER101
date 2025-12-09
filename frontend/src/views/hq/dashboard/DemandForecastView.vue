@@ -135,6 +135,19 @@ function openSkuChart(row) {
 // 퍼센트 표시
 const formatPercent = (v) => (v == null ? '-' : (v * 100).toFixed(1) + '%')
 
+// 카테고리 라벨 줄바꿈 (bar chart용)
+function formatCategoryLabel(label) {
+  const map = {
+    계절가전: '계절\n가전',
+    디지털기기: '디지털\n기기',
+    생활가전: '생활\n가전',
+    영상가전: '영상\n가전',
+    주방기기: '주방\n기기',
+    청소가전: '청소\n가전',
+  }
+  return map[label] ?? label
+}
+
 async function fetchReport() {
   loading.value = true
   try {
@@ -209,7 +222,9 @@ function renderCharts() {
   barChart = new Chart(barChartRef.value.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: categoryMetrics.value.map((c) => c.category),
+      labels: categoryMetrics.value.map((c) =>
+        formatCategoryLabel(c.category)
+      ),
       datasets: [
         {
           label: '오차율(%)',
@@ -217,9 +232,34 @@ function renderCharts() {
           backgroundColor: '#34D399',
           borderColor: '#059669',
           borderWidth: 1,
+
+          barThickness: 36,
+          maxBarThickness: 40,
         },
       ],
     },
+
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        ticks: {
+          autoSkip: false,
+          maxRotation: 0,
+          minRotation: 0,
+          padding: 4,      
+          align: 'center',
+          font: {
+            size: 11,      
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+      },
+    },
+  },
   })
 }
 
