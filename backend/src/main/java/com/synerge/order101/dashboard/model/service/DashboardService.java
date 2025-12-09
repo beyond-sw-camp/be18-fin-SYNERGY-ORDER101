@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -47,10 +48,18 @@ public class DashboardService {
 
     private double calculateRecentForecastAccuracy() {
 
-        List<DemandForecast> latest =
-                demandForecastRepository.findLatestSnapshotForecasts();
+        // 1. 지난주 기간 계산
+        LocalDate today = LocalDate.now();
+        LocalDate thisMonday = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        LocalDate lastMonday = thisMonday.minusWeeks(1);
+        LocalDate lastSunday = thisMonday.minusDays(1);
 
-        return latest.stream()
+        // 2. 지난주 targetWeek 데이터 조회
+        List<DemandForecast> lastWeekForecasts =
+                demandForecastRepository.findByTargetWeekBetween(lastMonday, lastSunday);
+
+        // 3. accuracy 계산
+        return lastWeekForecasts.stream()
                 .filter(df -> df.getActualOrderQty() != null && df.getActualOrderQty() > 0)
                 .filter(df -> df.getYPred() != null)
                 .mapToDouble(df -> {
