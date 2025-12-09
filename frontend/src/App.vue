@@ -278,14 +278,14 @@ watch(
         <Sidebar :sections="sidebarSections" :expanded="expandedSections" @toggle="toggleSection" />
 
         <section class="app-content">
-          <RouterView />
+          <RouterView :key="$route.fullPath" />
         </section>
       </div>
     </div>
 
     <!-- Auth routes (login) render here without header/sidebar -->
     <div v-else class="auth-route">
-      <RouterView />
+      <RouterView :key="$route.fullPath" />
     </div>
   </div>
 </template>
