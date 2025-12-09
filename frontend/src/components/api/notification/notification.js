@@ -95,7 +95,22 @@ export const useNotificationStore = defineStore('notification', {
         this.totalCount += 1
       })
 
-      es.onerror = () => {}
+      es.onerror = () => {
+        console.warn('[SSE] error → will reconnect')
+
+        // 현재 연결 정리
+        this.connected = false
+        if (this.es) {
+          this.es.close()
+          this.es = null
+        }
+
+        // 지수 backoff 등 넣고 싶으면 여기에서
+        setTimeout(() => {
+          const t = localStorage.getItem('authToken')
+          if (t) this.connectSSE(t)
+        }, 3_000)
+      }
     },
 
     disconnectSSE() {

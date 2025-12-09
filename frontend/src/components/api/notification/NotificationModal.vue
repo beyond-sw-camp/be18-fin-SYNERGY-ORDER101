@@ -13,7 +13,11 @@
 
       <ul v-else class="noti-list">
         <li v-for="n in items" :key="n.notificationId ?? n.id">
-          <div class="noti-item" :class="{ unread: !(n.readAt || n.isRead) }">
+          <div
+            class="noti-item"
+            :class="{ unread: !(n.readAt || n.isRead) }"
+            @click="handleClick(n)"
+          >
             <div class="dot" v-if="!(n.readAt || n.isRead)"></div>
 
             <div class="body">
@@ -48,6 +52,17 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const role =
+  authStore.userInfo &&
+  (authStore.userInfo.role ||
+    authStore.userInfo.type ||
+    (authStore.userInfo.roles && authStore.userInfo.roles[0]))
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -64,6 +79,126 @@ const formatTime = (v) => {
   const d = new Date(v)
   if (isNaN(d.getTime())) return v
   return d.toLocaleString()
+}
+
+const handleClick = (n) => {
+  const type = n.type
+  const upperRole = (role || '').toUpperCase()
+
+  // ========= 1) 가맹점주(STORE_ADMIN) 알림 =========
+  if (upperRole === 'STORE_ADMIN') {
+    switch (type) {
+      case 'STORE_ORDER_APPROVED':
+      case 'STORE_ORDER_REJECTED': {
+        const id = n.storeOrderId ?? n.orderId ?? n.id
+        if (id) {
+          router.push({
+            name: 'store-purchase-detail',
+            params: { id },
+          })
+        }
+        return
+      }
+      // 필요하면 가맹점주용 다른 타입도 여기에 분기 추가
+      default:
+        // 일단 기본은 대시보드로
+        router.push({ name: 'store-dashboard' })
+        return
+    }
+  }
+
+  // ========= 2) HQ / HQ_ADMIN 쪽 알림 =========
+  switch (type) {
+    // (1) 발주 승인 요청 (HQ_ADMIN들)
+    case 'PURCHASE_APPROVAL_REQUEST': {
+      // purchase 승인 요청
+      if (n.purchaseOrderId) {
+        router.push({
+          name: 'hq-orders-approval-detail',
+          params: { id: n.purchaseOrderId },
+        })
+        return
+      }
+
+      // 스마트 발주 승인 요청 (smartOrderId만 있는 케이스)
+      if (n.smartOrderId) {
+        router.push({
+          name: 'hq-smart-orders',
+        })
+        return
+      }
+
+      // 혹시 둘 다 없으면 그냥 발주 승인 리스트로
+      router.push({ name: 'hq-orders-approval' })
+      return
+    }
+
+    // (2) 가맹점 주문 승인 요청 (HQ들)
+    case 'STORE_ORDER_APPROVAL_REQUEST': {
+      const id = n.storeOrderId ?? n.id
+      if (id) {
+        router.push({
+          name: 'hq-franchise-approval-detail',
+          params: { id },
+        })
+      } else {
+        router.push({ name: 'hq-franchise-approval' })
+      }
+      return
+    }
+
+    // (3) 자동 발주 생성 (HQ들)
+    case 'AUTO_PURCHASE_CREATED': {
+      const purchaseId = n.purchaseOrderId ?? n.id
+      if (purchaseId) {
+        router.push({
+          name: 'hq-orders-auto-detail',
+          params: { purchaseId },
+        })
+      } else {
+        router.push({ name: 'hq-orders-auto-status' })
+      }
+      return
+    }
+
+    // (4) 스마트 발주 생성 (HQ들)
+    case 'AUTO_SMART_ORDER_CREATED': {
+      // targetWeek 정보가 없으니 우선 리스트로
+      if (n.supplierId) {
+        router.push({
+          name: 'hq-smart-orders',
+          // query: { supplierId: n.supplierId }  // 원하면 필터링용 힌트
+        })
+      } else {
+        router.push({ name: 'hq-smart-orders' })
+      }
+      return
+    }
+
+    // (5) 가맹점 주문 승인/반려 알림이 HQ에 온 경우 (있을지 모르지만 방어코드)
+    case 'STORE_ORDER_APPROVED':
+    case 'STORE_ORDER_REJECTED': {
+      const id = n.storeOrderId ?? n.id
+      if (id) {
+        router.push({
+          name: 'hq-franchise-order-detail',
+          params: { id },
+        })
+      } else {
+        router.push({ name: 'hq-franchise-orders' })
+      }
+      return
+    }
+
+    default:
+      // 혹시 새로운 타입인데 아직 분기 안 짠 경우 → 역할별 기본 대시보드로
+      if (upperRole === 'SYSTEM') {
+        router.push({ name: 'system-home' })
+      } else {
+        router.push({ name: 'hq-dashboard' })
+      }
+      return
+  }
 }
 
 const onScroll = () => {
