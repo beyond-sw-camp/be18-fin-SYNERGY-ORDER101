@@ -112,13 +112,11 @@ async function toggleStatus(user) {
               <th>역할</th>
               <th>상태</th>
               <th>가입 날짜</th>
-
-              <th>동작</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!loading && users.length === 0">
-              <td colspan="7" style="text-align: center; padding: 20px; color: #6b7280">
+              <td colspan="5" style="text-align: center; padding: 20px; color: #6b7280">
                 사용자가 없습니다.
               </td>
             </tr>
@@ -127,15 +125,21 @@ async function toggleStatus(user) {
               <td>{{ user.name }}</td>
               <td>{{ user.role }}</td>
               <td>
-                <span :class="['status-badge', getStatus(user) === '활성' ? 'active' : 'inactive']">
+                <span
+                  :class="[
+                    'status-badge',
+                    getStatus(user) === '활성' ? 'active' : 'inactive',
+                    'clickable',
+                  ]"
+                  role="button"
+                  tabindex="0"
+                  @click="toggleStatus(user)"
+                  @keydown.enter.prevent="toggleStatus(user)"
+                >
                   {{ getStatus(user) === '활성' ? '활성' : '비활성화' }}
                 </span>
               </td>
               <td>{{ fmtDate(user.createdAt) }}</td>
-
-              <td class="actions">
-                <button class="more" @click="toggleStatus(user)">⋯</button>
-              </td>
             </tr>
           </tbody>
         </table>
@@ -208,6 +212,13 @@ async function toggleStatus(user) {
   border-radius: 50%;
   background: #ff7ab6;
   margin-right: 6px;
+}
+.status-badge.clickable {
+  cursor: pointer;
+}
+.status-badge.clickable:focus {
+  outline: 2px solid #c7d2fe;
+  border-radius: 8px;
 }
 .actions {
   text-align: center;
