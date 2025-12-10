@@ -10,7 +10,8 @@ export const useInventoryStore = defineStore('inventory', {
     totalPages: 1,
     loading: false,
     error: null,
-    keyword: ''
+    keyword: '',
+    sortBy: '',
   }),
 
   actions: {
@@ -20,7 +21,8 @@ export const useInventoryStore = defineStore('inventory', {
       largeId = null,
       mediumId = null,
       smallId = null,
-      keyword = null
+      keyword = null,
+      sortBy = null
     } = {}) {
       try {
         this.loading = true
@@ -31,6 +33,7 @@ export const useInventoryStore = defineStore('inventory', {
         if (mediumId) params.mediumId = mediumId
         if (smallId) params.smallId = smallId
         if (keyword) params.keyword = keyword
+        if (sortBy) params.sortBy = sortBy
 
         const res = await apiClient.get(`/api/v1/warehouses/inventory`, { params })
 
@@ -49,7 +52,8 @@ export const useInventoryStore = defineStore('inventory', {
       this.fetchInventory({
         page: this.page,
         numOfRows: this.numOfRows,
-        keyword: this.keyword
+        keyword: this.keyword,
+        sortBy: this.sortBy
       })
     },
   },

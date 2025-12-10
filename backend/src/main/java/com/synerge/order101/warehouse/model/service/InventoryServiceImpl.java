@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,9 +44,19 @@ public class InventoryServiceImpl implements InventoryService {
     // 재고 조회
     @Override
     @Transactional
-    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId, String keyword) {
+    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId, String keyword, String sortBy) {
 
         Pageable pageable = PageRequest.of(page - 1, numOfRows);
+
+        if (sortBy == null) {
+            pageable = PageRequest.of(page - 1, numOfRows);
+        } else if (sortBy.equals("onHandQtyAsc")) {
+            pageable = PageRequest.of(page - 1, numOfRows, Sort.by(Sort.Direction.ASC, "onHandQuantity"));
+        } else if (sortBy.equals("onHandQtyDesc")) {
+            pageable = PageRequest.of(page - 1, numOfRows, Sort.by(Sort.Direction.DESC, "onHandQuantity"));
+        } else {
+            pageable = PageRequest.of(page - 1, numOfRows);
+        }
 
         return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, keyword, pageable);
     }

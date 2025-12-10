@@ -44,7 +44,14 @@
             <th>상품 코드</th>
             <th>카테고리</th>
             <th>상품명</th>
-            <th>현 재고량</th>
+            <th @click="toggleSort" class="sortable">
+              현 재고량
+              <span class="sort-icon">
+                <span v-if="sortBy === 'onHandQtyDesc'">▼</span>
+                <span v-else-if="sortBy === 'onHandQtyAsc'">▲</span>
+                <span v-else>⇅</span>
+              </span>
+            </th>
             <th>안전재고량</th>
           </tr>
         </thead>
@@ -96,6 +103,8 @@ const smallCategoryId = ref('')
 
 const page = computed(() => inventoryStore.page)
 const totalPages = computed(() => inventoryStore.totalPages)
+
+const sortBy = ref('') 
 
 const filters = ref({
   keyword: '',
@@ -151,6 +160,7 @@ const fetchInventory = async (page = 1) => {
     mediumId: mediumCategoryId.value || null,
     smallId: smallCategoryId.value || null,
     keyword: filters.value.keyword || null,
+    sortBy: sortBy.value,
   })
 }
 
@@ -189,8 +199,24 @@ const resetFilters = () => {
   mediumCategories.value = []
   smallCategories.value = []
   filters.value.keyword = ''
+  sortBy.value = ''
   fetchInventory(1)
 }
+
+// 정렬함수
+const toggleSort = () => {
+  if (sortBy.value === null) {
+    sortBy.value = 'onHandQtyDesc'
+  } else if (sortBy.value === 'onHandQtyDesc') {
+    sortBy.value = 'onHandQtyAsc'
+  } else {
+    sortBy.value = null
+  }
+
+  fetchInventory(1)
+}
+
+
 </script>
 
 <style scoped>
@@ -339,5 +365,15 @@ const resetFilters = () => {
   border: none;
   color: #6b7280;
   cursor: pointer;
+}
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.sort-icon {
+  font-size: 12px;
+  margin-left: 4px;
+  color: #6b7280;
 }
 </style>

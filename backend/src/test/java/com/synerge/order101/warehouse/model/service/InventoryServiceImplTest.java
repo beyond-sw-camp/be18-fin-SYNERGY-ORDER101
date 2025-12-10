@@ -45,7 +45,7 @@ class InventoryServiceImplTest {
                 .thenReturn(mockPage);
 
         Page<InventoryResponseDto> result =
-                inventoryService.getInventoryList(1, 10, null, null, null, null);
+                inventoryService.getInventoryList(1, 10, null, null, null, null, null);
 
         assertThat(result).isEqualTo(mockPage);
         verify(warehouseInventoryRepository, times(1))
