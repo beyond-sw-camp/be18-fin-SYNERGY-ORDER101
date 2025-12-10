@@ -85,7 +85,6 @@
 <script setup>
 import apiClient from '@/components/api'
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
 
 const DELIVERY_STATUS = {
   WAITING: 'WAITING',
