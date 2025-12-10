@@ -182,7 +182,7 @@ const getStatusClass = (status) => {
     '초안': 'status-draft',
     '대기': 'status-pending',
     '지연': 'status-delayed',
-    '무효': 'status-void',
+    '완료': 'status-void',
   };
   return statusMap[status] || 'status-default';
 };
@@ -202,7 +202,7 @@ const mapStatus = (status) => {
     'DRAFT': '초안',
     'ISSUED': '발행됨',
     'COMPLETED': '완료',
-    'VOID': '무효',
+    'VOID': '완료',
   };
   return statusMap[status] || status || '알 수 없음';
 };
