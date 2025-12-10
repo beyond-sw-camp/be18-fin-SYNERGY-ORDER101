@@ -341,16 +341,47 @@ export async function getPurchaseDetail(id) {
 
   try {
     const response = await apiClient.get(url, {})
-
-    // ItemsResponseDto 객체에서 'purchaseDetail' 필드를 직접 추출
-    // response.data가 { "purchaseDetail": { ... } } 구조라고 가정합니다.
     const detailObject = response.data
-
-    // 추출된 상세 객체 자체를 반환합니다.
-    // 이렇게 하면 호출하는 컴포넌트에서 response.purchaseDetail 대신 detailObject를 바로 사용할 수 있습니다.
     return detailObject
   } catch (error) {
-    // API 통신 실패 로그를 남기고, 에러를 다시 던집니다.
     throw new Error('API 서버와의 통신에 실패했습니다.')
+  }
+}
+
+/**
+ * [발주 승인용 최적화 조회 - 서버 사이드 페이지네이션]
+ * SUBMITTED 상태의 발주만 조회하며, 일반 발주만 대상 (스마트 발주 제외)
+ * @param {number} page - 페이지 번호 (0-based)
+ * @param {number} perPage - 페이지당 항목 수
+ * @param {string} [searchText] - 검색어 (PO 번호, 공급사명)
+ * @returns {Promise<object>} Spring Page 객체
+ */
+export async function getPurchasesForApproval(page = 0, perPage = 10, searchText = null) {
+  const url = '/api/v1/purchase-orders'
+
+  try {
+    const params = {
+      page: page,
+      size: perPage,
+      statuses: ['SUBMITTED'], // SUBMITTED 상태만
+      searchText: searchText || null,
+      sort: 'createdAt,desc',
+    }
+
+    const response = await apiClient.get(url, { params })
+
+    // 일반 발주만 필터링 (스마트 발주 제외)
+    const filteredContent = (response.data.content || []).filter(
+      item => item.sourceType !== 'SMART' && item.orderType !== 'SMART'
+    )
+
+    return {
+      ...response.data,
+      content: filteredContent,
+      totalElements: filteredContent.length,
+      totalPages: Math.ceil(filteredContent.length / perPage),
+    }
+  } catch (error) {
+    throw error
   }
 }
