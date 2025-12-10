@@ -34,9 +34,11 @@
                 <td>{{ row.sku }}</td>
                 <td>{{ row.name }}</td>
                 <td class="numeric">{{ row.stock ?? 0 }}</td>
-                <td class="numeric"><Money :value="row.price" /></td>
+                <td class="numeric">
+                  <Money :value="row.price" />
+                </td>
                 <td>
-                    <input type="number" v-model.number="row.qty" class="qty" min="1" />
+                  <input type="number" v-model.number="row.qty" class="qty" min="1" />
                 </td>
                 <td><button class="btn-delete" @click="removeRow(idx)">삭제</button></td>
               </tr>
@@ -70,18 +72,16 @@
           <hr />
           <div class="summary-row total">
             <span>총 금액:</span>
-            <span class="numeric"><Money :value="totalAmount" /></span>
+            <span class="numeric">
+              <Money :value="totalAmount" />
+            </span>
           </div>
         </div>
       </aside>
     </div>
 
     <!-- 품목 추가 모달 (OrderItemModal - 전체 품목 조회) -->
-    <OrderItemModal
-      v-if="showItemModal"
-      @close="showItemModal = false"
-      @add="onAddItems"
-    />
+    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems" />
   </div>
 </template>
 
@@ -192,7 +192,7 @@ async function onSubmitOrder() {
 
     if (res.status === 201 || res.status === 200) {
       const orderId = res.data?.storeOrderId || res.data?.id || ''
-      alert(`발주 요청이 완료되었습니다. (주문번호: ${orderId})`)
+      alert(`발주 요청이 완료되었습니다.`);
       resetForm()
     }
   } catch (e) {
