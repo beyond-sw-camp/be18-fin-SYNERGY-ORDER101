@@ -1,47 +1,34 @@
 <template>
   <div class="dashboard-page">
     <div class="dashboard">
-
-
       <section class="overview-card">
         <div class="dashboard-header">
           <h1>대시보드</h1>
           <p class="subtitle">주요 업무를 한 화면에서 관리하세요</p>
         </div>
 
-
         <div class="kpi-grid">
           <div class="kpi-card">
             <span class="kpi-label">승인 대기 발주</span>
-            <strong class="kpi-value">
-              {{ kpi.pendingPurchaseCount }}건
-            </strong>
+            <strong class="kpi-value"> {{ kpi.pendingPurchaseCount }}건 </strong>
           </div>
 
           <div class="kpi-card warning">
             <span class="kpi-label">재고 위험 SKU</span>
-            <strong class="kpi-value">
-              {{ kpi.lowStockSkuCount }}개
-            </strong>
+            <strong class="kpi-value"> {{ kpi.lowStockSkuCount }}개 </strong>
           </div>
 
           <div class="kpi-card">
             <span class="kpi-label">AI 생성 스마트 발주</span>
-            <strong class="kpi-value">
-              {{ kpi.draftAutoSmartOrderCount }}건
-            </strong>
+            <strong class="kpi-value"> {{ kpi.draftAutoSmartOrderCount }}건 </strong>
           </div>
 
           <div class="kpi-card success">
             <span class="kpi-label">최근 예측 정확도</span>
-            <strong class="kpi-value">
-              {{ kpi.recentForecastAccuracy.toFixed(1) }}%
-            </strong>
+            <strong class="kpi-value"> {{ kpi.recentForecastAccuracy.toFixed(1) }}% </strong>
           </div>
         </div>
-
       </section>
-
 
       <section class="quick-actions">
         <h2>빠른 작업</h2>
@@ -65,7 +52,6 @@
           </button>
         </div>
       </section>
-
     </div>
   </div>
 </template>
@@ -73,13 +59,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  ShoppingCart,
-  Warehouse,
-  Receipt,
-  TrendingUp
-} from 'lucide-vue-next'
-import axios from 'axios'
+import { ShoppingCart, Warehouse, Receipt, TrendingUp } from 'lucide-vue-next'
+import apiClient from '@/components/api'
 
 const router = useRouter()
 
@@ -98,7 +79,7 @@ const kpi = ref({
 ====================== */
 const fetchDashboardSummary = async () => {
   try {
-    const res = await axios.get('/api/v1/hq/dashboard/summary')
+    const res = await apiClient.get('/api/v1/hq/dashboard/summary')
     kpi.value = res.data
   } catch (e) {
     console.error('대시보드 KPI 조회 실패', e)
@@ -149,7 +130,6 @@ const formatCurrency = (value) => {
   return '₩' + Number(value).toLocaleString()
 }
 </script>
-
 
 <style scoped>
 /* ===== Page ===== */
@@ -287,8 +267,6 @@ const formatCurrency = (value) => {
   align-items: center;
   justify-content: center;
 }
-
-
 
 .highlight .icon-wrapper {
   background: #f3f4f6;
