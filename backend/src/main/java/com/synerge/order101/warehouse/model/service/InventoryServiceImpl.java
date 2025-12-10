@@ -4,7 +4,6 @@ import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.purchase.model.dto.CalculatedAutoItem;
-import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
@@ -28,7 +27,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final StoreOrderDetailRepository storeOrderDetailRepository;
 
-    // 재고 추가
+    // 새로운 상품 추가
     public void createInventory(Product product) {
         Warehouse warehouse = warehouseRepository.findById(1L).orElseThrow();
 
@@ -44,11 +43,11 @@ public class InventoryServiceImpl implements InventoryService {
     // 재고 조회
     @Override
     @Transactional
-    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId) {
+    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId, String keyword) {
 
         Pageable pageable = PageRequest.of(page - 1, numOfRows);
 
-        return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, pageable);
+        return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, keyword, pageable);
     }
 
     // 출고 반영

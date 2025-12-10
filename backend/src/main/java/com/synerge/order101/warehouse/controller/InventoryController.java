@@ -22,11 +22,12 @@ public class InventoryController {
             @RequestParam int numOfRows,
             @RequestParam(required = false) Long largeId,
             @RequestParam(required = false) Long mediumId,
-            @RequestParam(required = false) Long smallId
+            @RequestParam(required = false) Long smallId,
+            @RequestParam(required = false) String keyword
     ) {
 
         Page<InventoryResponseDto> inventory = inventoryService.getInventoryList(
-                page, numOfRows, largeId, mediumId, smallId
+                page, numOfRows, largeId, mediumId, smallId, keyword
         );
         int totalCount = (int) inventory.getTotalElements();
 
