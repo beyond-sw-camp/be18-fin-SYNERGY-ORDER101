@@ -3,17 +3,16 @@ spring:
     name: order101
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    # 이 부분에 환경 변수가 빈 값인지 아닌지 확인합니다.
-    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    url: jdbc:mariadb://${DB_HOST:${DB_HOST:localhost}}:${DB_PORT:${DB_PORT:3306}}/${DB_NAME:${DB_NAME:order101}}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none
     open-in-view: false
-    show-sql: true # 변경: 실행되는 SQL 쿼리를 출력합니다.
+    show-sql: false # 배포에서는 SQL 출력을 비활성화
     properties:
-      hibernate.format_sql: true # 변경: SQL 쿼리를 보기 좋게 포맷합니다.
+      hibernate.format_sql: false # 배포에서는 포맷된 SQL도 비활성화
   cache:
     type: redis
   data:
@@ -47,13 +46,17 @@ cloud:
 
 logging:
   level:
-    root: INFO
-    com.synerge: DEBUG
-    org.springframework.security: INFO
-    org.springframework.web.reactive.function.client: DEBUG
-    org.hibernate.resource.transaction: DEBUG
-    org.springframework.jdbc: DEBUG
-    org.hibernate: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.orm.query: DEBUG
+    root: ERROR                   # 전체 애플리케이션 기본 로그 레벨 (치명적/오류만)
+    com.synerge: ERROR            # 애플리케이션 패키지도 ERROR로 제한
+    org.springframework.security: ERROR
+    org.springframework.web.reactive.function.client: ERROR
+    org.hibernate.resource.transaction: ERROR
+    org.springframework.jdbc: ERROR
+    org.hibernate: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.hibernate.orm.query: ERROR
+
+# 운영 환경에서는 debug/sql 로깅을 켜지 마세요.
+# 필요 시 application-prod.yml을 만들어 운영 프로파일로 관리하거나 Spring Boot Actuator를 통해
+# 런타임에 로그 레벨을 동적으로 조정하세요.
