@@ -130,11 +130,25 @@
               </div>
             </div>
 
-            <!-- 공급가 -->
-            <div class="field">
-              <label>공급가</label>
-              <div class="value readonly">
-                {{ product.price }}
+            <!-- 공급가 & 판매가 -->
+            <div class="price-row">
+              <!-- 공급가 (읽기 전용) -->
+              <div class="field">
+                <label>공급가</label>
+                <div class="value readonly">
+                  <!-- purchasePrice or purchase_price, 백엔드 필드 이름에 맞춰 수정 -->
+                  <Money v-if="product.purchasePrice != null" :value="product.purchasePrice" />
+                  <span v-else>-</span>
+                </div>
+              </div>
+
+              <!-- 판매가 -->
+              <div class="field">
+                <label>판매가</label>
+
+                <div class="value readonly">
+                  <Money :value="product.price" />
+                </div>
               </div>
             </div>
 
