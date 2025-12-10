@@ -19,6 +19,8 @@ public class ProductRes {
     private String categoryLargeName;
     private String imageUrl;
     private Boolean status;
-    private BigDecimal price;
+    private BigDecimal price;  // 판매가
+    private BigDecimal purchasePrice;  // 공급가(상품-공급사 테이블)
+
     private String description;
 }

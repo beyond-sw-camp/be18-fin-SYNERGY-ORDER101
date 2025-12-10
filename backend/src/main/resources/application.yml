@@ -11,9 +11,9 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
-    show-sql: true # 변경: 실행되는 SQL 쿼리를 출력합니다.
+    show-sql: false
     properties:
-      hibernate.format_sql: true # 변경: SQL 쿼리를 보기 좋게 포맷합니다.
+      hibernate.format_sql: false
   cache:
     type: redis
   data:
@@ -47,13 +47,4 @@ cloud:
 
 logging:
   level:
-    root: INFO
-    com.synerge: DEBUG
-    org.springframework.security: INFO
-    org.springframework.web.reactive.function.client: DEBUG
-    org.hibernate.resource.transaction: DEBUG
-    org.springframework.jdbc: DEBUG
-    org.hibernate: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
-    org.hibernate.orm.query: DEBUG
+    root: ERROR

@@ -49,11 +49,14 @@ public class ShipmentService {
             List<Shipment> list = shipmentRepository.findByShipmentStatus(ShipmentStatus.IN_TRANSIT);
             for (Shipment sh : list) {
                 StoreOrder order = sh.getStoreOrder();
-                order.updateShipmentStatus(ShipmentStatus.IN_TRANSIT);
-                storeOrderRepository.save(order);
+                // StoreOrder status가 CONFIRMED일 때만 업데이트
+                if (order != null && order.getOrderStatus() != null &&
+                    order.getOrderStatus().toString().equals("CONFIRMED")) {
+                    order.updateShipmentStatus(ShipmentStatus.IN_TRANSIT);
+                    storeOrderRepository.save(order);
+                }
             }
         }
-
 
         // 일단 테스트 용으로 30분 설정.
         int t2d = shipmentRepository.updateFromUpdatedAt(
@@ -67,11 +70,14 @@ public class ShipmentService {
             List<Shipment> list = shipmentRepository.findByShipmentStatus(ShipmentStatus.DELIVERED);
             for (Shipment sh : list) {
                 StoreOrder order = sh.getStoreOrder();
-                order.updateShipmentStatus(ShipmentStatus.DELIVERED);
-                storeOrderRepository.save(order);
+                // StoreOrder status가 CONFIRMED일 때만 업데이트
+                if (order != null && order.getOrderStatus() != null &&
+                    order.getOrderStatus().toString().equals("CONFIRMED")) {
+                    order.updateShipmentStatus(ShipmentStatus.DELIVERED);
+                    storeOrderRepository.save(order);
+                }
             }
         }
-
 
 
         // IN_TRANSIT 입고예정 반영 이벤트
