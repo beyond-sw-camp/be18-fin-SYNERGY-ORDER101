@@ -47,6 +47,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -298,6 +299,10 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId).orElseThrow(() ->
                 new CustomException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
+        ProductSupplier ps = productSupplierRepository.findFirstByProductOrderByCreatedAtAsc(product).orElse(null);
+
+        BigDecimal purchasePrice = (ps != null) ? ps.getPurchasePrice() : null;
+
         return ProductRes.builder()
                 .productName(product.getProductName())
                 .productCode(product.getProductCode())
@@ -306,6 +311,7 @@ public class ProductServiceImpl implements ProductService {
                 .categorySmallName(product.getProductCategory().getCategoryName())
                 .status(product.getStatus())
                 .price(product.getPrice())
+                .purchasePrice(purchasePrice)
                 .imageUrl(product.getImageUrl())
                 .description(product.getDescription())
                 .build();
