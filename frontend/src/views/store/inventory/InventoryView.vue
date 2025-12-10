@@ -2,12 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import apiClient from '@/components/api'
 import { useAuthStore } from '@/stores/authStore'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const items = ref([])
 const loading = ref(false)
 const error = ref('')
 const page = ref(1)
-const numOfRows = ref(20)
+const numOfRows = ref(10)
 const totalCount = ref(0)
 
 const totalPages = computed(() => Math.ceil(totalCount.value / numOfRows.value))
@@ -53,6 +56,7 @@ const fetchInventory = async () => {
 
     items.value = arr.map((it) => ({
       id: it.storeInventoryId,
+      productId: it.productId,
       code: it.productCode,
       name: it.productName,
       stock: it.onHandQty ?? 0,
@@ -72,6 +76,10 @@ const goPage = (p) => {
 }
 
 onMounted(() => fetchInventory())
+
+function openDetail(item) {
+  router.push({ name: 'store-inventory-stock-detail', params: { id: item.productId } })
+}
 </script>
 
 <template>
@@ -101,7 +109,7 @@ onMounted(() => fetchInventory())
               <td colspan="4">{{ error }}</td>
             </tr>
 
-            <tr v-for="item in items" :key="item.id">
+            <tr v-for="item in items" :key="item.id" class="clickable-row" @click="openDetail(item)">
               <td class="col-code">{{ item.code }}</td>
               <td class="col-name">{{ item.name }}</td>
               <td class="col-stock">{{ item.stock }}</td>
@@ -277,5 +285,9 @@ onMounted(() => fetchInventory())
     display: block;
     width: 100%;
   }
+}
+
+.clickable-row {
+  cursor: pointer;
 }
 </style>

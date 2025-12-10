@@ -5,6 +5,8 @@ from lightgbm import early_stopping, log_evaluation
 import joblib
 from pathlib import Path
 import json
+from catboost import CatBoostRegressor
+
 
 BASE = Path(__file__).resolve().parent.parent / "data_pipeline"
 FEATURES_PATH = BASE / "features_all.csv"
@@ -63,6 +65,7 @@ def main():
     print("\nTraining LightGBM model...")
     train_ds = lgb.Dataset(X_train, label=y_train)
 
+
     model = lgb.train(
         params,
         train_ds,
@@ -76,19 +79,53 @@ def main():
     joblib.dump(model, MODEL_PATH)
     print(f"[OK] Saved model → {MODEL_PATH}")
 
+
+    print("\nTraining CatBoost model...")
+    cat_model = CatBoostRegressor(
+        iterations=800,
+        depth=6,
+        learning_rate=0.05,
+        loss_function="RMSE",
+        verbose=False
+    )
+
+    cat_model.fit(
+        X_train, y_train,
+        eval_set=(X_test, y_test),
+        use_best_model=True
+    )
+
+    CAT_MODEL_PATH = BASE / "catboost_model.pkl"
+    cat_model.save_model(CAT_MODEL_PATH)
+    print(f"[OK] Saved CatBoost model → {CAT_MODEL_PATH}")
+
+
     with open(FEATURES_JSON, "w", encoding="utf-8") as f:
         json.dump(feature_cols, f, ensure_ascii=False, indent=2)
     print(f"[OK] Saved feature list → {FEATURES_JSON}")
 
-    preds = model.predict(X_test, num_iteration=model.best_iteration)
-    mae = np.mean(np.abs(preds - y_test))
-    print(f"\n[Test 2025] MAE = {mae:.4f}")
+    pred_lgb = model.predict(X_test, num_iteration=model.best_iteration)
+    pred_cat = cat_model.predict(X_test)
+
+
+    # 앙상블
+    pred_ens = pred_lgb * 0.5 + pred_cat * 0.5
+
+
+
+    # mae_lgb = np.mean(np.abs(pred_lgb - y_test))
+    # print(f"\n[Test 2025] LGBM MAE = {mae_lgb:.4f}")
+
+
+
 
     eval_df = test[["target_date", "sku_id", "actual_order_qty"]].copy()
     eval_df = eval_df.rename(columns={"actual_order_qty": "y"})
-    eval_df["y_pred"] = preds
+    eval_df["y_pred"] = pred_ens
     eval_df.to_csv(EVAL_2025_PATH, index=False)
-    print(f"[OK] Saved evaluation file → {EVAL_2025_PATH}")
+    print(f"[OK] Saved *ENSEMBLE* evaluation (overwrite LightGBM) → {EVAL_2025_PATH}")
+    
+    
 
 
 if __name__ == "__main__":

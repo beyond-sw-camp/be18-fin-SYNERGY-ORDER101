@@ -4,7 +4,6 @@ import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.purchase.model.dto.CalculatedAutoItem;
-import com.synerge.order101.purchase.model.entity.Purchase;
 import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.Warehouse;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +28,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final WarehouseInventoryRepository warehouseInventoryRepository;
     private final StoreOrderDetailRepository storeOrderDetailRepository;
 
-    // 재고 추가
+    // 새로운 상품 추가
     public void createInventory(Product product) {
         Warehouse warehouse = warehouseRepository.findById(1L).orElseThrow();
 
@@ -44,11 +44,21 @@ public class InventoryServiceImpl implements InventoryService {
     // 재고 조회
     @Override
     @Transactional
-    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId) {
+    public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId, String keyword, String sortBy) {
 
         Pageable pageable = PageRequest.of(page - 1, numOfRows);
 
-        return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, pageable);
+        if (sortBy == null) {
+            pageable = PageRequest.of(page - 1, numOfRows);
+        } else if (sortBy.equals("onHandQtyAsc")) {
+            pageable = PageRequest.of(page - 1, numOfRows, Sort.by(Sort.Direction.ASC, "onHandQuantity"));
+        } else if (sortBy.equals("onHandQtyDesc")) {
+            pageable = PageRequest.of(page - 1, numOfRows, Sort.by(Sort.Direction.DESC, "onHandQuantity"));
+        } else {
+            pageable = PageRequest.of(page - 1, numOfRows);
+        }
+
+        return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, keyword, pageable);
     }
 
     // 출고 반영
