@@ -12,6 +12,7 @@ MODELING = BASE / "modeling"
 REQUIRED_FILES = [
     DATA_PIPELINE / "features_all.csv",
     DATA_PIPELINE / "lightgbm_model.pkl",
+    DATA_PIPELINE / "catboost_model.pkl",
     DATA_PIPELINE / "predictions.csv",
 ]
 

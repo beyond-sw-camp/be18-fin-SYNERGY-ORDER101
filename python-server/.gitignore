@@ -19,6 +19,7 @@ __pycache__/
 # models
 app/models/*
 
+catboost_info/
 
 __pycache__/
 .env
