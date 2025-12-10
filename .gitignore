@@ -9,6 +9,7 @@ application.yml
 
 *.zip
 *.json
+!python-server/knowledge/*.json
 *.pkl
 *.xlsx
 *.parquet
