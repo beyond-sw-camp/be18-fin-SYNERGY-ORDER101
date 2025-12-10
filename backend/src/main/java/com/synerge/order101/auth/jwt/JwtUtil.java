@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
@@ -22,7 +23,24 @@ public class JwtUtil {
     public JwtUtil(JwtProperties jwtProperties) {
 
         this.issuer = jwtProperties.getIssuer();
-        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        String secret = jwtProperties.getSecret();
+        byte[] keyBytes;
+        
+        // 시크릿이 Base64로 인코딩되어 있을 가능성을 고려
+        try {
+            keyBytes = Base64.getDecoder().decode(secret);
+            log.info("JWT secret decoded from Base64");
+        } catch (IllegalArgumentException e) {
+            // Base64가 아니면 UTF-8 바이트로 사용
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+            log.info("JWT secret used as UTF-8 bytes");
+        }
+        
+        // 키가 256비트(32바이트) 미만이면 로그만 출력하고 계속 진행
+        if (keyBytes.length < 32) {
+            log.warn("JWT secret key is only {} bytes. Consider using a key of at least 32 bytes.", keyBytes.length);
+        }
+        
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 

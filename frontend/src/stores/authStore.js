@@ -2,7 +2,19 @@ import { reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/components/api'
 
+// JWT 버전 (서버의 시크릿이 변경될 때마다 증가)
+const JWT_CONFIG_VERSION = 2
+
 export const useAuthStore = defineStore('auth', () => {
+  // 시작 시 저장된 JWT 버전 확인
+  const storedVersion = Number(localStorage.getItem('jwtConfigVersion')) || 0
+  if (storedVersion !== JWT_CONFIG_VERSION) {
+    // 버전이 다르면 모든 인증 정보 초기화
+    localStorage.clear()
+    sessionStorage.clear()
+    localStorage.setItem('jwtConfigVersion', JWT_CONFIG_VERSION)
+  }
+
   const userInfo = reactive({
     accessToken: localStorage.getItem('authToken') || '',
     userId: localStorage.getItem('userId') || 0,
