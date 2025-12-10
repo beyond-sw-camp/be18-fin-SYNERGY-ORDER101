@@ -50,7 +50,7 @@ def main():
     pred_lgb = model.predict(X, num_iteration=getattr(model, "best_iteration", None))
     pred_cat = cat_model.predict(X)
 
-    y_pred = pred_lgb * 0.3 + pred_cat * 0.7
+    y_pred = pred_lgb * 0.5 + pred_cat * 0.5
     future["y_pred"] = np.round(y_pred).astype(int)
 
 
