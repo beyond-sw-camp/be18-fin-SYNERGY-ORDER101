@@ -10,5 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface SettlementRepository extends JpaRepository<Settlement, Long> , SettlementRepositoryCustom{
     boolean existsByPurchase_PurchaseId(Long purchasePurchaseId);
     boolean existsByStoreOrder_StoreOrderId(Long storeOrderId);
+    java.util.List<Settlement> findBySettlementStatus(Settlement.SettlementStatus settlementStatus);
 
 }

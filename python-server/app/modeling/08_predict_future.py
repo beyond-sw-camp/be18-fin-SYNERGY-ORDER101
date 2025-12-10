@@ -11,6 +11,12 @@ MODEL_PATH    = BASE / "lightgbm_model.pkl"
 FEATURES_PATH = BASE / "lightgbm_features.json"
 OUT = BASE / "predictions.csv"
 
+CAT_MODEL_PATH = BASE / "catboost_model.pkl"
+from catboost import CatBoostRegressor
+cat_model = CatBoostRegressor()
+cat_model.load_model(CAT_MODEL_PATH)
+
+
 HORIZON_WEEKS = 12
 FORECAST_FREQ = "W-MON"
 KEYS = ["warehouse_id", "store_id", "sku_id"]
@@ -93,7 +99,10 @@ def main():
 
             X = temp.reindex(columns=features_used, fill_value=0.0)
 
-            y_pred = float(model.predict(X)[0])
+            pred_lgb = float(model.predict(X)[0])
+            pred_cat = float(cat_model.predict(X)[0])
+            y_pred = pred_lgb * 0.5 + pred_cat * 0.5
+
             y_pred = max(0, y_pred)
 
             forecasts.append({**row, "y_pred": round(y_pred)})

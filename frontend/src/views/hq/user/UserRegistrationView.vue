@@ -3,6 +3,7 @@ import { reactive, computed, ref } from 'vue'
 import apiClient from '@/components/api'
 import router from '@/router'
 import VenderSearchModal from '@/components/modal/VenderSearchModal.vue'
+import { Mail, User, Phone, Lock, Home } from 'lucide-vue-next'
 
 const form = reactive({
   memberType: 'HQ',
@@ -63,7 +64,6 @@ const canSubmit = computed(() => {
 })
 
 const handleSubmit = async () => {
-  // basic validation
   errors.loginId = ''
   errors.password = ''
   errors.name = ''
@@ -108,18 +108,12 @@ const handleSubmit = async () => {
   }
   try {
     const resp = await apiClient.post('/api/v1/users/register', payload)
-    // on success, reset form and inform user
-    // show success message and navigate to dashboard
     try {
-      // friendly success message in Korean
       window.alert('사용자를 등록하였습니다.')
-    } catch (e) {
-      // ignore if alert is blocked
-    }
+    } catch (e) {}
     handleReset()
     router.push({ name: 'hq-dashboard' })
   } catch (e) {
-    // try to surface server errors
     if (e.response && e.response.data && e.response.data.message) {
       errors.loginId = e.response.data.message
     }
@@ -170,7 +164,7 @@ const handleReset = () => {
         <div class="field">
           <label for="email">이메일</label>
           <div class="input-wrapper">
-            <span class="leading-icon">✉️</span>
+            <Mail class="leading-icon" aria-hidden />
             <input
               id="loginId"
               v-model="form.loginId"
@@ -186,7 +180,7 @@ const handleReset = () => {
         <div class="field">
           <label for="name">이름</label>
           <div class="input-wrapper">
-            <span class="leading-icon">👤</span>
+            <User class="leading-icon" aria-hidden />
             <input id="name" v-model="form.name" type="text" placeholder="이름을 입력하세요" />
           </div>
           <div v-if="errors.name" style="color: #ef4444; font-size: 13px">{{ errors.name }}</div>
@@ -195,7 +189,7 @@ const handleReset = () => {
         <div class="field">
           <label for="phone">연락처</label>
           <div class="input-wrapper">
-            <span class="leading-icon">📞</span>
+            <Phone class="leading-icon" aria-hidden />
             <input id="phone" v-model="form.phone" type="text" placeholder="010-0000-0000" />
           </div>
           <div v-if="errors.phone" style="color: #ef4444; font-size: 13px">{{ errors.phone }}</div>
@@ -204,7 +198,7 @@ const handleReset = () => {
         <div class="field">
           <label for="password">비밀번호</label>
           <div class="input-wrapper">
-            <span class="leading-icon">🔒</span>
+            <Lock class="leading-icon" aria-hidden />
             <input
               id="password"
               v-model="form.password"
@@ -217,7 +211,7 @@ const handleReset = () => {
         <div class="field">
           <label for="passwordConfirm">비밀번호 확인</label>
           <div class="input-wrapper">
-            <span class="leading-icon">🔒</span>
+            <Lock class="leading-icon" aria-hidden />
             <input
               id="passwordConfirm"
               v-model="form.passwordConfirm"
@@ -233,7 +227,7 @@ const handleReset = () => {
         <div v-if="form.memberType === 'STORE_ADMIN'" class="field">
           <label for="storeId">가맹점 선택</label>
           <div class="input-wrapper" style="gap: 8px">
-            <span class="leading-icon">🏬</span>
+            <Home class="leading-icon" aria-hidden />
             <input
               id="storeId"
               :value="selectedStore ? selectedStore.name : form.storeId"
@@ -297,7 +291,6 @@ const handleReset = () => {
           </div>
         </div>
 
-        <!-- store search modal -->
         <VenderSearchModal
           v-if="showStoreModal"
           :currentType="'FRANCHISE'"
@@ -307,7 +300,7 @@ const handleReset = () => {
 
         <div class="form-actions">
           <button type="button" class="ghost" @click="handleReset">초기화</button>
-          <button type="submit" class="primary" :disabled="!canSubmit">저장</button>
+          <button type="submit" class="primary">저장</button>
         </div>
       </form>
     </section>
@@ -337,7 +330,6 @@ h1 {
 }
 
 .form-wrapper {
-  /* center the card horizontally and give room on the left for the sidebar */
   display: flex;
   justify-content: center;
   padding: 8px 0 40px 0;
@@ -352,7 +344,7 @@ h1 {
   flex-direction: column;
   gap: 20px;
   box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
-  width: 680px; /* fixed card width like the design */
+  width: 680px;
   max-width: calc(100% - 48px);
 }
 
@@ -396,7 +388,9 @@ h1 {
 }
 
 .leading-icon {
-  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
   opacity: 0.7;
 }
 
@@ -436,7 +430,6 @@ input[type='password'] {
   border-color: #6b63f6;
 }
 
-/* Compact button used inside input fields (select / clear) */
 .btn-compact {
   display: inline-flex;
   align-items: center;

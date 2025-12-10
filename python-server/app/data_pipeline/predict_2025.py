@@ -4,13 +4,22 @@ import joblib
 import json
 from pathlib import Path
 
+
 BASE = Path(__file__).resolve().parent.parent / "data_pipeline"
+from catboost import CatBoostRegressor
+CAT_MODEL_PATH = BASE / "catboost_model.pkl"
+cat_model = CatBoostRegressor()
+cat_model.load_model(CAT_MODEL_PATH)
 
 FEA = BASE / "features_all.csv"
 MODEL_PATH = BASE / "lightgbm_model.pkl"
 FEATURES_JSON = BASE / "lightgbm_features.json"
 OUT = BASE / "prediction_2025.csv"
 
+from catboost import CatBoostRegressor
+CAT_MODEL_PATH = BASE / "catboost_model.pkl"
+cat_model = CatBoostRegressor()
+cat_model.load_model(CAT_MODEL_PATH)
 
 def main():
     print("Loading model...")
@@ -34,8 +43,16 @@ def main():
     print(f"future rows: {len(future):,}")
 
 
-    y_pred = model.predict(X, num_iteration=getattr(model, "best_iteration", None))
-    future["y_pred"] = y_pred.round().astype(int)
+    # y_pred = model.predict(X, num_iteration=getattr(model, "best_iteration", None))
+    # future["y_pred"] = y_pred.round().astype(int)
+
+
+    pred_lgb = model.predict(X, num_iteration=getattr(model, "best_iteration", None))
+    pred_cat = cat_model.predict(X)
+
+    y_pred = pred_lgb * 0.5 + pred_cat * 0.5
+    future["y_pred"] = np.round(y_pred).astype(int)
+
 
     out = future[[
         "warehouse_id",

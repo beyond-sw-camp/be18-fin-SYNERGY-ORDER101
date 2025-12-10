@@ -3,6 +3,7 @@ spring:
     name: order101
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
+    # 이 부분에 환경 변수가 빈 값인지 아닌지 확인합니다.
     url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
@@ -10,9 +11,9 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
-    show-sql: true
+    show-sql: true # 변경: 실행되는 SQL 쿼리를 출력합니다.
     properties:
-      hibernate.format_sql: true
+      hibernate.format_sql: true # 변경: SQL 쿼리를 보기 좋게 포맷합니다.
   cache:
     type: redis
   data:

@@ -13,6 +13,7 @@ const OrderApprovalListView = () => import('../views/hq/orders/OrderApprovalList
 const UserRegistrationView = () => import('../views/hq/user/UserRegistrationView.vue')
 const UserListView = () => import('../views/hq/user/UsersListView.vue')
 const StoreInventoryView = () => import('../views/store/inventory/InventoryView.vue')
+const StoreInventoryDetailView = () => import('../views/store/inventory/InventoryDetailView.vue')
 const LoginView = () => import('../views/LoginView.vue')
 const MyView = () => import('../views/MyView.vue')
 const MovementsView = () => import('../views/hq/inventory/MovementsView.vue')
@@ -264,6 +265,12 @@ const storeRoutes = [
     path: '/store/inventory/stock',
     name: 'store-inventory-stock',
     component: StoreInventoryView,
+    meta: { title: '재고 조회' },
+  },
+  {
+    path: '/store/inventory/stock/:id',
+    name: 'store-inventory-stock-detail',
+    component: StoreInventoryDetailView,
     meta: { title: '재고 조회' },
   },
   {

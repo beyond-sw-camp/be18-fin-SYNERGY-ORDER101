@@ -4,13 +4,10 @@ import com.synerge.order101.order.model.repository.StoreOrderDetailRepository;
 import com.synerge.order101.product.model.entity.Product;
 import com.synerge.order101.product.model.entity.ProductSupplier;
 import com.synerge.order101.purchase.model.dto.CalculatedAutoItem;
-import com.synerge.order101.purchase.model.entity.Purchase;
-import com.synerge.order101.purchase.model.entity.PurchaseDetail;
 import com.synerge.order101.supplier.model.entity.Supplier;
 import com.synerge.order101.warehouse.model.dto.response.InventoryResponseDto;
 import com.synerge.order101.warehouse.model.entity.WarehouseInventory;
 import com.synerge.order101.warehouse.model.repository.WarehouseInventoryRepository;
-import com.synerge.order101.warehouse.model.service.InventoryServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,15 +41,15 @@ class InventoryServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<InventoryResponseDto> mockPage = new PageImpl<>(List.of(), pageable, 0);
 
-        when(warehouseInventoryRepository.searchInventory(null, null, null, pageable))
+        when(warehouseInventoryRepository.searchInventory(null, null, null, null, pageable))
                 .thenReturn(mockPage);
 
         Page<InventoryResponseDto> result =
-                inventoryService.getInventoryList(1, 10, null, null, null);
+                inventoryService.getInventoryList(1, 10, null, null, null, null, null);
 
         assertThat(result).isEqualTo(mockPage);
         verify(warehouseInventoryRepository, times(1))
-                .searchInventory(null, null, null, pageable);
+                .searchInventory(null, null, null, null, pageable);
     }
 
 

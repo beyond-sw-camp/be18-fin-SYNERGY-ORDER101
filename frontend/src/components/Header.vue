@@ -28,6 +28,20 @@ const updateRole = (e) => emit('update:currentRole', e.target.value)
 const router = useRouter()
 const authStore = useAuthStore()
 
+const avatarLabel = computed(() => {
+  const name = authStore.userInfo && authStore.userInfo.name ? authStore.userInfo.name : ''
+  if (!name) return 'SY'
+  return name.length > 2 ? name.slice(-2) : name
+})
+
+const avatarStyle = computed(() => {
+  const gradient = 'linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)'
+  return {
+    background: gradient,
+    color: '#fff',
+  }
+})
+
 const showNotiMenu = ref(false)
 const notiBtnRef = ref(null)
 const notiMenuRef = ref(null)
@@ -143,8 +157,9 @@ const handleClearAll = async () => {
               @click="toggleProfileMenu"
               aria-haspopup="true"
               :aria-expanded="showProfileMenu"
+              :style="avatarStyle"
             >
-              SY
+              {{ avatarLabel }}
             </button>
             <div v-if="showProfileMenu" ref="profileMenuRef" class="profile-menu" role="menu">
               <button type="button" class="profile-action logout" @click="handleLogoutClick">

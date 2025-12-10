@@ -24,18 +24,34 @@
             {{ c.name }}
           </option>
         </select>
+
+        <div class="filter-item">
+          <input placeholder="상품 검색" v-model="filters.keyword" /> 
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn primary" @click="search">검색</button>
+          <button class="btn" @click="resetFilters">초기화</button>
+        </div>
       </div>
     </div>
 
     <div class="table-card">
-      <h3 class="card-title">현재 재고 개요</h3>
+      <h3 class="card-title"></h3>
       <table class="stock-table">
         <thead>
           <tr>
             <th>상품 코드</th>
             <th>카테고리</th>
             <th>상품명</th>
-            <th>현 재고량</th>
+            <th @click="toggleSort" class="sortable">
+              현 재고량
+              <span class="sort-icon">
+                <span v-if="sortBy === 'onHandQtyDesc'">▼</span>
+                <span v-else-if="sortBy === 'onHandQtyAsc'">▲</span>
+                <span v-else>⇅</span>
+              </span>
+            </th>
             <th>안전재고량</th>
           </tr>
         </thead>
@@ -88,6 +104,12 @@ const smallCategoryId = ref('')
 const page = computed(() => inventoryStore.page)
 const totalPages = computed(() => inventoryStore.totalPages)
 
+const sortBy = ref('') 
+
+const filters = ref({
+  keyword: '',
+})
+
 const pages = computed(() =>
   Array.from({ length: totalPages.value }, (_, i) => i + 1)
 )
@@ -136,7 +158,9 @@ const fetchInventory = async (page = 1) => {
     page,
     largeId: largeCategoryId.value || null,
     mediumId: mediumCategoryId.value || null,
-    smallId: smallCategoryId.value || null
+    smallId: smallCategoryId.value || null,
+    keyword: filters.value.keyword || null,
+    sortBy: sortBy.value,
   })
 }
 
@@ -163,6 +187,36 @@ const changePage = async (p) => {
   if (p < 1 || p > totalPages.value) return
   fetchInventory(p)
 }
+
+const search = () => {
+  fetchInventory(1)
+}
+
+const resetFilters = () => {
+  largeCategoryId.value = ''
+  mediumCategoryId.value = ''
+  smallCategoryId.value = ''
+  mediumCategories.value = []
+  smallCategories.value = []
+  filters.value.keyword = ''
+  sortBy.value = ''
+  fetchInventory(1)
+}
+
+// 정렬함수
+const toggleSort = () => {
+  if (sortBy.value === null) {
+    sortBy.value = 'onHandQtyDesc'
+  } else if (sortBy.value === 'onHandQtyDesc') {
+    sortBy.value = 'onHandQtyAsc'
+  } else {
+    sortBy.value = null
+  }
+
+  fetchInventory(1)
+}
+
+
 </script>
 
 <style scoped>
@@ -204,6 +258,52 @@ const changePage = async (p) => {
 .filter-row {
   display: flex;
   gap: 16px;
+}
+.filter-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+}
+.btn.primary {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+.input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    background-color: white;
+    transition: border-color 0.2s;
+    height: 38px;
+    min-width: 200px;
+}
+.input:hover,
+.input:focus {
+    border-color: #6b72f9;
+}
+.input::placeholder {
+    color: #9ca3af;
+}
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.filter-item input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 .select {
   padding: 10px 12px;
@@ -265,5 +365,15 @@ const changePage = async (p) => {
   border: none;
   color: #6b7280;
   cursor: pointer;
+}
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.sort-icon {
+  font-size: 12px;
+  margin-left: 4px;
+  color: #6b7280;
 }
 </style>

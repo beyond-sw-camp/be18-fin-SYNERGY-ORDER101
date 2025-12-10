@@ -85,6 +85,7 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
     WHERE (:largeCategoryId IS NULL OR large.productCategoryId = :largeCategoryId)
       AND (:mediumCategoryId IS NULL OR medium.productCategoryId = :mediumCategoryId)
       AND (:smallCategoryId IS NULL OR pc.productCategoryId = :smallCategoryId)
+      AND (:keyword IS NULL OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')))
     """,
             countQuery = """
     SELECT COUNT(DISTINCT i.inventoryId)
@@ -96,14 +97,15 @@ public interface WarehouseInventoryRepository extends JpaRepository<WarehouseInv
     WHERE (:largeCategoryId IS NULL OR large.productCategoryId = :largeCategoryId)
       AND (:mediumCategoryId IS NULL OR medium.productCategoryId = :mediumCategoryId)
       AND (:smallCategoryId IS NULL OR pc.productCategoryId = :smallCategoryId)
+      AND (:keyword IS NULL OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')))
     """
     )
     Page<InventoryResponseDto> searchInventory(
             Long largeCategoryId,
             Long mediumCategoryId,
             Long smallCategoryId,
+            String keyword,
             Pageable pageable
     );
-
 
 }

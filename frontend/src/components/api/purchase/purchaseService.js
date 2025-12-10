@@ -94,13 +94,16 @@ function mapRegularPurchase(purchase) {
  * @returns {object} 공통 형식의 발주 객체
  */
 function mapSmartPurchase(smartOrder) {
+  const unitPrice = smartOrder.unitPrice || smartOrder.price || 0
+  const qty = smartOrder.recommendedOrderQty || 0
   return {
     purchaseId: smartOrder.id,
     poNo: `SMART-${smartOrder.id}`, // 스마트 발주는 PO 번호 생성
     supplierName: smartOrder.supplierName || '공급업체 정보 없음',
     requesterName: '자동 생성', // 스마트 발주는 자동 생성
-    totalQty: smartOrder.recommendedOrderQty || 0,
-    totalAmount: 0, // 스마트 발주는 금액 정보 없음
+    totalQty: qty,
+    unitPrice: unitPrice,
+    totalAmount: Number(unitPrice) * Number(qty),
     status: smartOrder.smartOrderStatus,
     orderType: 'SMART',
     requestedAt: smartOrder.snapshotAt || smartOrder.updatedAt,
@@ -202,6 +205,7 @@ export function groupSmartOrdersByPoNumber(smartOrders) {
         items: [],
         smartOrderIds: [], // 같은 po_number의 모든 smart order ID
         totalQty: 0,
+        totalAmount: 0,
         status: order.smartOrderStatus,
         requestedAt: order.snapshotAt || order.updatedAt,
         targetWeek: order.targetWeek,
@@ -213,10 +217,14 @@ export function groupSmartOrdersByPoNumber(smartOrders) {
       productName: order.productName,
       recommendedOrderQty: order.recommendedOrderQty,
       forecastQty: order.forecastQty,
+      unitPrice: order.unitPrice || order.price || 0,
     })
 
     grouped[poNumber].smartOrderIds.push(order.id)
     grouped[poNumber].totalQty += order.recommendedOrderQty || 0
+    // 단가가 있으면 총액 누적
+    const lineUnit = order.unitPrice || order.price || 0
+    grouped[poNumber].totalAmount += Number(lineUnit) * (order.recommendedOrderQty || 0)
   })
 
   return Object.values(grouped).map((group, index) => ({
@@ -226,7 +234,7 @@ export function groupSmartOrdersByPoNumber(smartOrders) {
     supplierId: group.supplierId,
     requesterName: '자동 생성',
     totalQty: group.totalQty,
-    totalAmount: 0,
+    totalAmount: group.totalAmount || 0,
     status: group.status,
     orderType: 'SMART',
     requestedAt: group.requestedAt,

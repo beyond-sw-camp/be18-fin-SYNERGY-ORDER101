@@ -67,16 +67,17 @@
 
 <img width="2070" height="584" alt="image" src="https://github.com/user-attachments/assets/8584b2b4-d285-43de-b129-f8dc7a47d311" />
 “stockouts (품절)이 전세계 리테일러에 연간 약 1조 달러(약 1,000 조 원) 이상 손실을 안겨주고 있다”  <br>
--> 수요 예측 실패, 재고관리 부정확성, 발주 프로세스 지연 등이 주요 원인  <br>
-[출처](https://www.mirakl.com/blog/out-of-stocks-ecommerce-inventory-management-problem?)
+-> 수요 예측 실패, 재고관리 부정확성, 발주 프로세스 지연 등이 주요 원인  <br>  
+<a href="https://www.mirakl.com/blog/out-of-stocks-ecommerce-inventory-management-problem?">출처</a>
 <br></br>
 <img width="1584" height="463" alt="image" src="https://github.com/user-attachments/assets/9cc90bbf-9f30-4d7c-8d15-c6999f3753c6" />
-매장의 과거 판매·발주·재고 데이터 + 외부 변수를 사용하여 최적 발주량을 계산한다.<br>
-[출처](https://www.etnews.com/20250331000062?)
+매장의 과거 판매·발주·재고 데이터 + 외부 변수를 사용하여 최적 발주량을 계산한다.<br>  
+<a href="https://www.etnews.com/20250331000062?">출처</a>
 <br></br>
 <img width="1621" height="406" alt="image" src="https://github.com/user-attachments/assets/d9c56de2-f8d7-4f06-9b1d-62dd6eb8c10c" />
-AI가 팔릴 상품 수량 예측하고, 발주까지 자동으로 넣는다.<br>
-[출처](https://biz.chosun.com/site/data/html_dir/2020/04/06/2020040602892.html?)
+AI가 팔릴 상품 수량 예측하고, 발주까지 자동으로 넣는다.<br>  
+<a href="https://biz.chosun.com/site/data/html_dir/2020/04/06/2020040602892.html?">출처</a>
+
 
 <br></br>
 ### 1.3 기존 서비스와의 차별점
@@ -332,7 +333,7 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 9. 화면 기능 설계서 
 
-[화면 기능 설계서](https://app.visily.ai/projects/76f025b6-c743-4fe3-8bea-7c5e958c9d20/boards/2283842)
+[화면 기능 설계서](https://www.figma.com/design/8mX2qcFswjZHQQIoh3RJ8x/ORDER101?node-id=0-1&p=f&t=gZyv3W4HDc5EMKRX-0)
 
 <br/>
 
@@ -347,12 +348,30 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
   </div>
 </details>
 
+<details>
+  <summary><b>통합 테스트</b></summary>
+  <div>
+    <ul>
+      <li>
+        <a href="https://docs.google.com/spreadsheets/d/1zyB0iD03mgLm-BNBLT5-Q5ppBiXPDqPmvfoJyA0rz2U/edit?gid=0#gid=0" target="_blank">
+          통합 테스트 결과서
+        </a>
+        <br>
+      </li>
+      <img width="722" height="1137" alt="image" src="https://github.com/user-attachments/assets/5bfd7014-fbe7-4d22-b06a-7c6a07163056" />
+    </ul>
+  </div>
+</details>
+
+
+
+
 ## 11. 프론트엔드 테스트 결과서
 
 [UI/UX 테스트 결과서](https://www.notion.so/playdatacademy/UI-UX-2bfd943bcac2801390ecde7eb9f1fb4a?source=copy_link)
 
 ## 12. CICD
-
+[CICD 계획서](https://docs.google.com/document/d/1-79JuduMko7PyVVVVHkhjOkVK2aWvqL65Bw6ZQA6s5g/edit?usp=sharing)
 
 
 ## 13. 트러블 슈팅

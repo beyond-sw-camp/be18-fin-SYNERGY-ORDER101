@@ -43,6 +43,12 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomException(UserErrorCode.USER_NOT_FOUND);
         }
 
+        // 계정 활성화 여부 확인
+        if (!user.isActive()) {
+            log.warn("Login failed - account disabled for userId={}", user.getUserId());
+            throw new CustomException(AuthErrorCode.ACCOUNT_DISABLED);
+        }
+
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             log.warn("Login failed - invalid password for userId={}", user.getUserId());
             // 디버그: 제공된 평문 비밀번호(정리됨)와 DB의 해시 확인 (운영에서는 절대 노출 금지)
@@ -88,7 +94,26 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtTokenProvider.resolveToken(bearerToken);
 
         if (accessToken == null) {
-            throw new CustomException(AuthErrorCode.UNAUTHORIZED_TOKEN);
+            throw new CustomException(AuthErrorCode.TOKEN_NOT_PROVIDED);
+        }
+
+        // 토큰 유효성 검사 및 구체적 에러 매핑
+        try {
+            // 만료 여부 확인
+            long exp = jwtUtil.getExpiration(accessToken);
+            if (exp < System.currentTimeMillis()) {
+                throw new CustomException(AuthErrorCode.TOKEN_EXPIRED);
+            }
+
+            // validateToken이 false이면 형식/서명 문제가 의심됨
+            if (!jwtUtil.validateToken(accessToken)) {
+                throw new CustomException(AuthErrorCode.INVALID_TOKEN);
+            }
+        } catch (CustomException ce) {
+            throw ce; // 이미 적절한 AuthErrorCode로 변환된 예외
+        } catch (Exception e) {
+            log.warn("Logout failed - malformed token: {}", e.getMessage());
+            throw new CustomException(AuthErrorCode.MALFORMED_TOKEN);
         }
 
         jwtTokenProvider.addBlacklist(accessToken);
@@ -97,21 +122,44 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse refreshAccessToken(String refreshToken) {
-        // 1. 리프레시 토큰(Refresh Token) 검증
-        if (refreshToken == null || refreshToken.isBlank() || !jwtUtil.validateToken(refreshToken)) {
-            throw new CustomException(AuthErrorCode.UNAUTHORIZED_TOKEN);
+        // 1. 리프레시 토큰(Refresh Token) 미제공 검사
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new CustomException(AuthErrorCode.TOKEN_NOT_PROVIDED);
         }
 
-        // 2. Redis의 리프레시 토큰(Refresh Token)과 비교
+        // 2. 토큰 파싱/유효성 검사 - 만료/유효하지 않음/손상 구분
+        try {
+            long exp = jwtUtil.getExpiration(refreshToken);
+            if (exp < System.currentTimeMillis()) {
+                throw new CustomException(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
+            }
+
+            if (!jwtUtil.validateToken(refreshToken)) {
+                throw new CustomException(AuthErrorCode.INVALID_TOKEN);
+            }
+        } catch (CustomException ce) {
+            throw ce;
+        } catch (Exception e) {
+            log.warn("Refresh token validation failed - malformed token: {}", e.getMessage());
+            throw new CustomException(AuthErrorCode.MALFORMED_TOKEN);
+        }
+
+        // 3. Redis의 리프레시 토큰(Refresh Token)과 비교
         if (!jwtTokenProvider.isValidRefreshToken(refreshToken)) {
-            throw new CustomException(AuthErrorCode.UNAUTHORIZED_TOKEN);
+            throw new CustomException(AuthErrorCode.REFRESH_TOKEN_INVALID);
         }
 
-        // 3. 사용자 정보 조회 후 새로운 LoginResponse 객체를 생성
+        // 4. 사용자 정보 조회 후 새로운 LoginResponse 객체를 생성
         Long userId = Long.parseLong(jwtUtil.getUserId(refreshToken));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 계정 활성화 여부 확인
+        if (!user.isActive()) {
+            log.warn("Refresh failed - account disabled for userId={}", user.getUserId());
+            throw new CustomException(AuthErrorCode.ACCOUNT_DISABLED);
+        }
 
         return createLoginResponse(user);
     }

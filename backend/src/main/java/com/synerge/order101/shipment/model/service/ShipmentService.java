@@ -37,7 +37,7 @@ public class ShipmentService {
     public void updateShipmentStatus() {
         LocalDateTime now = LocalDateTime.now();
 
-        // 일단 테스트 용으로 3분 설정.
+        // 일단 테스트 용으로 5분 설정.
         int w2t = shipmentRepository.updateFromCreatedAt(
                 ShipmentStatus.WAITING, ShipmentStatus.IN_TRANSIT,
                 now.minusMinutes(3), now
@@ -58,7 +58,7 @@ public class ShipmentService {
         // 일단 테스트 용으로 30분 설정.
         int t2d = shipmentRepository.updateFromUpdatedAt(
                 ShipmentStatus.IN_TRANSIT, ShipmentStatus.DELIVERED,
-                now.minusMinutes(30), now
+                now.minusMinutes(5), now
         );
 
         if (t2d > 0) {

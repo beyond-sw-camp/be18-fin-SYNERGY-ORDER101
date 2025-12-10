@@ -154,7 +154,8 @@ const findTime = (st) => {
   const log = detail.logs.find(
     (l) => l.status === st || l.status.startsWith(st)
   );
-  return log ? formatDateTimeMinute(log.changedAt) : "";
+
+  return log ? formatServerTime(log.changedAt) : "";
 };
 
 
@@ -171,6 +172,21 @@ const displayStatus = computed(() => {
   if (ship === "WAITING") return "WAITING";
   return "-";
 });
+
+const formatServerTime = (time) => {
+  if (!time) return '';
+
+  const d = new Date(time);
+
+  return d.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
 
 const progressSteps = computed(() => {
   if (isRejected.value) {

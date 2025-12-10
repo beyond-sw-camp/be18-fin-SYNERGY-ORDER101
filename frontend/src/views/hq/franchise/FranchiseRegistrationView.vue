@@ -3,6 +3,7 @@ import { reactive, computed, ref } from 'vue'
 import apiClient from '@/components/api'
 import router from '@/router'
 import WarehouseSearchModal from '@/components/modal/WarehouseSearchModal.vue'
+import { Mail, User, Phone, Home } from 'lucide-vue-next'
 
 const form = reactive({
   storeName: '',
@@ -114,7 +115,7 @@ const handleReset = () => {
         <div class="field">
           <label for="storeName">가맹점명</label>
           <div class="input-wrapper">
-            <span class="leading-icon">✉️</span>
+            <Mail class="leading-icon" aria-hidden />
             <input
               id="storeName"
               v-model="form.storeName"
@@ -130,7 +131,7 @@ const handleReset = () => {
         <div class="field">
           <label for="address">주소</label>
           <div class="input-wrapper">
-            <span class="leading-icon">👤</span>
+            <User class="leading-icon" aria-hidden />
             <input
               id="address"
               v-model="form.address"
@@ -146,7 +147,7 @@ const handleReset = () => {
         <div class="field">
           <label for="contactNumber">연락처</label>
           <div class="input-wrapper">
-            <span class="leading-icon">📞</span>
+            <Phone class="leading-icon" aria-hidden />
             <input
               id="contactNumber"
               v-model="form.contactNumber"
@@ -162,7 +163,7 @@ const handleReset = () => {
         <div class="field">
           <label for="defaultWarehouseId">창고 선택</label>
           <div class="input-wrapper" style="gap: 8px">
-            <span class="leading-icon">🏬</span>
+            <Home class="leading-icon" aria-hidden />
             <input
               id="defaultWarehouseId"
               :value="selectedWareHouse ? selectedWareHouse.name : form.defaultWarehouseId"
@@ -324,7 +325,9 @@ h1 {
 }
 
 .leading-icon {
-  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
   opacity: 0.7;
 }
 

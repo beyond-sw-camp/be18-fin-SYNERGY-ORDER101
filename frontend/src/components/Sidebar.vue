@@ -7,6 +7,17 @@ import IconDocumentation from './icons/IconDocumentation.vue'
 import IconTooling from './icons/IconTooling.vue'
 import IconSupport from './icons/IconSupport.vue'
 import IconCommunity from './icons/IconCommunity.vue'
+// lucide icons for top-level menu visuals
+import {
+  ShoppingCart,
+  Box,
+  Tag,
+  CreditCard,
+  Users,
+  Home,
+  Warehouse,
+  ChartPie,
+} from 'lucide-vue-next'
 
 const props = defineProps({
   sections: { type: Array, default: () => [] },
@@ -32,6 +43,15 @@ const iconMap = {
   tooling: IconTooling,
   support: IconSupport,
   community: IconCommunity,
+  // mappings for app top-level sections
+  shoppingCart: ShoppingCart,
+  box: Box,
+  tag: Tag,
+  creditCard: CreditCard,
+  users: Users,
+  home: Home,
+  warehouse: Warehouse,
+  chartpie: ChartPie,
 }
 
 const getIconComponent = (name) => iconMap[name] || null
