@@ -109,7 +109,7 @@ def main():
 
 
     # 앙상블
-    pred_ens = (pred_lgb + pred_cat) / 2
+    pred_ens = pred_lgb * 0.7 + pred_cat * 0.3
 
 
 

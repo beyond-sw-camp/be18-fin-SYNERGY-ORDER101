@@ -101,7 +101,7 @@ def main():
 
             pred_lgb = float(model.predict(X)[0])
             pred_cat = float(cat_model.predict(X)[0])
-            y_pred = (pred_lgb + pred_cat) / 2
+            y_pred = pred_lgb * 0.3 + pred_cat * 0.7
 
             y_pred = max(0, y_pred)
 
