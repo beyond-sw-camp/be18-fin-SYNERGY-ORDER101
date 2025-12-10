@@ -247,10 +247,20 @@ public class ProductServiceImpl implements ProductService {
     public ItemsResponseDto<ProductListRes> getProducts(int page, int numOfRows, String keyword,
                                                         Long largeCategoryId,
                                                         Long mediumCategoryId, Long smallCategoryId) {
+        // 1. 페이지 인덱스 보정: 클라이언트의 1-base 페이지 번호를 0-base 인덱스로 변환 (page가 1 미만이면 0으로 보정)
         int pageIndex = Math.max(0, page - 1);
 
-        Pageable pageable = PageRequest.of(pageIndex, numOfRows, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // 2. numOfRows (페이지 크기) 유효성 검증 및 보정 (수정된 부분)
+        // Spring Data의 PageRequest는 페이지 크기가 1 이상이어야 하므로, 1 미만인 경우 안전한 값(10)으로 보정합니다.
+        int safeNumOfRows = numOfRows;
+        if (safeNumOfRows < 1) {
+            safeNumOfRows = 10;
+        }
 
+        // 3. Pageable 객체 생성: 보정된 페이지 크기(safeNumOfRows)를 사용
+        Pageable pageable = PageRequest.of(pageIndex, safeNumOfRows, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // 4. 리포지토리 쿼리 실행
         Page<Product> productPage = productRepository.findAll((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -276,6 +286,7 @@ public class ProductServiceImpl implements ProductService {
             return cb.and(predicates.toArray(new Predicate[0]));
         }, pageable);
 
+        // 5. 결과 DTO 매핑
         List<ProductListRes> items = productPage.getContent().stream()
                 .map(s -> ProductListRes.builder()
                         .productId(s.getProductId())
@@ -288,8 +299,10 @@ public class ProductServiceImpl implements ProductService {
                         .status(s.getStatus())
                         .build())
                 .toList();
+
         int totalCount = (int) productPage.getTotalElements();
 
+        // 6. 응답 DTO 반환
         return new ItemsResponseDto<>(HttpStatus.OK, items, page, totalCount);
     }
 

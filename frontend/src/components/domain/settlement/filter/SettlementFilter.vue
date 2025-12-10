@@ -44,9 +44,9 @@ import { getPastDateString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
 
 const initialFilters = {
-    scope: 'ALL',
+    scope: 'AP',
     vendorId: 'ALL',
-    vendorType: 'ALL', // 'ALL' | 'FRANCHISE' | 'SUPPLIER'
+    vendorType: 'SUPPLIER', // 기본값을 AP로 변경하여 공급사 기준으로 초기화
     vendorName: '전체',
     startDate: getPastDateString(30),
     endDate: new Date().toISOString().slice(0, 10),
@@ -57,7 +57,6 @@ const filters = ref({ ...initialFilters });
 const isVendorModalOpen = ref(false);
 
 const scopeOptions = [
-    { text: '전체', value: 'ALL' },
     { text: '미수금(AR)', value: 'AR' },
     { text: '미지급금(AP)', value: 'AP' },
 ];
@@ -80,7 +79,6 @@ function handleVendorSelect(vendor) {
     const { type, id, name, code } = vendor;
 
     // 필터 값 업데이트
-    filters.value.scope = 'ALL'; // 선택 시 전체로 변경
     filters.value.vendorId = id;
     filters.value.vendorName = name;
 
@@ -116,18 +114,19 @@ function resetFilters() {
 
 // scope 변경 시 vendorId 초기화 (선택사항)
 watch(() => filters.value.scope, (newScope) => {
-    // scope 변경 시 업체 선택 초기화 (선택사항)
-    if (newScope === 'ALL') {
-        // 전체 선택 시 업체도 전체로 초기화
+    // scope 변경 시 업체 선택 초기화 및 vendorType 고정
+    if (newScope === 'AR') {
+        // AR 선택 시 가맹점만 표시
+        filters.value.vendorType = 'FRANCHISE';
         filters.value.vendorId = 'ALL';
         filters.value.vendorName = '전체';
         vendorOptions.value = [{ text: '전체', value: 'ALL' }];
-    } else if (newScope === 'AR') {
-        // AR 선택 시 가맹점만 표시되도록 vendorType 고정
-        filters.value.vendorType = 'FRANCHISE';
     } else if (newScope === 'AP') {
-        // AP 선택 시 공급사만 표시되도록 vendorType 고정
+        // AP 선택 시 공급사만 표시
         filters.value.vendorType = 'SUPPLIER';
+        filters.value.vendorId = 'ALL';
+        filters.value.vendorName = '전체';
+        vendorOptions.value = [{ text: '전체', value: 'ALL' }];
     }
 });
 </script>

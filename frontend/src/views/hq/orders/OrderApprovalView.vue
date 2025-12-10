@@ -20,6 +20,7 @@ import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { getPurchaseDetail, updatePurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import apiClient from '@/components/api'
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 import OrderDetailView from '@/components/domain/order/OrderDetailView.vue'
 
@@ -27,6 +28,9 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const poId = route.params.id || 'PO-UNKNOWN'
+const sourceType = route.query.sourceType || null
+const smartSupplierId = route.query.supplierId || null
+const smartTargetWeek = route.query.targetWeek || null
 
 const po = reactive({
   purchaseId: null,
@@ -47,23 +51,62 @@ const orderData = computed(() => ({
 }))
 
 const fetchPurchaseDetail = async () => {
-  const data = await getPurchaseDetail(poId);
-  Object.assign(po, {
-    purchaseId: data.purchaseId,
-    poNo: data.poNo,
-    supplierName: data.supplierName,
-    userName: data.requesterName,
-    requestedAt: data.requestedAt,
-    status: data.orderStatus,
-  });
+  // SMART로 넘어온 경우: 스마트 전용 상세 API를 호출한 뒤 OrderDetailView가 기대하는 형태로 매핑
+  if (sourceType === 'SMART' && smartSupplierId && smartTargetWeek) {
+    try {
+      const res = await apiClient.get('/api/v1/smart-orders/detail', {
+        params: { supplierId: smartSupplierId, targetWeek: smartTargetWeek }
+      })
 
-  po.items = data.purchaseItems.map(item => ({
-    sku: item.productCode,
-    name: item.productName,
-    purchasePrice: item.purchasePrice,  // 공급가 (product_supplier)
-    price: item.unitPrice,              // 판매가 (product)
-    qty: item.orderQty,
-  }));
+      const data = res.data || {}
+
+      Object.assign(po, {
+        purchaseId: poId,
+        poNo: data.poNumber || poId,
+        supplierName: data.supplierName || '',
+        userName: data.requesterName || data.requester || '시스템',
+        requestedAt: data.targetWeek || data.snapshotAt || '',
+        status: data.smartOrderStatus || data.status || 'DRAFT_AUTO',
+      })
+
+      po.items = (data.items || []).map(item => ({
+        sku: item.productCode || item.productId || '',
+        name: item.productName || item.product_name || '',
+        purchasePrice: item.purchasePrice || item.supplierPrice || 0,
+        price: item.unitPrice || item.price || 0,
+        qty: item.recommendedOrderQty || item.orderQty || 0,
+      }))
+      return
+    } catch (e) {
+      console.error('스마트 발주 상세 로드 실패:', e)
+      alert('스마트 발주 상세를 불러오는 중 오류가 발생했습니다.')
+      return
+    }
+  }
+
+  // 일반 발주 상세
+  try {
+    const data = await getPurchaseDetail(poId)
+    Object.assign(po, {
+      purchaseId: data.purchaseId,
+      poNo: data.poNo,
+      supplierName: data.supplierName,
+      userName: data.requesterName,
+      requestedAt: data.requestedAt,
+      status: data.orderStatus,
+    })
+
+    po.items = (data.purchaseItems || []).map(item => ({
+      sku: item.productCode,
+      name: item.productName,
+      purchasePrice: item.purchasePrice, // 공급가
+      price: item.unitPrice, // 판매가
+      qty: item.orderQty,
+    }))
+  } catch (e) {
+    console.error('상세 로드 실패:', e)
+    alert('상세 정보를 불러오는 중 오류가 발생했습니다.')
+  }
 }
 
 // HQ_ADMIN이고, 상태가 SUBMITTED 또는 DRAFT_AUTO인 경우에만 승인/반려 버튼 표시
