@@ -1,7 +1,6 @@
 <template>
   <div class="dashboard-page">
     <div class="dashboard">
-
       <!-- ===== Overview ===== -->
       <section class="overview-card">
         <div class="dashboard-header">
@@ -63,7 +62,6 @@
           </button>
         </div>
       </section>
-
     </div>
   </div>
 </template>
@@ -71,12 +69,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
-import {
-  ShoppingCart,
-  Warehouse,
-  ClipboardList
-} from 'lucide-vue-next'
+import { ShoppingCart, Warehouse, ClipboardList } from 'lucide-vue-next'
+import apiClient from '@/components/api'
 
 const router = useRouter()
 
@@ -95,7 +89,7 @@ const summary = ref({
 ====================== */
 const fetchDashboardSummary = async () => {
   try {
-    const res = await axios.get('/api/v1/store/dashboard/summary')
+    const res = await apiClient.get('/api/v1/store/dashboard/summary')
     summary.value = res.data
   } catch (e) {
     console.error('Store Dashboard KPI 조회 실패', e)
