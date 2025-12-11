@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     @Query("SELECT u FROM User u ORDER BY function('RAND')")
     List<User> findRandomUsers();
+
+    Optional<User> findByName(String senderName);
 }
