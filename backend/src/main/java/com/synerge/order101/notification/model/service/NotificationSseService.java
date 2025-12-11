@@ -27,7 +27,7 @@ public class NotificationSseService {
     public SseEmitter subscribe(String userId, String lastEventId) {
         SseEmitter emitter = new SseEmitter(TIMEOUT);
         
-        // ⭐ 새로고침 시 기존 연결 정리 (메모리 누수 방지)
+        // 새로고침 시 기존 연결 정리 (메모리 누수 방지)
         CopyOnWriteArrayList<SseEmitter> userEmitters = emitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>());
         
         // 기존 연결들을 모두 complete 시키고 제거

@@ -19,6 +19,11 @@ export const useNotificationStore = defineStore('notification', {
     size: 20, // 한 번에 가져올 개수
     totalCount: 0, // 서버에서 내려준 전체 개수
     loadingPage: false, // 페이지 로딩중 여부
+
+    //  추가
+    reconnectTimer: null,
+    retryDelay: 3000, // 3초부터 시작
+    maxRetryDelay: 30000, // 최대 30초
   }),
 
   getters: {
@@ -27,6 +32,18 @@ export const useNotificationStore = defineStore('notification', {
   },
 
   actions: {
+    cleanupSSE() {
+      if (this.es) {
+        try {
+          this.es.close()
+        } catch (e) {
+          console.warn('[SSE] close error', e)
+        }
+      }
+      this.es = null
+      this.connected = false
+    },
+
     async init() {
       const token = localStorage.getItem('authToken')
 
@@ -80,83 +97,97 @@ export const useNotificationStore = defineStore('notification', {
     },
 
     connectSSE(token) {
-      if (this.connected) return
+      if (this.es || this.connected) {
+        return
+      }
 
       const es = new EventSource(SSE_URL(token))
       this.es = es
-      this.connected = true
 
-      es.addEventListener('connected', () => {})
+      es.addEventListener('open', () => {
+        console.info('[SSE] opened')
+        this.connected = true
+
+        // 연결 성공하면 backoff/타이머 초기화
+        this.retryDelay = 3000
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer)
+          this.reconnectTimer = null
+        }
+      })
 
       es.addEventListener('notification', (event) => {
         const payload = JSON.parse(event.data)
         const id = event.lastEventId
 
-        // 1. 중복 방지(같은 탭에서 재연결 시)
         if (id && id === this.lastEventId) return
         this.lastEventId = id
 
         this.notifications.unshift(payload)
-
         this.unreadCount += 1
-
         this.totalCount += 1
       })
 
-      es.addEventListener('error', () => {
-        // SSE 연결 에러 - 401 (JWT 토큰 문제)일 가능성 높음
-        console.warn('[SSE] Connection error detected')
-        
-        // 토큰 검증 실패 시 자동 로그아웃 처리
+      const handleError = (event) => {
+        console.warn('[SSE] error, will reconnect', event)
+
+        // 이미 reconnect 타이머가 잡혀 있으면 더 이상 안 잡음
+        if (this.reconnectTimer) {
+          return
+        }
+
+        // JWT 문제로 완전히 거절(CLOSED)된 경우만 로그아웃 처리
         if (es.readyState === EventSource.CLOSED) {
-          console.warn('[SSE] Connection refused - likely JWT signature mismatch')
-          
-          // 현재 연결 정리
-          this.connected = false
-          if (this.es) {
-            this.es.close()
-            this.es = null
-          }
-          
-          // JWT 서명 오류로 인한 사용자 강제 로그아웃
+          console.warn('[SSE] closed by server, maybe token invalid')
+
+          this.cleanupSSE()
+
           const authStore = useAuthStore()
           localStorage.clear()
           sessionStorage.clear()
           authStore.logout()
-          
-          // 로그인 페이지로 리다이렉트
+
           import('@/router').then((routerModule) => {
             routerModule.default.push({ name: 'login' })
           })
           return
         }
-        
-        // 일반 에러는 재연결 시도
-        this.connected = false
-        if (this.es) {
-          this.es.close()
-          this.es = null
-        }
 
-        // 지수 backoff로 재연결
-        setTimeout(() => {
+        // 나머지는 네트워크/서버 에러 → backoff 재연결
+        this.cleanupSSE()
+
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectTimer = null
           const t = localStorage.getItem('authToken')
-          if (t) this.connectSSE(t)
-        }, 3_000)
-      })
+          if (t) {
+            this.connectSSE(t)
+          }
+        }, this.retryDelay)
 
-      es.onerror = () => {
-        console.warn('[SSE] error event triggered')
-        // onerror 이벤트는 error 리스너로 통합됨
+        // 지수 backoff
+        this.retryDelay = Math.min(this.retryDelay * 2, this.maxRetryDelay)
       }
+
+      es.addEventListener('error', handleError)
     },
 
     disconnectSSE() {
-      if (this.es) this.es.close()
-      this.es = null
-      this.connected = false
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer)
+        this.reconnectTimer = null
+      }
+      this.cleanupSSE()
       this.lastEventId = null
     },
+
+    reset() {
+      this.disconnectSSE()
+      this.notifications = []
+      this.unreadCount = 0
+      this.page = 0
+      this.totalCount = 0
+    },
+
     async markAllRead() {
       await apiClient.post('/api/v1/notifications/read-all')
       this.unreadCount = 0
