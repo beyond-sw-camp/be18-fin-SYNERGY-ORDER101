@@ -98,7 +98,6 @@ export const useNotificationStore = defineStore('notification', {
       this.es = es
 
       es.addEventListener('open', () => {
-        console.info('[SSE] opened')
         this.connected = true
 
         // 연결 성공하면 backoff/타이머 초기화
@@ -122,8 +121,6 @@ export const useNotificationStore = defineStore('notification', {
       })
 
       const handleError = (event) => {
-        console.warn('[SSE] error, will reconnect', event)
-
         // 이미 reconnect 타이머가 잡혀 있으면 더 이상 안 잡음
         if (this.reconnectTimer) {
           return
