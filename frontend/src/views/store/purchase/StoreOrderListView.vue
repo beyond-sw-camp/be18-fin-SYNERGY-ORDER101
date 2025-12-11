@@ -44,24 +44,24 @@
       </div>
 
       <div class="pagination">
-        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">&laquo;</button>
-        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">&lsaquo;</button>
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 0">&laquo;</button>
+        <button class="page-nav" @click="goPage(page)" :disabled="page === 0">&lsaquo;</button>
 
         <div class="pages">
           <button
             v-for="p in visiblePages"
             :key="p"
-            :class="{ active: p === page }"
+            :class="{ active: p === page + 1 }"
             @click="goPage(p)"
           >
             {{ p }}
           </button>
         </div>
 
-        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(page + 2)" :disabled="page + 1 >= totalPages">
           &rsaquo;
         </button>
-        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page + 1 >= totalPages">
           &raquo;
         </button>
       </div>
@@ -99,7 +99,7 @@ const filters = ref({
   endDate: new Date().toISOString().slice(0, 10),
 })
 
-const page = ref(1)
+const page = ref(0)  // 0-based page
 const perPage = ref(10)
 const rows = ref([])
 const totalElements = ref(0)
@@ -113,7 +113,7 @@ const totalPages = computed(() => totalPagesFromBackend.value || 1)
 
 const visiblePages = computed(() => {
   const total = totalPages.value
-  const current = page.value
+  const current = page.value + 1  // Convert to 1-based for display
   const delta = 2
   const pages = []
 
@@ -151,7 +151,7 @@ function handleSearch(filterData) {
     startDate: filterData.startDate,
     endDate: filterData.endDate,
   }
-  page.value = 1
+  page.value = 0  // Reset to first page
   search()
 }
 
@@ -159,7 +159,7 @@ async function search() {
   loading.value = true
   error.value = null
 
-  const apiPage = page.value - 1
+  const apiPage = page.value
 
   try {
     // TradeSearchCondition 기반 파라미터 구성
@@ -211,7 +211,7 @@ async function search() {
 }
 
 function goPage(p) {
-  page.value = p
+  page.value = p - 1  // Convert 1-based to 0-based
   search()
 }
 

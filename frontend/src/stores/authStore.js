@@ -2,8 +2,8 @@ import { reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/components/api'
 
-// JWT 버전 (서버의 시크릿이 변경될 때마다 증가)
-const JWT_CONFIG_VERSION = 2
+// JWT 버전 (서버 시크릿/토큰 정책 바뀔 때마다 증가)
+const JWT_CONFIG_VERSION = 3
 
 export const useAuthStore = defineStore('auth', () => {
   // 시작 시 저장된 JWT 버전 확인

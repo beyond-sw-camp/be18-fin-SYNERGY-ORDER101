@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
 import apiClient from '..'
 
 const SSE_URL = (token) =>
@@ -95,21 +96,51 @@ export const useNotificationStore = defineStore('notification', {
         this.totalCount += 1
       })
 
-      es.onerror = () => {
-        console.warn('[SSE] error → will reconnect')
-
-        // 현재 연결 정리
+      es.addEventListener('error', () => {
+        // SSE 연결 에러 - 401 (JWT 토큰 문제)일 가능성 높음
+        console.warn('[SSE] Connection error detected')
+        
+        // 토큰 검증 실패 시 자동 로그아웃 처리
+        if (es.readyState === EventSource.CLOSED) {
+          console.warn('[SSE] Connection refused - likely JWT signature mismatch')
+          
+          // 현재 연결 정리
+          this.connected = false
+          if (this.es) {
+            this.es.close()
+            this.es = null
+          }
+          
+          // JWT 서명 오류로 인한 사용자 강제 로그아웃
+          const authStore = useAuthStore()
+          localStorage.clear()
+          sessionStorage.clear()
+          authStore.logout()
+          
+          // 로그인 페이지로 리다이렉트
+          import('@/router').then((routerModule) => {
+            routerModule.default.push({ name: 'login' })
+          })
+          return
+        }
+        
+        // 일반 에러는 재연결 시도
         this.connected = false
         if (this.es) {
           this.es.close()
           this.es = null
         }
 
-        // 지수 backoff 등 넣고 싶으면 여기에서
+        // 지수 backoff로 재연결
         setTimeout(() => {
           const t = localStorage.getItem('authToken')
           if (t) this.connectSSE(t)
         }, 3_000)
+      })
+
+      es.onerror = () => {
+        console.warn('[SSE] error event triggered')
+        // onerror 이벤트는 error 리스너로 통합됨
       }
     },
 

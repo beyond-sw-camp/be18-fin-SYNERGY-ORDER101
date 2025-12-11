@@ -28,11 +28,11 @@
               <th class="col-id">정산 ID</th>
               <th class="col-type">유형</th>
               <th class="col-vendor">상점/공급사</th>
-              <th class="col-period"> 완료 시간</th>
-              <th class="col-qty">총 수량</th>
+              <th class="col-date">생성일</th>
+              <th class="col-qty">수량</th>
               <th class="col-amount">정산 금액</th>
               <th class="col-status">상태</th>
-              <th class="col-date">생성일</th>
+              <th class="col-period">완료 시간</th>
             </tr>
           </thead>
           <tbody>
@@ -50,8 +50,8 @@
                   <span class="vendor-name">{{ r.entity }}</span>
                 </div>
               </td>
-              <td class="col-period">
-                <span class="period-text">{{ r.period }}</span>
+              <td class="col-date">
+                <span class="date-text">{{ r.created }}</span>
               </td>
               <td class="col-qty">
                 <span class="qty-text">{{ formatNumber(r.qty) }}개</span>
@@ -66,8 +66,8 @@
                   {{ r.status }}
                 </span>
               </td>
-              <td class="col-date">
-                <span class="date-text">{{ r.created }}</span>
+              <td class="col-period">
+                <span class="period-text">{{ r.period }}</span>
               </td>
             </tr>
             <tr v-if="rows.length === 0">
