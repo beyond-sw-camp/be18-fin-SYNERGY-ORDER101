@@ -10,7 +10,11 @@
       <!-- 필터 영역: 타입 필터만 사용하도록 PurchaseFilter 구성 (상태/날짜 비표시) -->
       <PurchaseFilter @search="onFilterSearch" :showTypeFilter="true" :showVendorFilter="false" :showStatusFilter="false" :showDateRange="false" />
 
-      <div class="table-wrap">
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>데이터를 불러오는 중...</p>
+      </div>
+      <div v-else-if="rows.length > 0" class="table-wrap">
         <table class="approval-table">
           <thead>
             <tr>
@@ -44,31 +48,36 @@
                   :smart-order-ids="row.smartOrderIds" @success="handleProcessSuccess" />
               </td>
             </tr>
-            <tr v-if="rows.length === 0">
-              <td colspan="8" class="no-data">발주 요청이 없습니다.</td>
-            </tr>
           </tbody>
         </table>
       </div>
+      <div v-else class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1">
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+          <path d="M3 9h18M9 21V9" stroke-width="2" />
+        </svg>
+        <p class="empty-text">발주 요청이 없습니다</p>
+        <p class="empty-hint">필터 조건을 변경해보세요</p>
+      </div>
 
       <div class="pagination">
-        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 0">
           &laquo;
         </button>
-        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+        <button class="page-nav" @click="goPage(page)" :disabled="page === 0">
           &lsaquo;
         </button>
 
         <div class="pages">
-          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
+          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page + 1 }" @click="goPage(p)">
             {{ p }}
           </button>
         </div>
 
-        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(page + 2)" :disabled="page + 1 >= totalPages">
           &rsaquo;
         </button>
-        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page + 1 >= totalPages">
           &raquo;
         </button>
       </div>
@@ -138,7 +147,8 @@ function handleProcessSuccess() {
 // 필터 검색
 function onFilterSearch(filters) {
   activeFilters.value = {
-    keyword: filters.keyword || ''
+    keyword: filters.keyword || '',
+    orderType: filters.orderType || 'ALL'
   }
   page.value = 0
   searchPurchases()
@@ -147,10 +157,14 @@ function onFilterSearch(filters) {
 const searchPurchases = async () => {
   loading.value = true
   try {
+    // orderType 필터: 'ALL'이면 null (필터 안 함), 아니면 해당 타입 (SMART/AUTO)
+    const orderTypeFilter = activeFilters.value.orderType === 'ALL' ? null : activeFilters.value.orderType
+    
     const data = await getPurchasesForApproval(
       page.value,
       perPage.value,
-      activeFilters.value.keyword || null
+      activeFilters.value.keyword || null,
+      orderTypeFilter
     )
 
     totalPagesFromBackend.value = data.totalPages || 1
@@ -303,6 +317,53 @@ function statusClass(s) {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f3;
+  border-top: 4px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .pagination {

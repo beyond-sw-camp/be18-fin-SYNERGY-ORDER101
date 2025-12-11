@@ -10,10 +10,23 @@ from app.ops.make_product_master_from_sku import main as build_master
 from app.service.product_loader import load_product_master_once
 from .service.train_service import retrain_model, ensure_artifacts_exist, run_full_pipeline
 from typing import List
+from app.chat.router import router
+from fastapi.middleware.cors import CORSMiddleware
 
 BASE = Path(__file__).resolve().parent
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router)
 
 @app.on_event("startup")
 def startup_tasks():

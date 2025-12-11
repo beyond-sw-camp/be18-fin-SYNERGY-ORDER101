@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class NotificationSseService {
 
-    private static final long TIMEOUT = 55_000L; // 1h
+    private static final long TIMEOUT = 5 * 60 * 1000L; // 5분 (CloudFront/ALB 호환, 클라이언트 자동 재연결)
     private final Map<String, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
 
     private final Map<String, Map<String, Object>> eventCache = new ConcurrentHashMap<>();
@@ -26,9 +26,22 @@ public class NotificationSseService {
 
     public SseEmitter subscribe(String userId, String lastEventId) {
         SseEmitter emitter = new SseEmitter(TIMEOUT);
-        emitters
-                .computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>())
-                .add(emitter);
+        
+        // 새로고침 시 기존 연결 정리 (메모리 누수 방지)
+        CopyOnWriteArrayList<SseEmitter> userEmitters = emitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>());
+        
+        // 기존 연결들을 모두 complete 시키고 제거
+        for (SseEmitter old : userEmitters) {
+            try {
+                old.complete();
+            } catch (Exception ignored) {
+                // 이미 종료된 연결은 무시
+            }
+        }
+        userEmitters.clear();
+        
+        // 새 연결만 추가
+        userEmitters.add(emitter);
 
         Runnable cleanup = () -> removeEmitter(userId, emitter);
         emitter.onCompletion(cleanup);

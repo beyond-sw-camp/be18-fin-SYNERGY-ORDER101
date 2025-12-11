@@ -112,7 +112,7 @@ const handleSubmit = async () => {
       window.alert('사용자를 등록하였습니다.')
     } catch (e) {}
     handleReset()
-    router.push({ name: 'hq-dashboard' })
+    router.push({ name: 'hq-users-list' })
   } catch (e) {
     if (e.response && e.response.data && e.response.data.message) {
       errors.loginId = e.response.data.message

@@ -45,11 +45,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } else {
                 log.debug("[JwtAuthenticationFilter] Token not usable or missing");
             }
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            // JWT 서명 검증 실패 - 토큰이 다른 키로 서명됨 (환경 변경 등)
+            log.warn("[JwtAuthenticationFilter] JWT signature validation failed: {}", e.getMessage());
+            sendUnauthorizedResponse(response, "INVALID_TOKEN_SIGNATURE", "JWT token signature is invalid. Please login again.");
+            return;
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            // 토큰 만료
+            log.warn("[JwtAuthenticationFilter] JWT token expired: {}", e.getMessage());
+            sendUnauthorizedResponse(response, "TOKEN_EXPIRED", "JWT token has expired. Please login again.");
+            return;
         } catch (Exception e) {
-            // 로그를 남기고 필터 체인을 계속 진행해서 요청이 차단되는 것을 막음
+            // 기타 JWT 검증 오류
             log.error("[JwtAuthenticationFilter] Failed to authenticate token: {}", e.getMessage(), e);
+            sendUnauthorizedResponse(response, "INVALID_TOKEN", "JWT token validation failed.");
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void sendUnauthorizedResponse(HttpServletResponse response, String errorCode, String errorMessage) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(String.format(
+            "{\"code\":\"%s\",\"message\":\"%s\"}",
+            errorCode, errorMessage
+        ));
     }
 }

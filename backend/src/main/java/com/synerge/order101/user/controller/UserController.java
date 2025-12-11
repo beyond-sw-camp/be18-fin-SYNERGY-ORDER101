@@ -28,12 +28,14 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponseDto<User>> registerUser(@RequestBody  UserRegisterRequestDto userRequestDto) {
+    public ResponseEntity<BaseResponseDto<UserProfile>> registerUser(@RequestBody  UserRegisterRequestDto userRequestDto) {
 
         User registeredUser = userService.registerUser(userRequestDto);
+        // 엔티티를 직접 반환하면 LAZY 프록시 때문에 직렬화 에러가 발생할 수 있으므로 DTO로 변환하여 반환
+        UserProfile profile = userService.getUserProfileById(registeredUser.getUserId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new BaseResponseDto<>(HttpStatus.CREATED, registeredUser));
+                .body(new BaseResponseDto<>(HttpStatus.CREATED, profile));
     }
 
 
