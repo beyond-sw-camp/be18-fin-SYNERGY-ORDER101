@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/authStore'
 import { useNotificationStore } from './api/notification/notification'
 import NotificationModal from './api/notification/NotificationModal.vue'
 import { computed } from 'vue'
+import ChatModal from '@/views/hq/chat/ChatModal.vue'
 
 // use the provided flaticon image URL
 const notificationIcon = 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png'
@@ -115,6 +116,38 @@ const handleClearAll = async () => {
   if (!confirm('모든 알림을 삭제하시겠습니까?')) return
   await notiStore.clearAll()
 }
+
+// ===== 채팅 모달 상태 =====
+const showChatModal = ref(false)
+const chatTargetNickname = ref('')
+
+// 역할 플래그 (헤더는 currentRole prop으로 전달받음)
+const isHQ = computed(() => props.currentRole === 'HQ')
+const isHqAdmin = computed(() => props.currentRole === 'HQ_ADMIN')
+const isStoreAdmin = computed(() => props.currentRole === 'STORE_ADMIN')
+
+// 나중에 백엔드에서 store_id 기준으로 상대 찾아서 userInfo에 심어둔다고 가정
+// 예: STORE_ADMIN → 담당 HQ 이름, HQ → 담당 점주 이름
+const assignedHqName = computed(() => authStore.userInfo?.hqName || '')
+const assignedStoreOwnerName = computed(() => authStore.userInfo?.storeOwnerName || '')
+// 위 둘은 필요에 따라 필드명 맞춰서 사용하면 됨. (지금은 예시)
+
+// 가맹점주: 본사 문의하기
+// 가맹점주 → HQ(조상원)에게 1:1 채팅
+const openChatToHq = () => {
+  chatTargetNickname.value = '조상원' // DB의 name 컬럼 그대로!
+  showChatModal.value = true
+}
+
+// HQ → 점주(윤석현)에게 1:1 채팅
+const openChatToStoreOwner = () => {
+  chatTargetNickname.value = '윤석현' // DB의 name 컬럼 그대로!
+  showChatModal.value = true
+}
+
+const closeChatModal = () => {
+  showChatModal.value = false
+}
 </script>
 
 <template>
@@ -125,6 +158,20 @@ const handleClearAll = async () => {
       </RouterLink>
       <div class="header-tools">
         <div class="header-actions">
+          <!--  가맹점주: 본사 문의하기 버튼 -->
+          <button v-if="isStoreAdmin" type="button" class="chat-button" @click="openChatToHq">
+            본사 문의하기
+          </button>
+
+          <!--  HQ/HQ_ADMIN: 점주랑 대화하기 버튼 -->
+          <button
+            v-if="isHQ || isHqAdmin"
+            type="button"
+            class="chat-button"
+            @click="openChatToStoreOwner"
+          >
+            점주랑 대화하기
+          </button>
           <div class="noti-wrap">
             <button
               ref="notiBtnRef"
@@ -177,6 +224,13 @@ const handleClearAll = async () => {
         </div>
       </div>
     </div>
+    <ChatModal
+      v-if="chatTargetNickname"
+      :visible="showChatModal"
+      :otherNickname="chatTargetNickname"
+      :title="isStoreAdmin ? '본사 문의하기' : '점주와의 1:1 채팅'"
+      @close="closeChatModal"
+    />
   </header>
 </template>
 
@@ -376,5 +430,23 @@ const handleClearAll = async () => {
 .noti-wrap {
   position: relative;
   display: inline-block;
+}
+
+.chat-button {
+  margin-right: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.chat-button:hover {
+  background: #f3f4f6;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 </style>

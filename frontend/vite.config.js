@@ -6,13 +6,13 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    vueDevTools(),
-  ],
+  plugins: [vue(), vueDevTools()],
+  define: {
+    global: 'window',
+  },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   server: {
@@ -22,7 +22,6 @@ export default defineConfig({
         target: 'http://localhost:8080', // 백엔드 서버 주소
         changeOrigin: true, // 호스트 헤더 변경 (CORS 회피)
       },
-    }
-  }
+    },
+  },
 })
-
