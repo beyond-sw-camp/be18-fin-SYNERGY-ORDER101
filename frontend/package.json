@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.2.1",
     "apiclient": "^0.2.5",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
