@@ -1,11 +1,17 @@
 #!/bin/bash
 echo "BeforeInstall: cleaning old containers"
 
-set +e
+# docker daemon 확인
+if ! docker info >/dev/null 2>&1; then
+    echo "Docker daemon is not running. Starting docker..."
+    systemctl start docker
+fi
 
-docker stop python-server || true
-docker rm python-server || true
+# 컨테이너 정리
+docker stop python-server >/dev/null 2>&1 || true
+docker rm python-server >/dev/null 2>&1 || true
 
-mkdir -p /home/ec2-user/python-server
+# 디렉토리 생성
+mkdir -p /home/ec2-user/python-server || true
 
-exit 0
+echo "BeforeInstall: completed successfully"
