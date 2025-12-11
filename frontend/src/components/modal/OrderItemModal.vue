@@ -122,6 +122,10 @@ const props = defineProps({
     type: [String, Number],
     default: null,
   },
+  selectedProductIds: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 // --- State (반응형 데이터) ---
@@ -203,8 +207,12 @@ function normalizeProduct(p) {
     }
   }
 
+  const productId = p.productId || p.id
+  // 이미 선택된 상품인지 확인
+  const isAlreadySelected = props.selectedProductIds.includes(productId)
+
   const normalized = {
-    productId: p.productId || p.id,
+    productId: productId,
     sku: p.productCode || p.sku || p.code,
     name: p.productName || p.name || p.product_name,
     price: Number(p.price || p.unitPrice || 0), // 납품가 (판매가)
@@ -212,7 +220,7 @@ function normalizeProduct(p) {
     stock: p.stockQuantity ?? p.stock ?? null,
     lead: Number(p.leadTimeDays || p.lead_time_days || 1),
     _raw: p,
-    isActive,
+    isActive: isActive && !isAlreadySelected, // 이미 선택된 상품은 비활성화
   }
 
   return normalized
@@ -389,6 +397,9 @@ function toggleSelectAll(e) {
 
 // 개별 항목 선택 토글 (행 클릭 시) — 비활성 항목은 선택 불가
 function toggleSelect(item) {
+  // 비활성화된 항목은 선택할 수 없음
+  if (!item.isActive) return
+
   if (selectedMap[item.productId]) {
     delete selectedMap[item.productId]
   } else {
