@@ -162,7 +162,6 @@ export const useNotificationStore = defineStore('notification', {
       }
 
       es.addEventListener('error', handleError)
-      es.onerror = handleError
     },
 
     disconnectSSE() {
