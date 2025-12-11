@@ -1,6 +1,8 @@
 #!/bin/bash
 echo "=== ApplicationStart: starting python-server ==="
 
+set +e  # 어떤 에러도 스크립트를 죽이지 않도록
+
 cd /home/ec2-user/python-server
 
 REGION="ap-northeast-2"
@@ -13,6 +15,7 @@ DB_PORT=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_port" --with-decrypti
 DB_USER=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_username" --with-decryption --region $REGION --query "Parameter.Value" --output text)
 DB_PASSWORD=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_password" --with-decryption --region $REGION --query "Parameter.Value" --output text)
 DB_NAME=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_name" --with-decryption --region $REGION --query "Parameter.Value" --output text)
+OPENAI_API_KEY=$(aws ssm get-parameter --name "${PARAM_PREFIX}/openai_api_key" --with-decryption --region "${REGION}" --query "Parameter.Value" --output text)
 
 echo "Loaded:"
 echo "DB_HOST=$DB_HOST"
@@ -32,6 +35,8 @@ docker run -d \
     -e DB_USER="$DB_USER" \
     -e DB_PASSWORD="$DB_PASSWORD" \
     -e DB_NAME="$DB_NAME" \
+    -e OPENAI_API_KEY="$OPENAI_API_KEY" \
     python-server
 
 echo "Python server started!"
+exit 0

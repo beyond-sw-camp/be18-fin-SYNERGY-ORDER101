@@ -1,6 +1,10 @@
 # 1) 가벼운 Python 베이스 이미지
-FROM python:3.13-slim
+FROM python:3.12-slim
 
+RUN ln -sf /usr/local/bin/python3.12 /usr/bin/python3 && \
+    ln -sf /usr/local/bin/python3.12 /usr/bin/python
+
+    
 # 2) 필수 OS 패키지 설치
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -15,18 +19,18 @@ RUN pip install --upgrade pip && pip install poetry
 
 # 5) dependencies 캐싱
 COPY pyproject.toml poetry.lock* /app/
+COPY knowledge /app/knowledge
 
 RUN poetry config virtualenvs.create false
 RUN poetry install --without dev --no-root
 
 # 6) 실제 앱 소스 복사
+
+
 COPY app /app/app
 COPY scripts /app/scripts
-
-# data_pipeline 파일들 명시적으로 복사
-COPY app /app/app
 
 # FastAPI 실행 포트
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--loop", "asyncio"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "asyncio"]
