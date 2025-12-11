@@ -35,8 +35,8 @@
                 </th>
                 <th>SKU</th>
                 <th>제품명</th>
-                <th>가격</th>
-                <th>리드 타임</th>
+                <th class="right">가격</th>
+                <th class="right">리드 타임</th>
               </tr>
             </thead>
             <tbody>
@@ -54,7 +54,7 @@
                 </td>
                 <td>{{ item.name }}</td>
                 <td class="numeric">
-                  <Money :value="item.price" />
+                  <Money :value="usePurchasePrice ? item.purchasePrice : item.price" />
                 </td>
                 <td class="numeric">{{ item.lead }}일</td>
               </tr>
@@ -125,6 +125,11 @@ const props = defineProps({
   selectedProductIds: {
     type: Array,
     default: () => [],
+  },
+  // 공급가(구매가) 기준으로 표시/선택할지 여부 (HQ 발주 화면에서 사용)
+  usePurchasePrice: {
+    type: Boolean,
+    default: false,
   },
 })
 
