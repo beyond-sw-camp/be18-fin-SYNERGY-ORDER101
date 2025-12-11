@@ -23,9 +23,6 @@ RUN poetry install --without dev --no-root
 COPY app /app/app
 COPY scripts /app/scripts
 
-# data_pipeline 파일들 명시적으로 복사
-COPY app /app/app
-
 # FastAPI 실행 포트
 EXPOSE 8000
 
