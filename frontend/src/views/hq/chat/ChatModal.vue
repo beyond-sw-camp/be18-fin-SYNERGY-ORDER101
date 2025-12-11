@@ -43,8 +43,8 @@ function connectWebSocket() {
     return
   }
 
-  const socket = new SockJS('http://localhost:8080/ws/chat')
-  //   const socket = new SockJS('https://order101.link/ws/chat')
+  // const socket = new SockJS('http://localhost:8080/ws/chat')
+  const socket = new SockJS('https://order101.link/ws/chat')
 
   stompClient = new Client({
     webSocketFactory: () => socket,
