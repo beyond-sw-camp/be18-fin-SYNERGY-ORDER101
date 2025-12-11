@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 import apiClient from '@/components/api'
 
 // JWT 버전 (서버 시크릿/토큰 정책 바뀔 때마다 증가)
-const JWT_CONFIG_VERSION = 3
+// v4: 2025-12-11 백엔드 재배포로 인한 JWT 서명 불일치 해결
+const JWT_CONFIG_VERSION = 4
 
 export const useAuthStore = defineStore('auth', () => {
   // 시작 시 저장된 JWT 버전 확인
