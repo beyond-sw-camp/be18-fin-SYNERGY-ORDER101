@@ -86,7 +86,7 @@ const onDocumentClick = (e) => {
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
   
-  // ⭐ 새로고침/창닫기 시 SSE 연결 정리
+  //  새로고침/창닫기 시 SSE 연결 정리
   const handleBeforeUnload = () => {
     notiStore.disconnectSSE()
   }
