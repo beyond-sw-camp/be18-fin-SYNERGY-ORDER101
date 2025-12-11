@@ -14,7 +14,6 @@ notebooks/
 *.csv
 *.xlsx
 *.zip
-*.json
 
 
 # ML 모델 파일
