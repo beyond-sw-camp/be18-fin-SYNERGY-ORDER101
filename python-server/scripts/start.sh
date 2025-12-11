@@ -13,12 +13,7 @@ DB_PORT=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_port" --with-decrypti
 DB_USER=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_username" --with-decryption --region $REGION --query "Parameter.Value" --output text)
 DB_PASSWORD=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_password" --with-decryption --region $REGION --query "Parameter.Value" --output text)
 DB_NAME=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_name" --with-decryption --region $REGION --query "Parameter.Value" --output text)
-OPENAI_API_KEY=$(aws ssm get-parameter \
-    --name "${PARAM_PREFIX}/openai_api_key" \
-    --with-decryption \
-    --region "${REGION}" \
-    --query "Parameter.Value" \
-    --output text)
+OPENAI_API_KEY=$(aws ssm get-parameter --name "${PARAM_PREFIX}/openai_api_key" --with-decryption --region "${REGION}" --query "Parameter.Value" --output text)
 
 
 echo "Loaded:"
