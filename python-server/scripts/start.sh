@@ -16,9 +16,10 @@ DB_NAME=$(aws ssm get-parameter --name "${PARAM_PREFIX}/db_name" --with-decrypti
 OPENAI_API_KEY=$(aws ssm get-parameter \
     --name "${PARAM_PREFIX}/openai_api_key" \
     --with-decryption \
-    --region $REGION \
+    --region "$REGION" \
     --query "Parameter.Value" \
     --output text)
+
 
 echo "Loaded:"
 echo "DB_HOST=$DB_HOST"
