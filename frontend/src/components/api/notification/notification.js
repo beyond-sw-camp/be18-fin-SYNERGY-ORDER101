@@ -35,9 +35,16 @@ export const useNotificationStore = defineStore('notification', {
         return
       }
 
-      await Promise.all([this.fetchUnreadCount(), this.fetchNotifications(0)])
-
-      this.connectSSE(token)
+      // SSE 연결 전에 토큰 유효성 검증 (API 호출로 확인)
+      try {
+        await Promise.all([this.fetchUnreadCount(), this.fetchNotifications(0)])
+        // API 호출이 성공하면 토큰이 유효함 -> SSE 연결
+        this.connectSSE(token)
+      } catch (error) {
+        // API 호출 실패 시 (JWT 에러 포함) SSE 연결하지 않음
+        console.warn('[Notification] Token validation failed, skipping SSE connection')
+        this.reset()
+      }
     },
 
     async fetchNotifications(page = 0, size = this.size) {

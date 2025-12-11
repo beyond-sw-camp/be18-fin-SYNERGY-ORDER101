@@ -35,14 +35,21 @@ apiClient.interceptors.response.use(
     try {
       const status = error.response ? error.response.status : null
       const errorCode = error.response?.data?.code
+      const errorMessage = error.response?.data?.message || ''
+      
+      // JWT 서명 오류 감지 (에러 코드 또는 메시지로 판단)
+      const isJwtSignatureError = 
+        errorCode === 'INVALID_TOKEN_SIGNATURE' ||
+        errorMessage.includes('JWT signature does not match') ||
+        errorMessage.includes('SignatureException')
       
       // JWT 서명 오류 또는 유효하지 않은 토큰 에러
-      if ((status === 401 || errorCode === 'INVALID_TOKEN_SIGNATURE') && !originalRequest._retry) {
+      if ((status === 401 || status === 500 && isJwtSignatureError) && !originalRequest._retry) {
         originalRequest._retry = true
         const authStore = useAuthStore()
         
         // JWT 서명 에러는 refresh 시도하지 말고 즉시 로그아웃
-        if (errorCode === 'INVALID_TOKEN_SIGNATURE') {
+        if (isJwtSignatureError) {
           console.warn('JWT signature mismatch detected. Clearing cache and logging out.')
           // 로컬 스토리지/세션 스토리지 완전 초기화
           localStorage.clear()
