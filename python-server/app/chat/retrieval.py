@@ -51,7 +51,7 @@ class KnowledgeBase:
         self._build_embeddings()
 
     def _build_embeddings(self):
-        print("▶ 임베딩 생성 중…")
+        print("임베딩 생성 중…")
 
         self.embeddings = EMBED_MODEL.encode(
             self.doc_texts,

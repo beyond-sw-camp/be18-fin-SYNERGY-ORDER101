@@ -31,7 +31,7 @@ public class ChatController {
     public Flux<String> stream(@RequestBody Map<String, Object> body) {
 
         return webClient.post()
-                .uri("/api/v1/chat/stream")  
+                .uri("/api/v1/chat/stream")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .bodyValue(body)
