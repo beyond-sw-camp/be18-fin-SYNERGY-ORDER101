@@ -31,19 +31,19 @@ export const useNotificationStore = defineStore('notification', {
     hasMore: (s) => s.notifications.length < s.totalCount,
   },
 
-  cleanupSSE() {
-    if (this.es) {
-      try {
-        this.es.close()
-      } catch (e) {
-        console.warn('[SSE] close error', e)
-      }
-    }
-    this.es = null
-    this.connected = false
-  },
-
   actions: {
+    cleanupSSE() {
+      if (this.es) {
+        try {
+          this.es.close()
+        } catch (e) {
+          console.warn('[SSE] close error', e)
+        }
+      }
+      this.es = null
+      this.connected = false
+    },
+
     async init() {
       const token = localStorage.getItem('authToken')
 
