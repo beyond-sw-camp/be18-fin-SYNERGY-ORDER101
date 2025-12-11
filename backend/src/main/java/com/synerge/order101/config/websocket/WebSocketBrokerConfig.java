@@ -33,6 +33,6 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
     // 이를 인터셉터로 가로채 토큰등을 검증할 수 있음
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompHandler);
+//        registration.interceptors(stompHandler);
     }
 }
