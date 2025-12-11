@@ -1,6 +1,10 @@
 # 1) 가벼운 Python 베이스 이미지
 FROM python:3.12-slim
 
+RUN ln -sf /usr/local/bin/python3.12 /usr/bin/python3 && \
+    ln -sf /usr/local/bin/python3.12 /usr/bin/python
+
+    
 # 2) 필수 OS 패키지 설치
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
