@@ -16,6 +16,8 @@ RUN pip install --upgrade pip && pip install poetry
 # 5) dependencies 캐싱
 COPY pyproject.toml poetry.lock* /app/
 
+COPY knowledge /app/knowledge
+
 RUN poetry config virtualenvs.create false
 RUN poetry install --without dev --no-root
 
