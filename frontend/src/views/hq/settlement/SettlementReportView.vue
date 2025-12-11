@@ -102,9 +102,9 @@
                         <thead>
                             <tr>
                                 <th>{{ currentFilterData?.scope === 'AR' ? '가맹점명' : '공급사명' }}</th>
-                                <th>정산 수량</th>
-                                <th>정산 금액</th>
-                                <th>상태</th>
+                                <th class="numeric-header">정산 수량</th>
+                                <th class="numeric-header">정산 금액</th>
+                                <th class="center-header">상태</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,7 +115,7 @@
                                 </td>
                                 <td class="numeric">{{ formatNumber(row.count) }}개</td>
                                 <td class="numeric">₩{{ formatNumber(row.netAmount) }}</td>
-                                <td>
+                                <td class="center">
                                     <span class="status-badge" :class="getStatusClass(row.status)">
                                         {{ row.status }}
                                     </span>
@@ -448,6 +448,14 @@ function getStatusClass(status) {
     border-bottom: 2px solid #e5e7eb;
 }
 
+.numeric-header {
+    text-align: right !important;
+}
+
+.center-header {
+    text-align: center !important;
+}
+
 .summary-table td {
     padding: 16px;
     border-bottom: 1px solid #f1f3f5;
@@ -463,6 +471,10 @@ function getStatusClass(status) {
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 500;
+}
+
+.center {
+    text-align: center;
 }
 
 .status-badge {

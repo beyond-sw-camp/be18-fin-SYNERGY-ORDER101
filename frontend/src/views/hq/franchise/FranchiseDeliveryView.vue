@@ -28,7 +28,11 @@
     </section>
 
     <section class="card list">
-      <div class="table-wrap">
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>데이터를 불러오는 중...</p>
+      </div>
+      <div v-else-if="rows.length > 0" class="table-wrap">
         <table class="delivery-table">
           <thead>
             <tr>
@@ -56,12 +60,16 @@
 
               <td>{{ formatDateTime(r.requestedAt) }}</td>
             </tr>
-
-            <tr v-if="rows.length === 0">
-              <td colspan="6" class="no-data">조회 결과가 없습니다.</td>
-            </tr>
           </tbody>
         </table>
+      </div>
+      <div v-else class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1">
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+          <path d="M3 9h18M9 21V9" stroke-width="2" />
+        </svg>
+        <p class="empty-text">배송 조회 결과가 없습니다</p>
+        <p class="empty-hint">필터 조건을 변경해보세요</p>
       </div>
       <div class="pagination">
         <button class="pager" :disabled="page === 0" @click="goPrev">‹ Previous</button>
@@ -100,6 +108,8 @@ const statusOptions = [
 ]
 
 const rows = ref([])
+const loading = ref(false)
+const allStoreNames = ref([]) // 모든 가맹점명 저장 (필터 드롭다운용)
 
 const page = ref(0)
 const size = ref(20)
@@ -115,13 +125,14 @@ const filters = ref({
 })
 
 async function fetchDeliveryList() {
+  loading.value = true
   try {
     const res = await apiClient.get('/api/v1/shipments', {
       params: {
         page: page.value,
         size: size.value,
         orderNo: filters.value.q || null,
-        storeId: filters.value.store === 'all' ? null : filters.value.store,
+        storeName: filters.value.store === 'all' ? null : filters.value.store,  // storeName으로 필터링
         status: filters.value.status === 'all' ? null : filters.value.status,
       },
     })
@@ -136,10 +147,17 @@ async function fetchDeliveryList() {
       requestedAt: item.orderDatetime,
     }))
 
+    // 모든 응답 데이터에서 가맹점명 수집 (다른 페이지의 데이터도 포함)
+    const storeNamesFromResponse = p.content.map(item => item.storeName)
+    allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
+
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
   } catch (e) {
     console.error('배송 목록 조회 실패', e)
+    rows.value = []
+  } finally {
+    loading.value = false
   }
 }
 
@@ -192,8 +210,7 @@ function resetFilter() {
 }
 
 const storeOptions = computed(() => {
-  const set = new Set(rows.value.map((r) => r.store))
-  return [...set]
+  return allStoreNames.value
 })
 
 function statusClass(s) {
@@ -317,6 +334,53 @@ onMounted(() => {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f3;
+  border-top: 4px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .pagination {
