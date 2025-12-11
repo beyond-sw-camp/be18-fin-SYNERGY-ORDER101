@@ -2,26 +2,26 @@ version: 0.0
 os: linux
 
 files:
-  - source: python-server/
+  - source: /
     destination: /home/ec2-user/python-server
 
 hooks:
   BeforeInstall:
     - location: scripts/before_install.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
 
   AfterInstall:
     - location: scripts/after_install.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
 
   ApplicationStart:
     - location: scripts/start.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
 
   ApplicationStop:
     - location: scripts/stop.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
