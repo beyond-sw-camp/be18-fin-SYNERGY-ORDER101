@@ -1,7 +1,16 @@
 <template>
   <div class="product-registration">
-    <h2 class="page-title">신규 상품 등록</h2>
+    <!-- ✅ 상단 헤더 + 우측 버튼 -->
+    <header class="page-header">
+      <h2 class="page-title">신규 상품 등록</h2>
 
+      <div class="page-actions">
+        <button class="btn-cancel" @click="onCancel">취소</button>
+        <button class="btn-save" :disabled="saving" @click="onSave">
+          {{ saving ? '저장 중...' : '저장' }}
+        </button>
+      </div>
+    </header>
     <div class="form-grid">
       <section class="card">
         <h3 class="card-title">기본 제품 정보</h3>
@@ -59,23 +68,25 @@
         <div class="form-row">
           <label>공급가</label>
           <input
-            v-model.number="form.price"
+            :value="priceInput"
             placeholder="₩ 0"
             class="input"
-            type="number"
-            min="0"
+            type="text"
+            inputmode="numeric"
+            @input="onPriceInput"
           />
         </div>
 
         <div class="form-row">
           <label>납품가</label>
           <input
-            v-model.number="form.deliveryPrice"
+            :value="deliveryPriceInput"
             placeholder="₩ 0"
             class="input"
-            type="number"
+            type="text"
+            inputmode="numeric"
             :disabled="!form.price"
-            min="0"
+            @input="onDeliveryPriceInput"
           />
           <small v-if="form.price" class="hint-text">
             최소 {{ minDeliveryPrice.toLocaleString() }}원 이상 입력해야 합니다.
@@ -122,13 +133,6 @@
         </div>
       </section>
     </div>
-
-    <div class="actions">
-      <button class="btn-cancel" @click="onCancel">취소</button>
-      <button class="btn-save" :disabled="saving" @click="onSave">
-        {{ saving ? '저장 중...' : '저장' }}
-      </button>
-    </div>
   </div>
 </template>
 
@@ -141,6 +145,9 @@ import apiClient from '@/components/api'
 const router = useRouter()
 const saving = ref(false)
 
+const priceInput = ref('')
+const deliveryPriceInput = ref('')
+
 const form = reactive({
   productName: '',
   price: 0,
@@ -148,6 +155,28 @@ const form = reactive({
   status: true,
   description: '',
 })
+
+const onPriceInput = (e) => {
+  const raw = e.target.value.replace(/[^\d]/g, '') // 숫자만 추출
+  const num = raw ? parseInt(raw, 10) : 0
+
+  form.price = num
+  priceInput.value = num ? num.toLocaleString() : ''
+
+  // 공급가가 0이 되면 납품가도 리셋
+  if (!num) {
+    form.deliveryPrice = 0
+    deliveryPriceInput.value = ''
+  }
+}
+
+const onDeliveryPriceInput = (e) => {
+  const raw = e.target.value.replace(/[^\d]/g, '')
+  const num = raw ? parseInt(raw, 10) : 0
+
+  form.deliveryPrice = num
+  deliveryPriceInput.value = num ? num.toLocaleString() : ''
+}
 
 const minDeliveryPrice = computed(() => (form.price ? Math.ceil(form.price * 1.1) : 0))
 
@@ -275,6 +304,15 @@ const onSave = async () => {
     saving.value = false
   }
 }
+
+onMounted(() => {
+  if (form.price) {
+    priceInput.value = form.price.toLocaleString()
+  }
+  if (form.deliveryPrice) {
+    deliveryPriceInput.value = form.deliveryPrice.toLocaleString()
+  }
+})
 
 const onCancel = () => {
   router.back()
@@ -410,5 +448,17 @@ select {
   .image-card {
     width: 100%;
   }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.page-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>
