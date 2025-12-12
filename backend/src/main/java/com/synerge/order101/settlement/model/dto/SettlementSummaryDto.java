@@ -31,13 +31,33 @@ public class SettlementSummaryDto {
             return null;
         }
 
+        // LAZY 로딩된 엔터티 안전하게 접근
+        String supplierName = null;
+        String storeName = null;
+        
+        try {
+            if (settlement.getSupplier() != null) {
+                supplierName = settlement.getSupplier().getSupplierName();
+            }
+        } catch (Exception e) {
+            supplierName = "삭제된 공급사";
+        }
+        
+        try {
+            if (settlement.getStore() != null) {
+                storeName = settlement.getStore().getStoreName();
+            }
+        } catch (Exception e) {
+            storeName = "삭제된 가맹점";
+        }
+
         return SettlementSummaryDto.builder()
                 .settlementId(settlement.getSettlementId())
                 .settlementNo(settlement.getSettlementNo())
                 .settlementType(settlement.getSettlementType())
                 .settledAt(settlement.getSettledDate())
-                .supplierName(settlement.getSupplier() != null ? settlement.getSupplier().getSupplierName() : null)
-                .storeName(settlement.getStore() != null ? settlement.getStore().getStoreName() : null)
+                .supplierName(supplierName)
+                .storeName(storeName)
                 .createdAt(settlement.getCreatedAt())
                 .settlementAmount(settlement.getProductsAmount())
                 .settlementQty(settlement.getProductsQty())

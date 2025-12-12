@@ -57,7 +57,8 @@ public class StoreOrderRepositoryImpl implements StoreOrderRepositoryCustom{
                 .where(
                         statusIn(cond.getStatuses()),
                         searchTextContains(cond.getSearchText()),
-                        DateBetween(cond.getFromDate(), cond.getToDate())
+                        DateBetween(cond.getFromDate(), cond.getToDate()),
+                        storeIdEq(cond.getVendorId())
                 )
                 .fetchOne();
 

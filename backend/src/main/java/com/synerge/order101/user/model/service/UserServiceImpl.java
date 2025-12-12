@@ -11,6 +11,7 @@ import com.synerge.order101.store.model.entity.Store;
 import com.synerge.order101.store.model.repository.StoreRepository;
 import com.synerge.order101.store.exception.StoreErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,8 +48,12 @@ public class UserServiceImpl implements UserService {
 
         User user = User.create(email, encoded, userRequestDto.getName(), role, userRequestDto.getPhone(), store);
 
-        return userRepository.save(user);
-    }
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            // DB 제약조건 위반(예: unique key duplicate) 처리
+            throw new CustomException(UserErrorCode.DUPLICATE_STORE_ID);
+    }}
 
     @Override
     @Transactional(readOnly = true)

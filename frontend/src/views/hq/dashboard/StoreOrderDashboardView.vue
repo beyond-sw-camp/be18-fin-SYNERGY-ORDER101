@@ -6,11 +6,13 @@
     <section class="filter-section">
       <div class="filter-row">
         <span class="filter-label">필터:</span>
-        <div class="date-range">
-          <input type="date" v-model="filters.fromDate" class="date-input" />
-          <span class="date-separator">~</span>
-          <input type="date" v-model="filters.toDate" class="date-input" />
-        </div>
+        <select v-model="filters.year" class="year-select">
+          <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}년</option>
+        </select>
+        <select v-model="filters.month" class="month-select">
+          <option value="all">전체</option>
+          <option v-for="month in 12" :key="month" :value="month">{{ month }}월</option>
+        </select>
         <button class="store-select-btn" @click="openStoreModal">
           {{ selectedStoreName }}
           <span class="dropdown-arrow">▼</span>
@@ -47,79 +49,22 @@
       </div>
     </section>
 
-    <!-- 기간별 주문량 차트 -->
+    <!-- 상태별 주문 현황 차트 -->
     <section class="chart-section">
-      <h2 class="section-title">기간별 주문량</h2>
-      <p class="chart-subtitle">지난 6개월간의 확정 및 보류 주문량 추이</p>
+      <h2 class="section-title">상태별 주문 현황</h2>
+      <p class="chart-subtitle">선택한 기간의 주문 상태 비율</p>
       <div class="chart-container">
         <canvas ref="orderChartRef"></canvas>
       </div>
       <div class="chart-legend">
-        <span class="legend-item">
-          <span class="legend-color confirmed"></span> 확정 주문
-        </span>
-        <span class="legend-item">
-          <span class="legend-color pending"></span> 보류 주문
-        </span>
+        <span class="legend-item"><span class="legend-color" style="background: #6366f1;"></span> 초안</span>
+        <span class="legend-item"><span class="legend-color" style="background: #f59e0b;"></span> 제출</span>
+        <span class="legend-item"><span class="legend-color" style="background: #10b981;"></span> 승인</span>
+        <span class="legend-item"><span class="legend-color" style="background: #ef4444;"></span> 반려</span>
+        <span class="legend-item"><span class="legend-color" style="background: #6b7280;"></span> 취소</span>
       </div>
     </section>
 
-    <!-- 매장 성과 분석 
-    <section class="store-analysis-section">
-      <h2 class="section-title">매장 성과 분석</h2>
-      <div class="store-tables">
-        <div class="store-table-wrapper">
-          <h3 class="table-title">상위 5개 매장</h3>
-          <table class="store-table">
-            <thead>
-              <tr>
-                <th>점</th>
-                <th>주문량</th>
-                <th>매출</th>
-                <th>승인율</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="store in topStores" :key="store.storeId">
-                <td>{{ store.name }}</td>
-                <td class="numeric">{{ store.orderCount }}</td>
-                <td class="numeric"><Money :value="store.revenue" /></td>
-                <td class="numeric">{{ store.approvalRate }}%</td>
-              </tr>
-              <tr v-if="topStores.length === 0">
-                <td colspan="4" class="empty">데이터가 없습니다.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="store-table-wrapper">
-          <h3 class="table-title">하위 5개 매장</h3>
-          <table class="store-table">
-            <thead>
-              <tr>
-                <th>매장</th>
-                <th>주문량</th>
-                <th>매출</th>
-                <th>승인율</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="store in bottomStores" :key="store.storeId">
-                <td>{{ store.name }}</td>
-                <td class="numeric">{{ store.orderCount }}</td>
-                <td class="numeric"><Money :value="store.revenue" /></td>
-                <td class="numeric">{{ store.approvalRate }}%</td>
-              </tr>
-              <tr v-if="bottomStores.length === 0">
-                <td colspan="4" class="empty">데이터가 없습니다.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
- -->
     <!-- 가맹점 검색 모달 -->
     <VenderSearchModal
       v-if="showStoreModal"
@@ -132,7 +77,6 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import Money from '@/components/global/Money.vue'
 import VenderSearchModal from '@/components/modal/VenderSearchModal.vue'
 import { getFranchiseOrderList, getFranchiseList } from '@/components/api/store/StoreService.js'
 import Chart from 'chart.js/auto'
@@ -144,10 +88,18 @@ const showStoreModal = ref(false)
 const selectedStore = ref(null)
 
 const filters = reactive({
-  fromDate: getDefaultFromDate(),
-  toDate: getDefaultToDate(),
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1,
   storeId: null
 })
+
+const yearOptions = ref([])
+
+// 년도 옵션 생성 (최근 3년)
+function generateYearOptions() {
+  const currentYear = new Date().getFullYear()
+  return [currentYear, currentYear - 1, currentYear - 2]
+}
 
 // 선택된 매장 이름 표시
 const selectedStoreName = computed(() => {
@@ -172,24 +124,37 @@ const topStores = ref([])
 const bottomStores = ref([])
 
 const chartData = reactive({
-  labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-  confirmed: [0, 0, 0, 0, 0, 0],
-  pending: [0, 0, 0, 0, 0, 0]
+  labels: [],
+  datasets: [],
+  counts: []
 })
 
+// 최근 조회 결과 재사용 (필요 시), 기본은 카운트만 계산해 메모리 사용을 줄임
+const cachedOrders = ref([])
+
 // --- 유틸 함수 ---
-function getDefaultFromDate() {
-  const date = new Date()
-  date.setMonth(date.getMonth() - 6)
-  return date.toISOString().split('T')[0]
-}
-
-function getDefaultToDate() {
-  return new Date().toISOString().split('T')[0]
-}
-
 function formatNumber(num) {
   return num?.toLocaleString() || '0'
+}
+
+// 날짜 범위 계산 함수
+function getDateRange() {
+  const year = filters.year
+  const month = filters.month
+
+  if (month === 'all') {
+    return {
+      fromDate: `${year}-01-01`,
+      toDate: `${year}-12-31`
+    }
+  } else {
+    const startDate = new Date(year, month - 1, 1)
+    const endDate = new Date(year, month, 0)
+    return {
+      fromDate: startDate.toISOString().split('T')[0],
+      toDate: endDate.toISOString().split('T')[0]
+    }
+  }
 }
 
 // --- 가맹점 모달 함수 ---
@@ -210,11 +175,70 @@ function onStoreSelect(store) {
 
 // --- 데이터 조회 ---
 async function fetchDashboardData() {
-  await Promise.all([
-    fetchOrderMetrics(),
-    fetchStorePerformance(),
-    fetchChartData()
-  ])
+  // 한 번만 호출해서 지표와 차트 모두 계산
+  await fetchOrdersAndCompute()
+}
+
+async function fetchOrdersAndCompute() {
+  try {
+    const { fromDate, toDate } = getDateRange()
+    const searchParams = {
+      fromDate,
+      toDate,
+      storeId: filters.storeId,
+      statuses: null
+    }
+
+    const pageSize = 1000
+    let page = 1
+    let totalPages = null
+
+    // 카운트만 누적하여 메모리 사용 최소화
+    const statusCount = {
+      DRAFT_AUTO: 0,
+      SUBMITTED: 0,
+      CONFIRMED: 0,
+      COMPLETED: 0,
+      REJECTED: 0,
+      CANCELLED: 0
+    }
+    let totalOrders = 0
+
+    while (true) {
+      const result = await getFranchiseOrderList(page, pageSize, searchParams)
+      const content = result.content || []
+
+      // 총 주문 수
+      totalOrders += content.length
+
+      // 상태 누적
+      content.forEach(order => {
+        const status = order.orderStatus || order.status
+        if (statusCount.hasOwnProperty(status)) {
+          statusCount[status]++
+        }
+      })
+
+      // 총 페이지 수가 제공되면 활용, 아니면 응답 길이 기반 종료
+      if (totalPages === null) {
+        totalPages = result.totalPages || null
+      }
+
+      if (content.length < pageSize || (totalPages && page >= totalPages)) {
+        break
+      }
+      page += 1
+    }
+
+    // 옵션: 최근 결과를 필요 시 위해 일부 저장 (첫 페이지만 캐시)
+    cachedOrders.value = []
+
+    computeMetricsFromCounts(totalOrders, statusCount)
+    computeChartFromCounts(statusCount)
+
+  } catch (error) {
+    console.error('주문 데이터 조회 실패:', error)
+  }
 }
 
 async function fetchStores() {
@@ -226,155 +250,46 @@ async function fetchStores() {
   }
 }
 
-async function fetchOrderMetrics() {
-  try {
-    const searchParams = {
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
-      storeId: filters.storeId,
-      statuses: null
-    }
+function computeMetricsFromCounts(totalOrders, statusCount) {
+  metrics.totalOrders = totalOrders
 
-    const result = await getFranchiseOrderList(1, 1000, searchParams)
-    const orders = result.content || []
+  const confirmedCount = (statusCount.CONFIRMED || 0) + (statusCount.COMPLETED || 0)
+  const cancelledCount = (statusCount.CANCELLED || 0) + (statusCount.REJECTED || 0)
+  const totalProcessed = confirmedCount + cancelledCount
 
-    // 총 주문 수
-    metrics.totalOrders = orders.length
+  metrics.approvalRate = totalProcessed > 0 ? ((confirmedCount / totalProcessed) * 100).toFixed(1) : 0
+  metrics.cancellationRate = totalProcessed > 0 ? ((cancelledCount / totalProcessed) * 100).toFixed(1) : 0
 
-    // 상태별 집계
-    const confirmedCount = orders.filter(o => o.orderStatus === 'CONFIRMED' || o.orderStatus === 'COMPLETED').length
-    const cancelledCount = orders.filter(o => o.orderStatus === 'CANCELLED' || o.orderStatus === 'REJECTED').length
-    const totalProcessed = confirmedCount + cancelledCount
-
-    // 승인율, 취소율 계산
-    metrics.approvalRate = totalProcessed > 0 ? ((confirmedCount / totalProcessed) * 100).toFixed(1) : 0
-    metrics.cancellationRate = totalProcessed > 0 ? ((cancelledCount / totalProcessed) * 100).toFixed(1) : 0
-
-    // 전월 대비 변화율 (임시 데이터 - 실제로는 이전 기간 데이터 조회 필요)
-    metrics.totalOrdersChange = 5.2
-    metrics.approvalRateChange = 0.3
-    metrics.cancellationRateChange = -0.1
-
-  } catch (error) {
-    console.error('주문 지표 조회 실패:', error)
-  }
-}
-
-async function fetchStorePerformance() {
-  try {
-    const searchParams = {
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
-      storeId: null,
-      statuses: null
-    }
-
-    const result = await getFranchiseOrderList(1, 1000, searchParams)
-    const orders = result.content || []
-
-    // 매장별 집계
-    const storeStats = {}
-    orders.forEach(order => {
-      const storeId = order.storeId
-      const storeName = order.storeName || `매장 ${storeId}`
-
-      if (!storeStats[storeId]) {
-        storeStats[storeId] = {
-          storeId,
-          name: storeName,
-          orderCount: 0,
-          revenue: 0,
-          confirmedCount: 0,
-          totalProcessed: 0
-        }
-      }
-
-      storeStats[storeId].orderCount++
-      storeStats[storeId].revenue += order.totalAmount || 0
-
-      if (order.orderStatus === 'CONFIRMED' || order.orderStatus === 'COMPLETED') {
-        storeStats[storeId].confirmedCount++
-        storeStats[storeId].totalProcessed++
-      } else if (order.orderStatus === 'CANCELLED' || order.orderStatus === 'REJECTED') {
-        storeStats[storeId].totalProcessed++
-      }
-    })
-
-    // 승인율 계산 및 정렬
-    const storeList = Object.values(storeStats).map(store => ({
-      ...store,
-      approvalRate: store.totalProcessed > 0
-        ? ((store.confirmedCount / store.totalProcessed) * 100).toFixed(1)
-        : 0
-    }))
-
-    // 주문량 기준 정렬
-    storeList.sort((a, b) => b.orderCount - a.orderCount)
-
-    topStores.value = storeList.slice(0, 5)
-    bottomStores.value = storeList.slice(-5).reverse()
-
-    // 데이터가 5개 미만인 경우 처리
-    if (storeList.length < 5) {
-      bottomStores.value = []
-    }
-
-  } catch (error) {
-    console.error('매장 성과 조회 실패:', error)
-  }
+  // 전월 대비 변화율 (임시 데이터 - 실제로는 이전 기간 데이터 조회 필요)
+  metrics.totalOrdersChange = 5.2
+  metrics.approvalRateChange = 0.3
+  metrics.cancellationRateChange = -0.1
 }
 
 async function fetchChartData() {
-  try {
-    const searchParams = {
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
-      storeId: filters.storeId,
-      statuses: null
-    }
+  // 이전 API를 유지하던 호출 경로를 위해 남겨둠 (호환용)
+  await fetchOrdersAndCompute()
+}
 
-    const result = await getFranchiseOrderList(1, 1000, searchParams)
-    const orders = result.content || []
+function computeChartFromCounts(statusCount) {
+  const confirmed = (statusCount.CONFIRMED || 0) + (statusCount.COMPLETED || 0)
 
-    // 월별 집계
-    const monthlyData = {}
-    const months = []
-    const now = new Date()
+  const counts = [
+    statusCount.DRAFT_AUTO || 0,
+    statusCount.SUBMITTED || 0,
+    confirmed,
+    statusCount.REJECTED || 0,
+    statusCount.CANCELLED || 0
+  ]
 
-    // 최근 6개월 레이블 생성
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      const label = `${date.getMonth() + 1}월`
-      months.push({ key, label })
-      monthlyData[key] = { confirmed: 0, pending: 0 }
-    }
+  const total = counts.reduce((sum, n) => sum + n, 0)
+  const percentages = total > 0 ? counts.map(n => Number(((n / total) * 100).toFixed(1))) : counts.map(() => 0)
 
-    // 주문 데이터 월별 분류
-    orders.forEach(order => {
-      const orderDate = new Date(order.createdAt || order.orderDate)
-      const key = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`
+  chartData.labels = ['초안', '제출', '승인', '반려', '취소']
+  chartData.datasets = percentages
+  chartData.counts = counts
 
-      if (monthlyData[key]) {
-        if (order.orderStatus === 'CONFIRMED' || order.orderStatus === 'COMPLETED') {
-          monthlyData[key].confirmed++
-        } else if (order.orderStatus === 'PENDING' || order.orderStatus === 'SUBMITTED') {
-          monthlyData[key].pending++
-        }
-      }
-    })
-
-    // 차트 데이터 업데이트
-    chartData.labels = months.map(m => m.label)
-    chartData.confirmed = months.map(m => monthlyData[m.key].confirmed)
-    chartData.pending = months.map(m => monthlyData[m.key].pending)
-
-    await nextTick()
-    renderChart()
-
-  } catch (error) {
-    console.error('차트 데이터 조회 실패:', error)
-  }
+  nextTick().then(() => renderChart())
 }
 
 function renderChart() {
@@ -386,34 +301,27 @@ function renderChart() {
 
   const ctx = orderChartRef.value.getContext('2d')
 
+  const backgroundColors = [
+    '#6366f1', // 초안
+    '#f59e0b', // 제출
+    '#10b981', // 승인
+    '#ef4444', // 반려
+    '#6b7280'  // 취소
+  ]
+
+  const counts = chartData.counts || []
+
   chartInstance = new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: chartData.labels,
-      datasets: [
-        {
-          label: '확정 주문',
-          data: chartData.confirmed,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointBackgroundColor: '#6366f1'
-        },
-        {
-          label: '보류 주문',
-          data: chartData.pending,
-          borderColor: '#f97316',
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 4,
-          pointBackgroundColor: '#f97316'
-        }
-      ]
+      datasets: [{
+        label: '주문 비율(%)',
+        data: chartData.datasets,
+        backgroundColor: backgroundColors,
+        borderColor: backgroundColors,
+        borderWidth: 1
+      }]
     },
     options: {
       responsive: true,
@@ -421,11 +329,25 @@ function renderChart() {
       plugins: {
         legend: {
           display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const idx = context.dataIndex
+              const count = counts[idx] ?? 0
+              return `${context.label}: ${context.parsed.y}% (${count}건)`
+            }
+          }
         }
       },
       scales: {
         y: {
           beginAtZero: true,
+          max: 100,
+          ticks: {
+            stepSize: 20,
+            callback: (value) => `${value}%`
+          },
           grid: {
             color: '#f3f4f6'
           }
@@ -443,6 +365,14 @@ function renderChart() {
 // --- 라이프사이클 ---
 onMounted(async () => {
   await fetchStores()
+  
+  // 년도 옵션 초기화
+  yearOptions.value = generateYearOptions()
+  
+  // 전체 조회를 기본값으로 설정 (storeId = null)
+  selectedStore.value = null
+  filters.storeId = null
+  
   await fetchDashboardData()
 })
 
@@ -487,21 +417,20 @@ onUnmounted(() => {
   color: #374151;
 }
 
-.date-range {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-input {
+.year-select,
+.month-select {
   padding: 8px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  min-width: 100px;
 }
 
-.date-separator {
-  color: #9ca3af;
+.year-select:hover,
+.month-select:hover {
+  border-color: #6366f1;
 }
 
 .store-select-btn {
@@ -619,6 +548,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .legend-item {
@@ -633,84 +563,13 @@ onUnmounted(() => {
   width: 12px;
   height: 12px;
   border-radius: 2px;
-}
-
-.legend-color.confirmed {
-  background: #6366f1;
-}
-
-.legend-color.pending {
-  background: #f97316;
-}
-
-/* 매장 성과 분석 */
-.store-analysis-section {
-  margin-bottom: 32px;
-}
-
-.store-tables {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-
-.store-table-wrapper {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 20px;
-}
-
-.table-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #374151;
-}
-
-.store-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.store-table th,
-.store-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.store-table th {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-  background: #f9fafb;
-}
-
-.store-table td {
-  font-size: 14px;
-  color: #374151;
-}
-
-.store-table .numeric {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.store-table .empty {
-  text-align: center;
-  color: #9ca3af;
-  padding: 24px;
+  display: inline-block;
 }
 
 /* 반응형 */
 @media (max-width: 1024px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .store-tables {
-    grid-template-columns: 1fr;
   }
 }
 

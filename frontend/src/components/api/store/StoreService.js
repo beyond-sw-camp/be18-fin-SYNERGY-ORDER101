@@ -25,6 +25,13 @@ export async function getFranchiseOrderList(page, pageSize, searchParams) {
     // Settlement과 동일한 구조로 반환 (Spring Page 객체)
     return apiData
   } catch (error) {
+    console.error('가맹점 주문 조회 오류:', error)
+    console.error('요청 URL:', url)
+    console.error('요청 파라미터:', params)
+    if (error.response) {
+      console.error('응답 상태:', error.response.status)
+      console.error('응답 데이터:', error.response.data)
+    }
     throw new Error('가맹점 API 서버와의 통신에 실패했습니다.')
   }
 }

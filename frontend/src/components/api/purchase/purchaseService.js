@@ -341,16 +341,132 @@ export async function getPurchaseDetail(id) {
 
   try {
     const response = await apiClient.get(url, {})
-
-    // ItemsResponseDto 객체에서 'purchaseDetail' 필드를 직접 추출
-    // response.data가 { "purchaseDetail": { ... } } 구조라고 가정합니다.
     const detailObject = response.data
-
-    // 추출된 상세 객체 자체를 반환합니다.
-    // 이렇게 하면 호출하는 컴포넌트에서 response.purchaseDetail 대신 detailObject를 바로 사용할 수 있습니다.
     return detailObject
   } catch (error) {
-    // API 통신 실패 로그를 남기고, 에러를 다시 던집니다.
     throw new Error('API 서버와의 통신에 실패했습니다.')
+  }
+}
+
+/**
+ * [발주 승인용 최적화 조회 - 일반 발주 + 스마트 발주 통합]
+ * SUBMITTED 상태의 발주만 조회
+ * @param {number} page - 페이지 번호 (0-based)
+ * @param {number} perPage - 페이지당 항목 수
+ * @param {string} [searchText] - 검색어 (PO 번호, 공급사명)
+ * @param {string} [orderType] - 발주 타입 필터
+ *   - null/undefined: 전체 (스마트 + 일반 모두)
+ *   - 'SMART': 스마트 발주만 (스마트 API만 호출)
+ *   - 'AUTO': 자동 발주만 (일반 API 호출 후 AUTO 필터링)
+ *   - 'MANUAL': 일반 발주만 (일반 API 호출 후 AUTO 제외)
+ * @returns {Promise<object>} 통합 발주 목록
+ */
+export async function getPurchasesForApproval(page = 0, perPage = 10, searchText = null, orderType = null) {
+  try {
+    let mergedContent = []
+
+    // 일반 발주 API 파라미터
+    const regularParams = {
+      page: 0,
+      size: 1000,
+      statuses: ['SUBMITTED'],
+      searchText: searchText || null,
+      sort: 'createdAt,desc',
+    }
+
+    // orderType에 따라 다른 API 호출 전략
+    if (orderType === 'SMART') {
+      // 스마트 발주만: 스마트 API만 호출
+      const smartData = await getSmartPurchases('SUBMITTED', null, null).catch(() => ({ rawData: [] }))
+      mergedContent = groupSmartOrdersByPoNumber(smartData.rawData || [])
+      
+    } else if (orderType === 'AUTO') {
+      // 자동 발주만: 일반 API 호출 후 AUTO만 필터링
+      const regularResponse = await apiClient.get('/api/v1/purchase-orders', { params: regularParams }).catch(() => ({ data: { content: [] } }))
+      const regularOrders = (regularResponse.data.content || []).map(item => ({
+        purchaseId: item.purchaseId,
+        poNo: item.poNo,
+        supplierName: item.supplierName,
+        supplierId: item.supplierId,
+        totalQty: item.totalQty,
+        totalAmount: item.totalAmount,
+        requestedAt: item.requestedAt,
+        status: item.status,
+        orderType: item.orderType || 'MANUAL',
+        sourceType: item.sourceType || 'REGULAR',
+        targetWeek: item.targetWeek,
+        smartOrderIds: item.smartOrderIds,
+      }))
+      // AUTO만 필터링
+      mergedContent = regularOrders.filter(item => item.orderType === 'AUTO')
+      
+    } else if (orderType === 'MANUAL') {
+      // 일반 발주만: 일반 API 호출 후 AUTO 제외
+      const regularResponse = await apiClient.get('/api/v1/purchase-orders', { params: regularParams }).catch(() => ({ data: { content: [] } }))
+      const regularOrders = (regularResponse.data.content || []).map(item => ({
+        purchaseId: item.purchaseId,
+        poNo: item.poNo,
+        supplierName: item.supplierName,
+        supplierId: item.supplierId,
+        totalQty: item.totalQty,
+        totalAmount: item.totalAmount,
+        requestedAt: item.requestedAt,
+        status: item.status,
+        orderType: item.orderType || 'MANUAL',
+        sourceType: item.sourceType || 'REGULAR',
+        targetWeek: item.targetWeek,
+        smartOrderIds: item.smartOrderIds,
+      }))
+      // AUTO 제외 (MANUAL만)
+      mergedContent = regularOrders.filter(item => item.orderType !== 'AUTO')
+      
+    } else {
+      // 전체: 스마트 + 일반 모두 호출하여 병합
+      const [regularResponse, smartData] = await Promise.all([
+        apiClient.get('/api/v1/purchase-orders', { params: regularParams }).catch(() => ({ data: { content: [] } })),
+        getSmartPurchases('SUBMITTED', null, null).catch(() => ({ rawData: [] })),
+      ])
+
+      const regularOrders = (regularResponse.data.content || []).map(item => ({
+        purchaseId: item.purchaseId,
+        poNo: item.poNo,
+        supplierName: item.supplierName,
+        supplierId: item.supplierId,
+        totalQty: item.totalQty,
+        totalAmount: item.totalAmount,
+        requestedAt: item.requestedAt,
+        status: item.status,
+        orderType: item.orderType || 'MANUAL',
+        sourceType: item.sourceType || 'REGULAR',
+        targetWeek: item.targetWeek,
+        smartOrderIds: item.smartOrderIds,
+      }))
+
+      const groupedSmartOrders = groupSmartOrdersByPoNumber(smartData.rawData || [])
+      mergedContent = [...regularOrders, ...groupedSmartOrders]
+    }
+
+    // requestedAt 기준 내림차순 정렬
+    mergedContent.sort((a, b) => {
+      const dateA = new Date(a.requestedAt || 0)
+      const dateB = new Date(b.requestedAt || 0)
+      return dateB - dateA
+    })
+
+    // 클라이언트 사이드 페이지네이션
+    const startIndex = page * perPage
+    const endIndex = startIndex + perPage
+    const paginatedContent = mergedContent.slice(startIndex, endIndex)
+
+    return {
+      content: paginatedContent,
+      totalElements: mergedContent.length,
+      totalPages: Math.ceil(mergedContent.length / perPage) || 1,
+      size: perPage,
+      number: page,
+    }
+  } catch (error) {
+    console.error('발주 승인 목록 조회 실패:', error)
+    throw error
   }
 }

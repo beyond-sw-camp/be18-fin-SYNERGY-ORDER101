@@ -29,8 +29,8 @@ public class SettlementController {
     @GetMapping("/{settlementId}")
     public ResponseEntity<SettlementDetailResponseDto> getSettlementDetail(
             @PathVariable("settlementId") String settlementId) {
-
-        return null;
+        SettlementDetailResponseDto detail = settlementService.getSettlementDetail(settlementId);
+        return ResponseEntity.ok(detail);
     }
 
 }

@@ -6,8 +6,8 @@
         </div>
 
         <!-- 필터 섹션 -->
-        <section class="filter-section">
-            <SettlementFilter @search="handleSearch" />
+        <section class="filter-section" style="display: block !important; visibility: visible !important;">
+            <SettlementFilter @search="handleSearch" :showKeywordSearch="false" />
         </section>
 
         <!-- 로딩 상태 -->
@@ -17,7 +17,7 @@
         </div>
 
         <!-- 데이터 표시 -->
-        <template v-else-if="summaryData">
+        <template v-else-if="summaryData && !loading">
             <!-- 주요 통계 카드 -->
             <section class="summary-cards">
                 <div class="stat-card">
@@ -102,9 +102,9 @@
                         <thead>
                             <tr>
                                 <th>{{ currentFilterData?.scope === 'AR' ? '가맹점명' : '공급사명' }}</th>
-                                <th>정산 수량</th>
-                                <th>정산 금액</th>
-                                <th>상태</th>
+                                <th class="numeric-header">정산 수량</th>
+                                <th class="numeric-header">정산 금액</th>
+                                <th class="center-header">상태</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,7 +115,7 @@
                                 </td>
                                 <td class="numeric">{{ formatNumber(row.count) }}개</td>
                                 <td class="numeric">₩{{ formatNumber(row.netAmount) }}</td>
-                                <td>
+                                <td class="center">
                                     <span class="status-badge" :class="getStatusClass(row.status)">
                                         {{ row.status }}
                                     </span>
@@ -145,12 +145,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue';
 import MonthlyBarChart from '@/components/domain/settlement/charts/MonthlyBarChart.vue';
 import RatioDonutChart from '@/components/domain/settlement/charts/RatioDonutChart.vue';
 import { getSettlementReport } from '@/components/api/settlement/SettlementService';
 import { SettlementDataProcessor } from '@/components/global/SettlementDataProcessor.js';
+import { getPastDateString } from '@/components/global/Date';
 
 const loading = ref(false);
 const currentFilterData = ref(null);
@@ -254,6 +255,20 @@ function getStatusClass(status) {
     };
     return statusMap[status] || 'status-default';
 }
+
+/**
+ * 페이지 진입 시 AR 기본값으로 자동 검색
+ */
+onMounted(() => {
+    const defaultFilters = {
+        scope: 'AR',
+        vendorId: 'ALL',
+        startDate: getPastDateString(30),
+        endDate: new Date().toISOString().slice(0, 10),
+        keyword: ''
+    };
+    handleSearch(defaultFilters);
+});
 </script>
 
 <style scoped>
@@ -448,6 +463,14 @@ function getStatusClass(status) {
     border-bottom: 2px solid #e5e7eb;
 }
 
+.numeric-header {
+    text-align: right !important;
+}
+
+.center-header {
+    text-align: center !important;
+}
+
 .summary-table td {
     padding: 16px;
     border-bottom: 1px solid #f1f3f5;
@@ -463,6 +486,10 @@ function getStatusClass(status) {
     text-align: right;
     font-variant-numeric: tabular-nums;
     font-weight: 500;
+}
+
+.center {
+    text-align: center;
 }
 
 .status-badge {

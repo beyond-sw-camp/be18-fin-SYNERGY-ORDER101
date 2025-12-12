@@ -105,6 +105,7 @@
       v-if="showModal"
       @close="showModal = false"
       :initial-supplier-id="selectedSupplier.supplierId"
+      :use-purchase-price="true"
       @add="onAddItems"
     />
 
@@ -144,10 +145,10 @@ const selectedSupplier = ref({ supplierId: null, name: '공급업체 선택' }) 
 const productIdSet = ref(new Set()) // 품목 중복 방지용 Set (productId 기준)
 
 // --- 3. 계산된 속성 (Computed) ---
-const shipping = 50000 // 배송비 (임시 고정값)
+const shipping = 0 // 배송비 (임시 고정값)
 
 const subtotal = computed(() =>
-  rows.value.reduce((s, r) => s + Number(r.price || 0) * (r.qty || 0), 0),
+  rows.value.reduce((s, r) => s + Number(r.purchasePrice || 0) * (r.qty || 0), 0),
 )
 
 const total = computed(() => subtotal.value + shipping)

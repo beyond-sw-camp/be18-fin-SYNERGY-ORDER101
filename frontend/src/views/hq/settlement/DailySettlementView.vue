@@ -66,15 +66,14 @@
             <tr>
               <th>정산 ID</th>
               <th @click="setSort('date')" class="sortable">
-                정산 날짜 <span v-if="sortBy === 'date'">{{ sortDirSymbol }}</span>
+                생성일 <span v-if="sortBy === 'date'">{{ sortDirSymbol }}</span>
               </th>
               <th @click="setSort('deliverQty')" class="sortable">
-                배송 수량 <span v-if="sortBy === 'deliverQty'">{{ sortDirSymbol }}</span>
+                수량 <span v-if="sortBy === 'deliverQty'">{{ sortDirSymbol }}</span>
               </th>
               <th @click="setSort('totalSupply')" class="sortable">
-                총 공급 금액 <span v-if="sortBy === 'totalSupply'">{{ sortDirSymbol }}</span>
+                정산 금액 <span v-if="sortBy === 'totalSupply'">{{ sortDirSymbol }}</span>
               </th>
-              <th>공급 수량</th>
               <th>상태</th>
             </tr>
           </thead>
@@ -84,13 +83,12 @@
               <td>{{ formatDate(row.date) }}</td>
               <td class="numeric">{{ row.deliverQty }}</td>
               <td class="numeric">{{ formatWon(row.totalSupply) }}</td>
-              <td class="numeric">{{ row.supplyQty }}</td>
               <td>
                 <span :class="['status', statusClass(row.status)]">{{ row.status }}</span>
               </td>
             </tr>
             <tr v-if="sortedRows.length === 0">
-              <td colspan="6" class="no-data">조건에 맞는 정산 내역이 없습니다.</td>
+              <td colspan="5" class="no-data">조건에 맞는 정산 내역이 없습니다.</td>
             </tr>
           </tbody>
         </table>

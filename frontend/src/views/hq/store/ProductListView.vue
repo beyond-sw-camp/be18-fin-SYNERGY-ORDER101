@@ -45,7 +45,7 @@
               <th>상품 코드</th>
               <th>카테고리</th>
               <th>제품명</th>
-              <th class="numeric">공급가</th>
+              <!-- <th class="numeric">공급가</th> -->
               <th>상태</th>
             </tr>
           </thead>
@@ -59,7 +59,7 @@
               <td class="code">{{ p.productCode }}</td>
               <td>{{ p.categoryName }}</td>
               <td>{{ p.productName }}</td>
-              <td class="numeric"><Money :value="p.price" /></td>
+              <!-- <td class="numeric"><Money :value="p.price" /></td> -->
               <td>
                 <span :class="['chip', p.status ? 's-active' : 's-inactive']">{{
                   p.status ? '활성' : '비활성'

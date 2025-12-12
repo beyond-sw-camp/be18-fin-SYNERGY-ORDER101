@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
@@ -22,8 +23,41 @@ public class JwtUtil {
     public JwtUtil(JwtProperties jwtProperties) {
 
         this.issuer = jwtProperties.getIssuer();
-        byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
+        String secret = jwtProperties.getSecret();
+        
+        if (secret == null || secret.isEmpty()) {
+            throw new IllegalStateException("JWT secret is not configured");
+        }
+        
+        // 공백/개행 제거 (AWS Parameter Store에서 공백이 포함될 수 있음)
+        secret = secret.trim();
+        
+        log.info("[JwtUtil] Loaded JWT secret length: {} chars", secret.length());
+        
+        byte[] keyBytes;
+        
+        // Base64로 인코딩된 시크릿 처리 (권장)
+        try {
+            keyBytes = Base64.getDecoder().decode(secret);
+            log.info("[JwtUtil] JWT secret decoded from Base64, key bytes length: {} bytes", keyBytes.length);
+        } catch (IllegalArgumentException e) {
+            // Base64가 아니면 평문 UTF-8로 처리 (하위 호환성)
+            log.warn("[JwtUtil] JWT secret is not Base64 encoded, using as plain UTF-8 text");
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+            log.info("[JwtUtil] JWT secret converted to UTF-8 bytes, length: {} bytes", keyBytes.length);
+        }
+        
+        // 키가 256비트(32바이트) 미만이면 경고
+        if (keyBytes.length < 32) {
+            log.warn("[JwtUtil] JWT secret key is only {} bytes. HMAC-SHA256 requires at least 32 bytes for security.", keyBytes.length);
+        }
+        
+        // 디버깅: 키의 해시값 출력 (서버간 일관성 확인용)
+        String keyHash = Integer.toHexString(java.util.Arrays.hashCode(keyBytes));
+        log.info("[JwtUtil] Secret key hash (for consistency check): {}", keyHash);
+        
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        log.info("[JwtUtil] SecretKey initialized successfully");
     }
 
 

@@ -1,6 +1,6 @@
 <template>
-  <div class="modal-backdrop" @click.self="close">
-    <div class="modal">
+  <div class="modal-backdrop">
+    <div class="modal" @keydown.enter.prevent>
       <header class="modal-header">
         <h3>창고 선택</h3>
         <button class="close-btn" @click="close">×</button>
@@ -13,6 +13,7 @@
             placeholder="창고명 검색..."
             class="search"
             @input="onSearchInput"
+            @keydown.enter.prevent
           />
         </div>
 

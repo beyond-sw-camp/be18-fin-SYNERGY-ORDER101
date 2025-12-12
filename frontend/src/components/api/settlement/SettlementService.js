@@ -8,33 +8,36 @@ import apiClient from '..'
  * @returns {Promise<Object>} Spring Page 객체
  */
 export async function getSettlements(params, page = 0, size = 20) {
-  // types가 ALL이면 null, 아니면 배열로 변환하여 전달
-  let typesParam = null
-  if (params.types && params.types !== 'ALL') {
-    typesParam = [params.types] // 'AR' or 'AP' -> ['AR'] or ['AP']
-  }
+  // types가 ALL이면 파라미터 제외, 아니면 단일 값으로 전달
+  const typesParam = (params.types && params.types !== 'ALL') ? params.types : null
 
   // vendorId가 ALL이면 null로 처리
   const vendorIdParam = params.vendorId === 'ALL' ? null : params.vendorId
 
-  const response = await apiClient.get('/api/v1/settlements', {
-    params: {
-      // SettlementSearchCondition 필드
-      fromDate: params.fromDate,
-      toDate: params.toDate,
-      types: typesParam, // null | ['AR'] | ['AP']
-      vendorId: vendorIdParam, // 특정 업체 ID
-      searchText: params.searchText,
+  // URL 쿼리 직접 구성 (배열 직렬화 문제 방지)
+  const queryParts = []
+  
+  if (params.fromDate) queryParts.push(`fromDate=${params.fromDate}`)
+  if (params.toDate) queryParts.push(`toDate=${params.toDate}`)
+  if (params.searchText) queryParts.push(`searchText=${encodeURIComponent(params.searchText)}`)
+  if (typesParam) queryParts.push(`types=${typesParam}`)
+  if (vendorIdParam) queryParts.push(`vendorId=${vendorIdParam}`)
+  
+  queryParts.push(`page=${page}`)
+  queryParts.push(`size=${size}`)
+  queryParts.push(`sort=createdAt,desc`)
 
-      // Pageable 필드
-      page: page,
-      size: size,
-      sort: 'createdAt,desc', // 생성일 내림차순
-    },
-    paramsSerializer: {
-      indexes: null, // types[0]=AR 대신 types=AR로 전송
-    },
+  const queryString = queryParts.join('&')
+  
+  // 디버깅용 로그
+  console.log('Settlement API 요청:', {
+    params,
+    typesParam,
+    vendorIdParam,
+    url: `/api/v1/settlements?${queryString}`
   })
+  
+  const response = await apiClient.get(`/api/v1/settlements?${queryString}`)
 
   return response.data
 }

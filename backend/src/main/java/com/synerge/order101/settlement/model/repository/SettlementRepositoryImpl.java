@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 
 // unused imports removed
 import static com.synerge.order101.settlement.model.entity.QSettlement.settlement;
+import static com.synerge.order101.store.model.entity.QStore.store;
+import static com.synerge.order101.supplier.model.entity.QSupplier.supplier;
 
 @RequiredArgsConstructor
 public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
@@ -28,9 +30,11 @@ public class SettlementRepositoryImpl implements SettlementRepositoryCustom {
 
     @Override
     public Page<Settlement> search(TradeSearchCondition cond, Pageable pageable) {
-        //데이터 목록 조회
+        //데이터 목록 조회 - LEFT JOIN으로 존재하지 않는 연관 엔터티 처리
         List<Settlement> content = queryFactory
                 .selectFrom(settlement)
+                .leftJoin(settlement.store, store)
+                .leftJoin(settlement.supplier, supplier)
                 .where(
                     statusIn(cond.getStatuses()),
                     typeIn(cond.getTypes()),

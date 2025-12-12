@@ -5,6 +5,10 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import Header from './components/Header.vue'
 import Sidebar from './components/Sidebar.vue'
 import { useAuthStore } from './stores/authStore'
+import ChatBotButton from './components/chat/ChatBotButton.vue'
+import ChatBotModal from './components/chat/ChatBotModal.vue'
+
+const showChat = ref(false)
 
 // instantiate auth store
 const auth = useAuthStore()
@@ -74,7 +78,7 @@ const adminSidebar = [
       { title: '가맹점 등록', path: '/hq/franchise/registration' },
       { title: '가맹점 주문 승인', path: '/hq/franchise/approval' },
       { title: '가맹점 주문 조회', path: '/hq/franchise/orders' },
-      { title: '배송 관리', path: '/hq/franchise/delivery' },
+      { title: '배송 목록 조회', path: '/hq/franchise/delivery' },
     ],
   },
   {
@@ -287,6 +291,18 @@ watch(
     <div v-else class="auth-route">
       <RouterView :key="$route.fullPath" />
     </div>
+
+    <!-- 챗봇 버튼 -->
+    <ChatBotButton
+      v-if="!isAuthRoute && currentRole !== 'STORE_ADMIN'"
+      @open="showChat = true"
+    />
+
+    <!-- 챗봇 모달 -->
+    <ChatBotModal
+      v-if="showChat && !isAuthRoute && currentRole !== 'STORE_ADMIN'"
+      @close="showChat = false"
+    />
   </div>
 </template>
 

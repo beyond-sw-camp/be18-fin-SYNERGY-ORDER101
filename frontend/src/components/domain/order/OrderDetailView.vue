@@ -123,7 +123,8 @@ const props = defineProps({
 
 const subtotal = computed(() => {
     const items = props.orderData.items || []
-    return items.reduce((s, r) => s + Number(r.price || 0) * Number(r.qty || 0), 0) || 0
+    // 주문수량 * 공급가로 계산
+    return items.reduce((s, r) => s + Number(r.purchasePrice || 0) * Number(r.qty || 0), 0) || 0
 })
 
 const total = computed(() => subtotal.value)

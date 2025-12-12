@@ -13,6 +13,7 @@ import com.synerge.order101.order.model.repository.StoreOrderRepository;
 import com.synerge.order101.order.model.repository.StoreOrderStatusLogRepository;
 import com.synerge.order101.shipment.model.entity.Shipment;
 import com.synerge.order101.shipment.model.repository.ShipmentRepository;
+import com.synerge.order101.store.model.repository.StoreInventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class FranchiseOrderServiceImpl implements  FranchiseOrderService {
     private final StoreOrderDetailRepository storeOrderDetailRepository;
     private final StoreOrderStatusLogRepository storeOrderStatusLogRepository;
     private final ShipmentRepository shipmentRepository;
+    private final StoreInventoryRepository storeInventoryRepository;
 
     public FranchiseOrderDetailResponseDto getFranchiseOrderDetail(Long orderId){
 
@@ -51,14 +53,25 @@ public class FranchiseOrderServiceImpl implements  FranchiseOrderService {
                 buildProgress(order, shipment, trackingNo);
 
         List<FranchiseOrderDetailResponseDto.ItemDto> items = detailList.stream()
-                .map(d -> FranchiseOrderDetailResponseDto.ItemDto.builder()
-                        .sku(d.getProduct().getProductCode())
-                        .name(d.getProduct().getProductName())
-                        .qty(d.getOrderQty())
-                        .price(d.getUnitPrice())
-                        .stock(0)
-                        .build()
-                )
+                .map(d -> {
+
+                    // 가맹점 재고 조회
+                    int stock = storeInventoryRepository
+                            .findByStore_StoreIdAndProduct_ProductId(
+                                    order.getStore().getStoreId(),
+                                    d.getProduct().getProductId()
+                            )
+                            .map(inv -> inv.getOnHandQty())
+                            .orElse(0);
+
+                    return FranchiseOrderDetailResponseDto.ItemDto.builder()
+                            .sku(d.getProduct().getProductCode())
+                            .name(d.getProduct().getProductName())
+                            .qty(d.getOrderQty())
+                            .price(d.getUnitPrice())
+                            .stock(stock)
+                            .build();
+                })
                 .toList();
 
         return FranchiseOrderDetailResponseDto.builder()

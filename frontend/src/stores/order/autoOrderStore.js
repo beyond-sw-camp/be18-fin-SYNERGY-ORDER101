@@ -9,7 +9,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
     editedItems: [],
     selectedPurchase: null,
     page: 1,
-    numOfRows: 5,
+    numOfRows: 10,
     totalCount: 0,
     totalPages: 1,
     loading: false,
@@ -17,7 +17,7 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
   }),
 
   actions: {
-    async fetchAutoOrders({ page = 1, numOfRows = 5 } = {}) {
+    async fetchAutoOrders({ page = 1, numOfRows = 10 } = {}) {
       try {
         this.loading = true
 
@@ -26,13 +26,9 @@ export const useAutoOrderStore = defineStore('autoOrderStore', {
         })
 
         this.items = res.data.items
-        this.page = res.data.page ?? 1
-        this.totalCount = res.data.totalCount ?? 0
-        this.numOfRows = res.data.numOfRows ?? numOfRows
-
-        const total = Number(this.totalCount) || 0
-        const rows = Number(this.numOfRows) || 1
-        this.totalPages = Math.max(1, Math.ceil(total / rows))
+        this.page = res.data.page
+        this.totalCount = res.data.totalCount
+        this.totalPages = Math.ceil(this.totalCount / this.numOfRows)
       } catch (e) {
         // 자동발주 목록 조회 실패
       } finally {

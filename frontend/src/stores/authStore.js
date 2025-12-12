@@ -2,7 +2,20 @@ import { reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/components/api'
 
+// JWT 버전 (서버 시크릿/토큰 정책 바뀔 때마다 증가)
+// v4: 2025-12-11 백엔드 재배포로 인한 JWT 서명 불일치 해결
+const JWT_CONFIG_VERSION = 4
+
 export const useAuthStore = defineStore('auth', () => {
+  // 시작 시 저장된 JWT 버전 확인
+  const storedVersion = Number(localStorage.getItem('jwtConfigVersion')) || 0
+  if (storedVersion !== JWT_CONFIG_VERSION) {
+    // 버전이 다르면 모든 인증 정보 초기화
+    localStorage.clear()
+    sessionStorage.clear()
+    localStorage.setItem('jwtConfigVersion', JWT_CONFIG_VERSION)
+  }
+
   const userInfo = reactive({
     accessToken: localStorage.getItem('authToken') || '',
     userId: localStorage.getItem('userId') || 0,

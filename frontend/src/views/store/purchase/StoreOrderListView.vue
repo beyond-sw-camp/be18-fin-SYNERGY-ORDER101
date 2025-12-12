@@ -44,24 +44,24 @@
       </div>
 
       <div class="pagination">
-        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">&laquo;</button>
-        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">&lsaquo;</button>
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 0">&laquo;</button>
+        <button class="page-nav" @click="goPage(page)" :disabled="page === 0">&lsaquo;</button>
 
         <div class="pages">
           <button
             v-for="p in visiblePages"
             :key="p"
-            :class="{ active: p === page }"
+            :class="{ active: p === page + 1 }"
             @click="goPage(p)"
           >
             {{ p }}
           </button>
         </div>
 
-        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(page + 2)" :disabled="page + 1 >= totalPages">
           &rsaquo;
         </button>
-        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page + 1 >= totalPages">
           &raquo;
         </button>
       </div>
@@ -74,7 +74,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
-import { formatDateTimeMinute, getPastDateString } from '@/components/global/Date'
+import { formatDateTimeMinute, getPastDateString, getTodayString } from '@/components/global/Date'
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue'
 import apiClient from '@/components/api'
 
@@ -96,10 +96,10 @@ const filters = ref({
   statuses: null,
   searchText: null,
   startDate: getPastDateString(30),
-  endDate: new Date().toISOString().slice(0, 10),
+  endDate: getTodayString(),
 })
 
-const page = ref(1)
+const page = ref(0)  // 0-based page
 const perPage = ref(10)
 const rows = ref([])
 const totalElements = ref(0)
@@ -113,7 +113,7 @@ const totalPages = computed(() => totalPagesFromBackend.value || 1)
 
 const visiblePages = computed(() => {
   const total = totalPages.value
-  const current = page.value
+  const current = page.value + 1  // Convert to 1-based for display
   const delta = 2
   const pages = []
 
@@ -140,8 +140,16 @@ const visiblePages = computed(() => {
   return pages
 })
 
-onMounted(() => {
-  search()
+onMounted(async () => {
+  // authStore가 로드될 때까지 대기
+  if (!authStore.userInfo?.storeId) {
+    console.error('storeId가 없습니다. 로그인 상태를 확인하세요.')
+    error.value = '매장 정보를 불러올 수 없습니다.'
+    loading.value = false
+    return
+  }
+  
+  await search()
 })
 
 function handleSearch(filterData) {
@@ -151,7 +159,7 @@ function handleSearch(filterData) {
     startDate: filterData.startDate,
     endDate: filterData.endDate,
   }
-  page.value = 1
+  page.value = 0  // Reset to first page
   search()
 }
 
@@ -159,20 +167,21 @@ async function search() {
   loading.value = true
   error.value = null
 
-  const apiPage = page.value - 1
+  const apiPage = page.value
 
   try {
+    // Store 계정의 storeId 확인
+    const storeId = authStore.userInfo?.storeId
+    if (!storeId) {
+      throw new Error('매장 정보가 없습니다.')
+    }
+
     // TradeSearchCondition 기반 파라미터 구성
     const params = {
       page: apiPage,
       size: perPage.value,
       sort: 'createdAt,desc',
-    }
-
-    // Store 계정의 storeId를 vendorId로 전달 (백엔드에서 storeId 필터로 사용)
-    const storeId = authStore.userInfo?.storeId
-    if (storeId) {
-      params.vendorId = storeId
+      vendorId: storeId, // 필수: 가맹점 필터
     }
 
     // 검색 조건 추가 (null이 아닌 경우만)
@@ -211,7 +220,7 @@ async function search() {
 }
 
 function goPage(p) {
-  page.value = p
+  page.value = p - 1  // Convert 1-based to 0-based
   search()
 }
 

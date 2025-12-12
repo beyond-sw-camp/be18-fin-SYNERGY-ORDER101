@@ -3,7 +3,7 @@ os: linux
 
 files:
   - source: python-server/
-    destination: /home/ec2-user/python-server
+    destination: /home/ec2-user/python-server/
 
 hooks:
   BeforeInstall:

@@ -10,7 +10,11 @@
       <!-- 필터 영역: 타입 필터만 사용하도록 PurchaseFilter 구성 (상태/날짜 비표시) -->
       <PurchaseFilter @search="onFilterSearch" :showTypeFilter="true" :showVendorFilter="false" :showStatusFilter="false" :showDateRange="false" />
 
-      <div class="table-wrap">
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>데이터를 불러오는 중...</p>
+      </div>
+      <div v-else-if="rows.length > 0" class="table-wrap">
         <table class="approval-table">
           <thead>
             <tr>
@@ -37,38 +41,45 @@
                 <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
               </td>
 
-              <td class="center">{{ row.orderType }}</td>
+              <td class="center">
+                <span :class="['type-badge', typeClass(row.orderType)]">{{ row.orderType }}</span>
+              </td>
 
               <td class="center" @click.stop>
                 <PurchaseApprovalActions :po-id="row.id" :source-type="row.sourceType"
                   :smart-order-ids="row.smartOrderIds" @success="handleProcessSuccess" />
               </td>
             </tr>
-            <tr v-if="rows.length === 0">
-              <td colspan="8" class="no-data">발주 요청이 없습니다.</td>
-            </tr>
           </tbody>
         </table>
       </div>
+      <div v-else class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1">
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+          <path d="M3 9h18M9 21V9" stroke-width="2" />
+        </svg>
+        <p class="empty-text">발주 요청이 없습니다</p>
+        <p class="empty-hint">필터 조건을 변경해보세요</p>
+      </div>
 
       <div class="pagination">
-        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 0">
           &laquo;
         </button>
-        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+        <button class="page-nav" @click="goPage(page)" :disabled="page === 0">
           &lsaquo;
         </button>
 
         <div class="pages">
-          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page }" @click="goPage(p)">
+          <button v-for="p in visiblePages" :key="p" :class="{ active: p === page + 1 }" @click="goPage(p)">
             {{ p }}
           </button>
         </div>
 
-        <button class="page-nav" @click="goPage(page + 1)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(page + 2)" :disabled="page + 1 >= totalPages">
           &rsaquo;
         </button>
-        <button class="page-nav" @click="goPage(totalPages)" :disabled="page === totalPages">
+        <button class="page-nav" @click="goPage(totalPages)" :disabled="page + 1 >= totalPages">
           &raquo;
         </button>
       </div>
@@ -80,31 +91,27 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Money from '@/components/global/Money.vue'
-import { getPurchases, updatePurchaseStatus, updateSmartOrderStatus, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
+import { getPurchasesForApproval, mapPurchaseStatus } from '@/components/api/purchase/purchaseService.js'
 import { formatDateTimeMinute } from '@/components/global/Date';
 import PurchaseApprovalActions from '@/views/hq/orders/PurchaseApproveButton.vue'
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue'
 
 const perPage = ref(10)
-const page = ref(1)
+const page = ref(0) // 0-based for backend
 const totalPagesFromBackend = ref(0)
+const loading = ref(false)
 
-// 현재 적용된 필터 (이 페이지는 날짜 범위 및 상태 검색 불필요 — 타입만 사용)
+// 현재 적용된 필터
 const activeFilters = ref({
-  orderType: 'ALL',
-  status: null,
-  startDate: null,
-  endDate: null,
   keyword: ''
 })
 
-// 총 페이지 수
 const totalPages = computed(() => totalPagesFromBackend.value || 1)
 
-// 표시할 페이지 번호 계산 (최대 5개)
+// 표시할 페이지 번호 계산 (1-based)
 const visiblePages = computed(() => {
   const total = totalPages.value
-  const current = page.value
+  const current = page.value + 1
   const delta = 2
   const pages = []
 
@@ -132,115 +139,70 @@ const visiblePages = computed(() => {
 })
 
 onMounted(() => {
-  // 초기 데이터 로드 등 필요한 작업 수행
   searchPurchases()
 })
 
 function handleProcessSuccess() {
-  // 목록을 다시 불러와서 상태 변경 반영
   searchPurchases()
 }
 
-// PurchaseFilter에서 전달되는 검색 필터를 처리합니다.
+// 필터 검색
 function onFilterSearch(filters) {
-  // 이 페이지는 날짜 범위와 상태 검색을 사용하지 않음 — 타입 필터만 적용
-  const orderType = filters.orderType || 'ALL'
-
   activeFilters.value = {
-    orderType,
-    status: null,
-    startDate: null,
-    endDate: null,
-    keyword: filters.keyword || ''
+    keyword: filters.keyword || '',
+    orderType: filters.orderType || 'ALL'
   }
-
-  page.value = 1
+  page.value = 0
   searchPurchases()
 }
 
 const searchPurchases = async () => {
-  // 발주 목록을 다시 불러오는 함수
-  // 검색 조건 적용
-  const q = activeFilters.value.keyword || ''
-  const statusParam = activeFilters.value.status && activeFilters.value.status !== 'ALL' ? activeFilters.value.status : null
-  const startDate = activeFilters.value.startDate || null
-  const endDate = activeFilters.value.endDate || null
+  loading.value = true
+  try {
+    // orderType 필터: 'ALL'이면 null (필터 안 함), 아니면 해당 타입 (SMART/AUTO)
+    const orderTypeFilter = activeFilters.value.orderType === 'ALL' ? null : activeFilters.value.orderType
+    
+    const data = await getPurchasesForApproval(
+      page.value,
+      perPage.value,
+      activeFilters.value.keyword || null,
+      orderTypeFilter
+    )
 
-  const data = await getPurchases(
-    page.value - 1,
-    perPage.value,
-    q,
-    // 승인 페이지는 SUBMITTED 상태만 조회하도록 기본 고정
-    'SUBMITTED',
-    null,
-    startDate,
-    endDate
-  );
+    totalPagesFromBackend.value = data.totalPages || 1
 
-  // Debug logs: 필터와 서버 응답 확인용
-  console.log('[DEBUG] getPurchases called with filters:', {
-    page: page.value,
-    perPage: perPage.value,
-    q,
-    statusParam,
-    startDate,
-    endDate,
-    activeFilters: activeFilters.value
-  })
-  console.log('[DEBUG] getPurchases response (raw):', data)
-
-  // 서버에서 받은 통합 목록(일반+스마트)을 클라이언트에서 타입으로 필터링
-  let content = data.content || []
-  if (activeFilters.value.orderType && activeFilters.value.orderType !== 'ALL') {
-    const wanted = (activeFilters.value.orderType || '').toString().toUpperCase()
-    content = content.filter(it => ((it.orderType || '').toString().toUpperCase()) === wanted)
+    rows.value = (data.content || []).map(item => ({
+      id: item.purchaseId,
+      No: item.poNo,
+      vendor: item.supplierName,
+      items: item.totalQty,
+      amount: item.totalAmount,
+      requestedAt: item.requestedAt,
+      status: mapPurchaseStatus(item.status),
+      orderType: mapPurchaseStatus(item.orderType),
+      sourceType: item.sourceType,
+      supplierId: item.supplierId,
+      targetWeek: item.targetWeek,
+      smartOrderIds: item.smartOrderIds
+    }))
+  } catch (error) {
+    console.error('발주 조회 오류:', error)
+    alert('발주 목록을 불러오는데 실패했습니다.')
+    rows.value = []
+  } finally {
+    loading.value = false
   }
-
-  // 클라이언트 사이드 검색어 필터링: PO 번호, 공급사명, 요청자
-  const keyword = (activeFilters.value.keyword || '').toString().trim()
-  if (keyword) {
-    const k = keyword.toLowerCase()
-    content = content.filter(it => {
-      const po = (it.poNo || '').toString().toLowerCase()
-      const supplier = (it.supplierName || '').toString().toLowerCase()
-      const requester = (it.requesterName || '').toString().toLowerCase()
-      return po.includes(k) || supplier.includes(k) || requester.includes(k)
-    })
-  }
-
-  // Debug: 필터 적용 후 내용과 orderType 분포 확인
-  console.log('[DEBUG] content after orderType filter - length:', content.length)
-  console.log('[DEBUG] content sample orderTypes:', content.slice(0, 10).map(it => ({ id: it.purchaseId, orderType: it.orderType })))
-
-  totalPagesFromBackend.value = data.totalPages || 1
-
-  rows.value = content.map(item => ({
-    id: item.purchaseId,
-    No: item.poNo,
-    vendor: item.supplierName,
-    items: item.totalQty,
-    amount: item.totalAmount,
-    requestedAt: item.requestedAt,
-    status: mapPurchaseStatus(item.status),
-    orderType: mapPurchaseStatus(item.orderType),
-    sourceType: item.sourceType,
-    supplierId: item.supplierId,
-    targetWeek: item.targetWeek,
-    smartOrderIds: item.smartOrderIds // 스마트 발주인 경우 ID 배열
-  }));
 }
 
 const router = useRouter()
-
 const rows = ref([])
 
 function goPage(p) {
-  page.value = p
+  page.value = p - 1 // 1-based to 0-based
   searchPurchases()
 }
 
 function openDetail(row) {
-  // 항상 발주 상세 페이지로 이동하되, SMART인 경우에는 query로 메타 정보를 전달합니다.
   if (row.sourceType === 'SMART') {
     router.push({ name: 'hq-orders-approval-detail', params: { id: row.id }, query: { sourceType: 'SMART', supplierId: row.supplierId, targetWeek: row.targetWeek } })
   } else {
@@ -257,11 +219,67 @@ function statusClass(s) {
   if (s === '초안') return 's-waiting'
   return ''
 }
+
+function typeClass(type) {
+  if (!type) return 't-manual'
+  const upperType = type.toUpperCase()
+  if (upperType === 'AUTO' || upperType === '자동') return 't-auto'
+  if (upperType === 'SMART' || upperType === '스마트') return 't-smart'
+  return 't-manual'
+}
 </script>
 
 <style scoped>
 .s-accepted {
   background: #16a34a;
+}
+
+
+/* 타입 배지 스타일 */
+.type-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.t-auto {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  animation: pulse-auto 2s ease-in-out infinite;
+}
+
+.t-smart {
+  background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+  animation: pulse-smart 2s ease-in-out infinite;
+}
+
+.t-manual {
+  background: #64748b;
+  color: white;
+}
+
+@keyframes pulse-auto {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+  }
+}
+
+@keyframes pulse-smart {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.5);
+  }
 }
 
 .s-waiting {
@@ -357,6 +375,53 @@ function statusClass(s) {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f3;
+  border-top: 4px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .pagination {

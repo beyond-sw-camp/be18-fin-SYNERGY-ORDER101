@@ -9,7 +9,15 @@
     </section>
 
     <section class="card list">
-      <div class="table-wrap">
+      <div v-if="!rows || rows.length === 0" class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1">
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+          <path d="M3 9h18M9 21V9" stroke-width="2" />
+        </svg>
+        <p class="empty-text">검색 조건에 맞는 주문이 없습니다</p>
+        <p class="empty-hint">필터 조건을 변경해보세요</p>
+      </div>
+      <div v-else class="table-wrap">
         <table class="orders-table">
           <thead>
             <tr>
@@ -37,9 +45,6 @@
                   statusLabel(row.status)
                 }}</span>
               </td>
-            </tr>
-            <tr v-if="filteredRows.length === 0">
-              <td colspan="7" class="no-data">검색 조건에 맞는 주문이 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -82,8 +87,7 @@ import { formatDateTimeMinute, getPastDateString, getTodayString } from '@/compo
 const router = useRouter()
 
 // 페이지네이션
-const page = ref(1)
-const currentPage = ref(1)
+const page = ref(1)  // 1-based 페이지
 const perPage = ref(10)
 const totalElements = ref(0)
 const totalPagesFromBackend = ref(0)
@@ -119,7 +123,7 @@ function handleSearch(filterData) {
     keyword: filterData.keyword,
     statuses: filterData.scope !== 'ALL' ? filterData.scope : null // scope를 status로 사용
   }
-  currentPage.value = 1
+  page.value = 1  // 첫 페이지로 리셋
   searchStoreOrders()
 }
 
@@ -135,7 +139,7 @@ const searchStoreOrders = async () => {
     };
 
     const pageData = await getFranchiseOrderList(
-      currentPage.value,
+      page.value,
       perPage.value,
       params
     );
@@ -305,6 +309,31 @@ function statusLabel(s) {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .pagination {
