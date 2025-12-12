@@ -28,23 +28,17 @@
         <div class="metric-card">
           <p class="metric-label">총 주문 수</p>
           <p class="metric-value">{{ formatNumber(metrics.totalOrders) }}건</p>
-          <p class="metric-change" :class="metrics.totalOrdersChange >= 0 ? 'positive' : 'negative'">
-            {{ metrics.totalOrdersChange >= 0 ? '↑' : '↓' }} {{ Math.abs(metrics.totalOrdersChange) }}% (전월 대비)
-          </p>
+          
         </div>
         <div class="metric-card">
           <p class="metric-label">승인율</p>
           <p class="metric-value">{{ metrics.approvalRate }}%</p>
-          <p class="metric-change" :class="metrics.approvalRateChange >= 0 ? 'positive' : 'negative'">
-            {{ metrics.approvalRateChange >= 0 ? '▲' : '▼' }} {{ Math.abs(metrics.approvalRateChange) }}% (전월 대비)
-          </p>
+          
         </div>
         <div class="metric-card">
           <p class="metric-label">취소율</p>
           <p class="metric-value">{{ metrics.cancellationRate }}%</p>
-          <p class="metric-change" :class="metrics.cancellationRateChange <= 0 ? 'positive' : 'negative'">
-            {{ metrics.cancellationRateChange <= 0 ? '▼' : '▲' }} {{ Math.abs(metrics.cancellationRateChange) }}% (전월 대비)
-          </p>
+          
         </div>
       </div>
     </section>
@@ -255,10 +249,9 @@ function computeMetricsFromCounts(totalOrders, statusCount) {
 
   const confirmedCount = (statusCount.CONFIRMED || 0) + (statusCount.COMPLETED || 0)
   const cancelledCount = (statusCount.CANCELLED || 0) + (statusCount.REJECTED || 0)
-  const totalProcessed = confirmedCount + cancelledCount
 
-  metrics.approvalRate = totalProcessed > 0 ? ((confirmedCount / totalProcessed) * 100).toFixed(1) : 0
-  metrics.cancellationRate = totalProcessed > 0 ? ((cancelledCount / totalProcessed) * 100).toFixed(1) : 0
+  metrics.approvalRate = totalOrders > 0 ? ((confirmedCount / totalOrders) * 100).toFixed(1) : 0
+  metrics.cancellationRate = totalOrders > 0 ? ((cancelledCount / totalOrders) * 100).toFixed(1) : 0
 
   // 전월 대비 변화율 (임시 데이터 - 실제로는 이전 기간 데이터 조회 필요)
   metrics.totalOrdersChange = 5.2
@@ -369,9 +362,18 @@ onMounted(async () => {
   // 년도 옵션 초기화
   yearOptions.value = generateYearOptions()
   
-  // 전체 조회를 기본값으로 설정 (storeId = null)
-  selectedStore.value = null
-  filters.storeId = null
+  // 첫 번째 매장을 기본값으로 설정
+  if (stores.value && stores.value.length > 0) {
+    const firstStore = stores.value[0]
+    selectedStore.value = {
+      id: firstStore.storeId,
+      name: firstStore.storeName
+    }
+    filters.storeId = firstStore.storeId
+  } else {
+    selectedStore.value = null
+    filters.storeId = null
+  }
   
   await fetchDashboardData()
 })

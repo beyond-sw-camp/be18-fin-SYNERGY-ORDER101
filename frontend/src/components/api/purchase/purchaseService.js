@@ -233,7 +233,7 @@ export function groupSmartOrdersByPoNumber(smartOrders) {
     supplierName: group.supplierName,
     supplierId: group.supplierId,
     requesterName: '자동 생성',
-    totalQty: group.totalQty,
+    totalQty: group.items.length, // 품목 수 (items 배열 길이)
     totalAmount: group.totalAmount || 0,
     status: group.status,
     orderType: 'SMART',
