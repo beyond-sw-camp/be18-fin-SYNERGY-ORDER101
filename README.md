@@ -278,10 +278,9 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ### DEVOPS
 
-<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white">
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> 
 <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white">
-<img src="https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white">
-<img src="https://img.shields.io/badge/Argo%20CD-FE6A16?style=for-the-badge&logo=argo&logoColor=white">
+
 
 
 <br/>
@@ -425,6 +424,6 @@ ALB/CloudFront 타임아웃 조정으로 장시간 SSE 연결 안정화
 |---	|-------|
 | 조상원 | 웹을 기획부터 실제 배포까지 전체 과정을 이끌며 전체 프로세스를 체화할 수 있는 좋은 기회였다. 특히 Spring 벡엔드와 Vue.js 프론트엔드에서 그치는게 아닌 AI를 집중적으로 다룰 수 있어 시야를 넓힐 수 있었던 프로젝트였다. 이후 AWS를 사용해 실제 배포를 해보며 우리의 도메인에 접속할 수 있는게 새로운 느낌이었다. 단순 기능 구현이 아닌 하나하나 직접 고민해보며 적용해본 경험들이 이후의 개발에 있어서 큰 도움이 될 수 있을거 같다. |
 | 박진우 | aws cicd를 해보는 좋은 기회가 됐다. 에러가 많이 났는데 향후 다른 프로젝트를 진행할때 기준점을 제시할 수 있는 경험이엿다. 근거를 제시하는 연습을 충분히 할 수 있는 성과 있었다.  |
-| 윤석현 | |
+| 윤석현 | 이번 프로젝트는 처음으로 B2B 시스템을 설계부터 개발까지 해보는 경험이었다. 처음에는 막막했지만 요구사항을 분석하고 설계하는 과정에서 많은 것을 배울 수 있었다. 로그인 프로세스와 권한 관리를 구현하면서 보안에 대한 중요성을 다시 한 번 깨달았다. 이번 프로젝트를 통해 얻은 경험을 바탕으로 앞으로 더 나은 시스템을 개발할 수 있을 것 같다. |
 | 이진구 | RestFul API, SSE, WebSocket등을 사용하면서 다방면으로 기술 스택을 넓힌 것 같으며, 로컬이 아닌 실제로 AWS를 사용하여 사용자들이 사용할 수 있는 서비스를 배포하면서 실무와 비슷한 경험을 한 것 같아 성장한 것 같은 느낌이 든다. 또한 B2B에 대해 도메인을 어느 정도 알게 되어 만족스러운 느낌이 들었다. |
 | 최유경 | 기능 구현에서 끝나는것이 아니라 배포까지 하는 프로젝트는 처음이라 좋은 경험이었다. 기획부터 배포까지 전체 프로세스를 해보며 기획 단계가 중요하다는 것을 다시 한 번 깨달을 수 있었다.  |
