@@ -135,7 +135,6 @@ const loading = ref(false)
 const page = ref(0)
 const size = ref(20)
 const totalPages = ref(1)
-const totalElements = ref(0)
 
 const filters = ref({
   q: '',
@@ -172,7 +171,6 @@ async function fetchDeliveryList() {
     }))
 
     totalPages.value = p.totalPages
-    totalElements.value = p.totalElements
   } catch (e) {
     console.error('배송 목록 조회 실패', e)
     rows.value = []
@@ -237,7 +235,6 @@ function resetFilter() {
   fetchDeliveryList()
 }
 
-/* store / status 즉시 반영 */
 watch(
   () => [filters.value.store, filters.value.status],
   applyFilter
@@ -271,9 +268,6 @@ function formatDateTime(dt) {
   return dt ? dt.replace('T', ' ').slice(0, 19) : '-'
 }
 
-/* ===============================
- * 초기 로드
- * =============================== */
 onMounted(fetchDeliveryList)
 </script>
 
