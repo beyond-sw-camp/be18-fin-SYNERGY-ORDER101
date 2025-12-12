@@ -116,23 +116,59 @@ const canSubmitOrder = computed(() => rows.value.length > 0)
 /**
  * OrderItemModal에서 선택된 품목들을 받아 발주 목록에 추가합니다.
  */
-function onAddItems(products) {
+async function onAddItems(products) {
   if (!Array.isArray(products)) {
     return
   }
-  products.forEach(p => {
-    if (productIdSet.value.has(p.productId)) return
 
+  const storeId = authStore.userInfo.storeId
+  if (!storeId) {
+    alert('매장 정보가 없습니다.')
+    return
+  }
+
+  // 가맹점 재고 조회
+  let storeInventoryMap = {}
+  try {
+    const response = await apiClient.get(`/api/v1/stores/${storeId}/inventory`, {
+      params: { page: 1, numOfRows: 1000 }
+    })
+    
+    console.log('재고 조회 응답:', response.data)
+    const inventoryList = response.data.items || []
+    console.log('재고 목록:', inventoryList)
+    
+    // productId를 키로 하는 재고 맵 생성
+    inventoryList.forEach(item => {
+      storeInventoryMap[item.productId] = item.stockQuantity || 0
+    })
+    console.log('재고 맵:', storeInventoryMap)
+  } catch (error) {
+    console.error('가맹점 재고 조회 실패:', error)
+  }
+
+  // 새로운 품목만 필터링
+  const newProducts = products.filter(p => !productIdSet.value.has(p.productId))
+  
+  if (newProducts.length === 0) {
+    return
+  }
+
+  // 한 번에 추가
+  const newRows = newProducts.map(p => {
     productIdSet.value.add(p.productId)
-    rows.value.push({
+    return {
       productId: p.productId,
       sku: p.sku,
       name: p.name,
       price: p.price || 0,
-      stock: p.stock ?? 0,
+      stock: storeInventoryMap[p.productId] ?? 0,
       qty: 1
-    })
+    }
   })
+
+  rows.value.push(...newRows)
+  console.log('추가된 행:', newRows)
 }
 
 /**

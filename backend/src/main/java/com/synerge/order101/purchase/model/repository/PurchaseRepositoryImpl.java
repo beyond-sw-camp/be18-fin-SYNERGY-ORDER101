@@ -45,12 +45,10 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
                 .orderBy(purchase.createdAt.desc())
                 .fetch();
 
-        // 전체 카운트 조회
+        // 전체 카운트 조회 (count 쿼리에는 JOIN 불필요)
         Long total = queryFactory
                 .select(purchase.count())
                 .from(purchase)
-                .leftJoin(purchase.user)
-                .leftJoin(purchase.supplier)
                 .where(
                         statusEq(status),
                         keywordContains(keyword)
@@ -82,12 +80,10 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
                 .orderBy(purchase.createdAt.desc())
                 .fetch();
 
-        // total
+        // total (count 쿼리에는 JOIN 불필요, WHERE 절만 동일하게 적용)
         Long total = queryFactory
                 .select(purchase.count())
                 .from(purchase)
-                .leftJoin(purchase.user)
-                .leftJoin(purchase.supplier)
                 .where(
                         statusIn(statusStrings),
                         searchTextContains(searchText),

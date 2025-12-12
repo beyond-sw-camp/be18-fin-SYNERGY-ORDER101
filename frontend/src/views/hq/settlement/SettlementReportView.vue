@@ -5,11 +5,6 @@
             <p class="page-subtitle">가맹점 및 공급사의 정산 데이터를 분석하고 시각화합니다</p>
         </div>
 
-        <!-- 필터 섹션 -->
-        <section class="filter-section">
-            <SettlementFilter @search="handleSearch" />
-        </section>
-
         <!-- 로딩 상태 -->
         <div v-if="loading" class="loading-container">
             <div class="spinner"></div>

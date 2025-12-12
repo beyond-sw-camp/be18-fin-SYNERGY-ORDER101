@@ -140,8 +140,16 @@ const visiblePages = computed(() => {
   return pages
 })
 
-onMounted(() => {
-  search()
+onMounted(async () => {
+  // authStore가 로드될 때까지 대기
+  if (!authStore.userInfo?.storeId) {
+    console.error('storeId가 없습니다. 로그인 상태를 확인하세요.')
+    error.value = '매장 정보를 불러올 수 없습니다.'
+    loading.value = false
+    return
+  }
+  
+  await search()
 })
 
 function handleSearch(filterData) {
@@ -162,17 +170,18 @@ async function search() {
   const apiPage = page.value
 
   try {
+    // Store 계정의 storeId 확인
+    const storeId = authStore.userInfo?.storeId
+    if (!storeId) {
+      throw new Error('매장 정보가 없습니다.')
+    }
+
     // TradeSearchCondition 기반 파라미터 구성
     const params = {
       page: apiPage,
       size: perPage.value,
       sort: 'createdAt,desc',
-    }
-
-    // Store 계정의 storeId를 vendorId로 전달 (백엔드에서 storeId 필터로 사용)
-    const storeId = authStore.userInfo?.storeId
-    if (storeId) {
-      params.vendorId = storeId
+      vendorId: storeId, // 필수: 가맹점 필터
     }
 
     // 검색 조건 추가 (null이 아닌 경우만)
@@ -181,9 +190,13 @@ async function search() {
     if (filters.value.startDate) params.fromDate = filters.value.startDate
     if (filters.value.endDate) params.toDate = filters.value.endDate
 
+    console.log('StoreOrder 조회 파라미터:', params)
+
     // GET /api/v1/store-orders (StoreOrderController.findStoreOrders)
     const response = await apiClient.get('/api/v1/store-orders', { params })
     const data = response.data
+
+    console.log('StoreOrder 조회 응답:', data)
 
     totalElements.value = data.totalElements || 0
     totalPagesFromBackend.value = data.totalPages || 1

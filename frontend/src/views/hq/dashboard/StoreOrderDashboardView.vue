@@ -443,6 +443,12 @@ function renderChart() {
 // --- 라이프사이클 ---
 onMounted(async () => {
   await fetchStores()
+  
+  // 전체 조회를 기본값으로 설정 (storeId = null)
+  // 가맹점을 선택하지 않으면 모든 가맹점의 데이터를 조회
+  selectedStore.value = null
+  filters.storeId = null
+  
   await fetchDashboardData()
 })
 
