@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/chatrooms")
 @RequiredArgsConstructor
-public class ChatController {
+public class ChattingController {
     private final ChatService chatService;
 
     // 개인 채팅방 개설 또는 기존 roomId return
