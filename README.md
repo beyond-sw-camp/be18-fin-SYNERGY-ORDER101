@@ -50,7 +50,7 @@
 
 ## <a id="0-발표-슬라이드"></a> 0. 발표 슬라이드
 
-[발표 슬라이드]()
+[발표 슬라이드](https://www.canva.com/design/DAG6-Nh9Ixs/bA0Cm1fcNDg14sJtg0QeTw/edit)
 <br>
 
 ## <a id="1-프로젝트-개요"></a> 1. 프로젝트 개요  
