@@ -40,7 +40,7 @@ import { ref, computed, watch } from 'vue';
 import FilterDropdown from '../../../base/FilterDropdown.vue';
 import FilterDateRange from '../../../base/FilterDateRange.vue';
 import FilterSearchInput from '../../../base/FilterSearchInput.vue';
-import { getPastDateString } from '@/components/global/Date';
+import { getPastDateString, getTodayString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
 
 const initialFilters = {
@@ -49,7 +49,7 @@ const initialFilters = {
     vendorType: 'SUPPLIER', // 기본값을 AP로 변경하여 공급사 기준으로 초기화
     vendorName: '전체',
     startDate: getPastDateString(30),
-    endDate: new Date().toISOString().slice(0, 10),
+    endDate: getTodayString(),
     keyword: '',
 };
 

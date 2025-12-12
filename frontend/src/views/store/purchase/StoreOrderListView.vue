@@ -74,7 +74,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import Money from '@/components/global/Money.vue'
-import { formatDateTimeMinute, getPastDateString } from '@/components/global/Date'
+import { formatDateTimeMinute, getPastDateString, getTodayString } from '@/components/global/Date'
 import PurchaseFilter from '@/components/domain/order/PurchaseFilter.vue'
 import apiClient from '@/components/api'
 
@@ -96,7 +96,7 @@ const filters = ref({
   statuses: null,
   searchText: null,
   startDate: getPastDateString(30),
-  endDate: new Date().toISOString().slice(0, 10),
+  endDate: getTodayString(),
 })
 
 const page = ref(0)  // 0-based page

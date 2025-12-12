@@ -177,14 +177,17 @@ export class SettlementDataProcessor {
     // ========== Private Methods ==========
 
     _formatMonth(monthString) {
-        // '2023-01' → '1월'
-        const month = parseInt(monthString.split('-')[1]);
-        return `${month}월`;
+        // '2023-01' → '2023년 1월' (월 표시는 차트 컴포넌트에서 처리)
+        const [year, month] = monthString.split('-');
+        return `${year}년 ${parseInt(month)}`;
     }
 
     _translateStatus(status) {
         const statusMap = {
+            'DRAFT': '초안',
+            'ISSUED': '발행됨',
             'COMPLETED': '완료',
+            'VOID': '완료',
             'PENDING': '대기',
             'DELAYED': '지연',
             'CANCELLED': '취소',

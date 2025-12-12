@@ -104,7 +104,6 @@
                                 <th>{{ currentFilterData?.scope === 'AR' ? '가맹점명' : '공급사명' }}</th>
                                 <th class="numeric-header">정산 수량</th>
                                 <th class="numeric-header">정산 금액</th>
-                                <th class="center-header">상태</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,14 +114,9 @@
                                 </td>
                                 <td class="numeric">{{ formatNumber(row.count) }}개</td>
                                 <td class="numeric">₩{{ formatNumber(row.netAmount) }}</td>
-                                <td class="center">
-                                    <span class="status-badge" :class="getStatusClass(row.status)">
-                                        {{ row.status }}
-                                    </span>
-                                </td>
                             </tr>
                             <tr v-if="tableData.length === 0">
-                                <td colspan="4" class="empty-cell">
+                                <td colspan="3" class="empty-cell">
                                     조회된 데이터가 없습니다.
                                 </td>
                             </tr>
@@ -145,12 +139,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue';
 import MonthlyBarChart from '@/components/domain/settlement/charts/MonthlyBarChart.vue';
 import RatioDonutChart from '@/components/domain/settlement/charts/RatioDonutChart.vue';
 import { getSettlementReport } from '@/components/api/settlement/SettlementService';
 import { SettlementDataProcessor } from '@/components/global/SettlementDataProcessor.js';
+import { getPastDateString, getTodayString } from '@/components/global/Date';
 
 const loading = ref(false);
 const currentFilterData = ref(null);
@@ -254,6 +249,21 @@ function getStatusClass(status) {
     };
     return statusMap[status] || 'status-default';
 }
+
+onMounted(async () => {
+    // 컴포넌트가 완전히 마운트된 후 데이터 로드
+    await nextTick();
+    
+    // 페이지 진입 시 AP(미지급금) 기본값으로 데이터 로드
+    const defaultFilters = {
+        scope: 'AP',
+        vendorId: 'ALL',
+        startDate: getPastDateString(30),
+        endDate: getTodayString(),
+        keyword: ''
+    };
+    handleSearch(defaultFilters);
+});
 </script>
 
 <style scoped>
@@ -274,6 +284,7 @@ function getStatusClass(status) {
     color: #0f172a;
     margin: 0 0 8px 0;
     letter-spacing: -0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .page-subtitle {
@@ -370,12 +381,14 @@ function getStatusClass(status) {
     font-size: 13px;
     color: #6b7280;
     font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .stat-value {
     font-size: 24px;
     font-weight: 700;
     color: #1f2937;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* 차트 섹션 */
@@ -410,6 +423,7 @@ function getStatusClass(status) {
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 4px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .card-subtitle {

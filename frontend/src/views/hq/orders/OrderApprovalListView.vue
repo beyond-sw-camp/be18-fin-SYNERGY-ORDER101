@@ -41,7 +41,9 @@
                 <span :class="['chip', statusClass(row.status)]">{{ row.status }}</span>
               </td>
 
-              <td class="center">{{ row.orderType }}</td>
+              <td class="center">
+                <span :class="['type-badge', typeClass(row.orderType)]">{{ row.orderType }}</span>
+              </td>
 
               <td class="center" @click.stop>
                 <PurchaseApprovalActions :po-id="row.id" :source-type="row.sourceType"
@@ -217,6 +219,13 @@ function statusClass(s) {
   if (s === '초안') return 's-waiting'
   return ''
 }
+
+function typeClass(type) {
+  if (!type) return ''
+  if (type === '스마트') return 'type-smart'
+  if (type === '자동') return 'type-auto'
+  return 'type-manual'
+}
 </script>
 
 <style scoped>
@@ -225,6 +234,50 @@ function statusClass(s) {
 }
 
 .s-waiting {
+.type-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.type-smart {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  animation: pulse-smart 2s ease-in-out infinite;
+}
+
+.type-auto {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3);
+  animation: pulse-auto 2s ease-in-out infinite;
+}
+
+.type-manual {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+@keyframes pulse-smart {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
+  }
+}
+
+@keyframes pulse-auto {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.6);
+  }
+}
   background: #d97706;
 }
 

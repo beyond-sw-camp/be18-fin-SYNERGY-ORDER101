@@ -36,7 +36,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in rows" :key="r.id" class="data-row">
+            <tr v-for="r in rows" :key="r.id" class="data-row" @click="goToDetail(r.id)">
               <td class="col-id">
                 <span class="settlement-id">{{ r.id }}</span>
               </td>
@@ -112,11 +112,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue';
 import Money from '@/components/global/Money.vue'
 import { formatDateTimeMinute, getTodayString, getPastDateString } from '@/components/global/Date.js';
 import { getSettlements } from '@/components/api/settlement/SettlementService.js';
+
+const router = useRouter();
 
 const loading = ref(false);
 const todayString = getTodayString();
@@ -149,7 +152,7 @@ const pageNumbers = computed(() => {
 })
 
 /**
- * 완료 시간을 "M월 d일 H시 m분" 형식으로 포맷합니다.
+ * 완료 시간을 "M월 d일 H시 m분" 형식으로 포맷합니다. (브라우저 현지 시간 기반)
  * @param {string} dateString - ISO 8601 형식의 날짜 문자열
  * @returns {string} - "12월 10일 14시 30분" 형식
  */
@@ -157,16 +160,13 @@ const formatSettlementTime = (dateString) => {
   if (!dateString) return '정산 미완료';
 
   try {
+    // 브라우저 현지 시간으로 자동 변환
     const date = new Date(dateString);
-    // UTC → KST 변환
-    const kstOffset = 9 * 60;
-    const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-    const kstDate = new Date(utc + (kstOffset * 60000));
 
-    const month = kstDate.getMonth() + 1;
-    const day = kstDate.getDate();
-    const hour = kstDate.getHours();
-    const minute = String(kstDate.getMinutes()).padStart(2, '0');
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hour = date.getHours();
+    const minute = String(date.getMinutes()).padStart(2, '0');
 
     return `${month}월 ${day}일 ${hour}시 ${minute}분`;
   } catch (error) {
@@ -276,9 +276,24 @@ function changePage(page) {
   handleSearch(currentFilterData.value, page);
 }
 
-onMounted(() => {
-
+onMounted(async () => {
+  // 컴포넌트가 완전히 마운트된 후 데이터 로드
+  await nextTick();
+  
+  // 페이지 진입 시 AP(미지급금) 기본값으로 데이터 로드
+  const defaultFilters = {
+    scope: 'AP',
+    vendorId: 'ALL',
+    startDate: getPastDateString(30),
+    endDate: getTodayString(),
+    keyword: ''
+  };
+  handleSearch(defaultFilters, 0);
 });
+
+function goToDetail(settlementId) {
+  router.push({ name: 'SettlementDetail', params: { id: settlementId } });
+}
 </script>
 
 <style scoped>
@@ -295,11 +310,10 @@ onMounted(() => {
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
   margin: 0 0 8px 0;
-  letter-spacing: -0.5px;
 }
 
 .page-subtitle {
@@ -343,23 +357,22 @@ onMounted(() => {
 }
 
 .section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
   margin: 0;
-  letter-spacing: -0.3px;
 }
 
 .result-count {
   font-size: 14px;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .result-count strong {
   color: #6366f1;
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .header-actions {
@@ -410,12 +423,10 @@ onMounted(() => {
 }
 
 .settlement-table thead th {
-  padding: 16px 20px;
-  font-size: 12px;
+  padding: 16px 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   white-space: nowrap;
 }
 
@@ -462,12 +473,11 @@ onMounted(() => {
 
 /* Table Body */
 .settlement-table tbody td {
-  padding: 18px 20px;
+  padding: 16px 12px;
   font-size: 14px;
   color: #334155;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f0f0f3;
   vertical-align: middle;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Body cell alignment overrides */
@@ -506,6 +516,7 @@ onMounted(() => {
 .data-row {
   transition: all 0.2s;
   border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
 }
 
 .data-row:hover {
@@ -515,27 +526,20 @@ onMounted(() => {
 
 /* Settlement ID */
 .settlement-id {
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: #3b82f6;
-  letter-spacing: 0;
-  background: #eff6ff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
 }
 
 /* Type Badge */
 .type-badge {
   display: inline-flex;
   align-items: center;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
-  letter-spacing: -0.2px;
 }
 
 .type-ar {
@@ -558,49 +562,43 @@ onMounted(() => {
 }
 
 .vendor-name {
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: #334155;
   font-size: 14px;
-  letter-spacing: -0.2px;
 }
 
 /* Period Text */
 .period-text {
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: #64748b;
-  font-weight: 500;
-  letter-spacing: -0.3px;
+  font-weight: 400;
 }
 
 /* Quantity Text */
 .qty-text {
-  font-weight: 700;
+  font-weight: 600;
   color: #334155;
   font-variant-numeric: tabular-nums;
   font-size: 14px;
-  letter-spacing: -0.3px;
 }
 
 /* Amount Text */
 .amount-text {
-  font-weight: 800;
-  color: #0f172a;
-  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.5px;
 }
 
 /* Status Badge */
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
-  letter-spacing: -0.2px;
 }
 
 .status-issued {
@@ -641,12 +639,10 @@ onMounted(() => {
 
 /* Date Text */
 .date-text {
-  font-size: 13px;
+  font-size: 14px;
   color: #64748b;
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  letter-spacing: -0.3px;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-weight: 400;
 }
 
 /* ============ Empty State ============ */
