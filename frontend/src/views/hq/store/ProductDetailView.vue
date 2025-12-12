@@ -55,8 +55,22 @@
                   <input class="value name" v-model="editForm.productName" />
                 </template>
 
-                <span class="chip" v-if="product.status">활성화</span>
-                <span class="chip2" v-else>비활성화</span>
+                <template v-if="!isEditMode">
+                  <span class="chip" v-if="product.status">활성화</span>
+                  <span class="chip2" v-else>비활성화</span>
+                </template>
+
+                <template v-else>
+                  <span
+                    :class="['status-badge', editForm.status ? 'active' : 'inactive', 'clickable']"
+                    role="button"
+                    tabindex="0"
+                    @click="toggleEditStatus"
+                    @keydown.enter.prevent="toggleEditStatus"
+                  >
+                    {{ editForm.status ? '활성' : '비활성화' }}
+                  </span>
+                </template>
               </div>
             </div>
 
@@ -161,15 +175,6 @@
               <template v-else>
                 <textarea class="value description" v-model="editForm.description"></textarea>
               </template>
-            </div>
-
-            <!-- 상태 -->
-            <div class="field" v-if="isEditMode">
-              <label>상태</label>
-              <select class="value" v-model="editForm.status">
-                <option :value="true">활성</option>
-                <option :value="false">비활성</option>
-              </select>
             </div>
           </div>
 
@@ -322,6 +327,11 @@ const productId = Number(route.params.id)
 const errorMsg = ref('')
 const isLoading = ref(false)
 const isEditMode = ref(false)
+const initializedCategories = ref(false)
+
+const toggleEditStatus = () => {
+  editForm.value.status = !editForm.value.status
+}
 
 const editForm = ref({
   productCode: '',
@@ -419,8 +429,23 @@ const saveEdit = async () => {
     editForm.value.categoryMediumId = selectedMediumId.value
     editForm.value.categorySmallId = selectedSmallId.value
 
-    const updated = await updateProduct(productId, editForm.value, newImageFile.value)
-    product.value = updated
+    // const updated = await updateProduct(productId, editForm.value, newImageFile.value)
+    // product.value = updated
+    // isEditMode.value = false
+
+    // selectedLargeId.value = updated.categoryLargeId ?? selectedLargeId.value
+    // selectedMediumId.value = updated.categoryMediumId ?? selectedMediumId.value
+    // selectedSmallId.value = updated.categorySmallId ?? selectedSmallId.value
+    // 1) 상품 수정 요청
+    await updateProduct(productId, editForm.value, newImageFile.value)
+
+    // 2) 카테고리 다시 세팅할 수 있게 플래그 초기화
+    initializedCategories.value = false
+
+    // 3) 최신 상품 상세 다시 조회 (purchasePrice 포함)
+    await fetchProduct()
+
+    // 4) 편집 모드 종료
     isEditMode.value = false
   } catch (e) {
     console.error(e)
@@ -513,6 +538,38 @@ watch(activeTab, (tab) => {
     fetchInventory(invCurrentPage.value)
   }
 })
+watch([product, largeCategories], async ([p, large]) => {
+  // 이미 한 번 초기화했으면 다시 안 함
+  if (initializedCategories.value) return
+  if (!p || !large.length) return
+
+  // 1) 대분류: 이름으로 찾기
+  const largeCat = large.find((c) => c.name === p.categoryLargeName)
+  if (!largeCat) return
+
+  selectedLargeId.value = largeCat.id
+  mediumCategories.value = await fetchChildren(largeCat.id)
+
+  // 2) 중분류
+  let mediumCat = null
+  if (p.categoryMediumName) {
+    mediumCat = mediumCategories.value.find((c) => c.name === p.categoryMediumName)
+    if (mediumCat) {
+      selectedMediumId.value = mediumCat.id
+      smallCategories.value = await fetchChildren(mediumCat.id)
+    }
+  }
+
+  // 3) 소분류
+  if (p.categorySmallName && smallCategories.value.length) {
+    const smallCat = smallCategories.value.find((c) => c.name === p.categorySmallName)
+    if (smallCat) {
+      selectedSmallId.value = smallCat.id
+    }
+  }
+
+  initializedCategories.value = true
+})
 
 const formatDateTime = (iso) => {
   if (!iso) return ''
@@ -527,7 +584,8 @@ const fetchProduct = async () => {
   isLoading.value = true
   errorMsg.value = ''
   try {
-    product.value = await getProductDetail(productId)
+    const detail = await getProductDetail(productId)
+    product.value = detail
   } catch (e) {
     console.error(e)
     errorMsg.value = '상품 상세 조회에 실패했습니다.'
@@ -1006,5 +1064,69 @@ select.value {
 .image-actions input[type='file'] {
   width: 100%;
   font-size: 12px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+}
+
+.status-badge.active {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.status-badge.inactive {
+  background: #f3f4f6;
+  color: #7c3aed;
+}
+
+.status-badge.clickable {
+  cursor: pointer;
+}
+
+/* hover/포커스 시 “클릭 가능” 느낌 */
+.status-badge.clickable:hover {
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+.status-badge.clickable:active {
+  transform: translateY(0);
+}
+
+.status-badge.clickable:focus {
+  outline: 2px solid #c7d2fe;
+  outline-offset: 2px;
+}
+/* 제품명은 줄의 남은 공간을 꽉 채우게 */
+.name-row .value.name {
+  flex: 1;
+}
+
+/* 상태 뱃지는 줄바꿈 되지 않도록 */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap; /*  이 줄 추가 */
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
 }
 </style>
