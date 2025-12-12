@@ -4,20 +4,21 @@
       <h1>배송 조회</h1>
     </header>
 
+    <!-- 필터 -->
     <section class="filters card">
       <div class="filters-row">
         <input placeholder="주문 ID 검색" v-model="filters.q" />
 
         <select v-model="filters.store">
           <option value="all">모든 가맹점</option>
-          <option v-for="s in storeOptions" :value="s" :key="s">
+          <option v-for="s in storeOptions" :key="s" :value="s">
             {{ s }}
           </option>
         </select>
 
         <select v-model="filters.status">
           <option value="all">모든 상태</option>
-          <option v-for="st in statusOptions" :value="st.key" :key="st.key">
+          <option v-for="st in statusOptions" :key="st.key" :value="st.key">
             {{ st.label }}
           </option>
         </select>
@@ -27,11 +28,13 @@
       </div>
     </section>
 
+    <!-- 목록 -->
     <section class="card list">
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
         <p>데이터를 불러오는 중...</p>
       </div>
+
       <div v-else-if="rows.length > 0" class="table-wrap">
         <table class="delivery-table">
           <thead>
@@ -58,28 +61,27 @@
               <td>{{ r.store }}</td>
               <td>{{ r.warehouse }}</td>
               <td class="numeric">{{ r.qty }}</td>
-
               <td class="status-cell">
                 <span class="chip" :class="statusClass(r.status)">
                   {{ statusLabel(r.status) }}
                 </span>
               </td>
-
               <td>{{ formatDateTime(r.requestedAt) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+
       <div v-else class="empty-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1">
-          <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
-          <path d="M3 9h18M9 21V9" stroke-width="2" />
-        </svg>
         <p class="empty-text">배송 조회 결과가 없습니다</p>
         <p class="empty-hint">필터 조건을 변경해보세요</p>
       </div>
+
+      <!-- 페이지네이션 -->
       <div class="pagination">
-        <button class="pager" :disabled="page === 0" @click="goPrev">‹ Previous</button>
+        <button class="pager" :disabled="page === 0" @click="goPrev">
+          ‹ Previous
+        </button>
 
         <button
           v-for="p in pageNumbers"
@@ -91,16 +93,25 @@
           {{ p }}
         </button>
 
-        <button class="pager" :disabled="page + 1 >= totalPages" @click="goNext">Next ›</button>
+        <button
+          class="pager"
+          :disabled="page + 1 >= totalPages"
+          @click="goNext"
+        >
+          Next ›
+        </button>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import apiClient from '@/components/api'
 import { ref, computed, onMounted, watch } from 'vue'
+import apiClient from '@/components/api'
 
+/* ===============================
+ * 상수
+ * =============================== */
 const DELIVERY_STATUS = {
   WAITING: 'WAITING',
   IN_TRANSIT: 'IN_TRANSIT',
@@ -113,16 +124,18 @@ const statusOptions = [
   { key: DELIVERY_STATUS.DELIVERED, label: '배송 완료' },
 ]
 
+const MAX_VISIBLE_PAGES = 5
+
+/* ===============================
+ * 상태
+ * =============================== */
 const rows = ref([])
 const loading = ref(false)
-const allStoreNames = ref([])
 
 const page = ref(0)
 const size = ref(20)
 const totalPages = ref(1)
 const totalElements = ref(0)
-
-const MAX_VISIBLE_PAGES = 5
 
 const filters = ref({
   q: '',
@@ -130,7 +143,9 @@ const filters = ref({
   status: 'all',
 })
 
-
+/* ===============================
+ * 데이터 조회
+ * =============================== */
 async function fetchDeliveryList() {
   loading.value = true
   try {
@@ -145,6 +160,7 @@ async function fetchDeliveryList() {
     })
 
     const p = res.data
+
     rows.value = p.content.map(item => ({
       id: item.storeOrderId,
       orderNo: item.orderNo,
@@ -154,10 +170,6 @@ async function fetchDeliveryList() {
       status: item.shipmentStatus,
       requestedAt: item.orderDatetime,
     }))
-    console.log(p.content[0])
-
-    const storeNamesFromResponse = p.content.map(item => item.storeName)
-    allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
 
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
@@ -169,25 +181,18 @@ async function fetchDeliveryList() {
   }
 }
 
-
-async function changePage(clientPage) {
-  if (clientPage < 1 || clientPage > totalPages.value) return
-  page.value = clientPage - 1
-  await fetchDeliveryList()
-}
-
-function goPrev() {
-  if (page.value > 0) changePage(page.value)
-}
-
-function goNext() {
-  if (page.value + 1 < totalPages.value) changePage(page.value + 2)
-}
+/* ===============================
+ * 파생 데이터
+ * =============================== */
+const storeOptions = computed(() => {
+  const names = rows.value.map(r => r.store)
+  return [...new Set(names)]
+})
 
 const pageNumbers = computed(() => {
   const pages = []
-  const total = totalPages.value
   const current = page.value + 1
+  const total = totalPages.value
   const half = Math.floor(MAX_VISIBLE_PAGES / 2)
 
   let start = Math.max(1, current - half)
@@ -201,6 +206,23 @@ const pageNumbers = computed(() => {
   return pages
 })
 
+/* ===============================
+ * 페이지네이션
+ * =============================== */
+function changePage(p) {
+  if (p < 1 || p > totalPages.value) return
+  page.value = p - 1
+  fetchDeliveryList()
+}
+
+function goPrev() {
+  if (page.value > 0) changePage(page.value)
+}
+
+function goNext() {
+  if (page.value + 1 < totalPages.value) changePage(page.value + 2)
+}
+
 
 function applyFilter() {
   page.value = 0
@@ -213,31 +235,25 @@ function resetFilter() {
   fetchDeliveryList()
 }
 
-
-
-// store / status 변경 시 즉시 적용
+/* store / status 즉시 반영 */
 watch(
   () => [filters.value.store, filters.value.status],
-  () => {
-    applyFilter()
-  }
+  applyFilter
 )
 
-// 주문 ID 검색 → 디바운스 적용
+/* 주문 ID 검색 디바운스 */
 let searchDebounce = null
 watch(
   () => filters.value.q,
   () => {
     clearTimeout(searchDebounce)
-    searchDebounce = setTimeout(() => {
-      applyFilter()
-    }, 400)
+    searchDebounce = setTimeout(applyFilter, 400)
   }
 )
 
-
-const storeOptions = computed(() => allStoreNames.value)
-
+/* ===============================
+ * UI 헬퍼
+ * =============================== */
 function statusClass(s) {
   if (s === DELIVERY_STATUS.DELIVERED) return 's-delivered'
   if (s === DELIVERY_STATUS.IN_TRANSIT) return 's-intransit'
@@ -253,10 +269,9 @@ function formatDateTime(dt) {
   return dt ? dt.replace('T', ' ').slice(0, 19) : '-'
 }
 
-onMounted(() => {
-  fetchDeliveryList()
-})
+onMounted(fetchDeliveryList)
 </script>
+
 
 
 <style scoped>
