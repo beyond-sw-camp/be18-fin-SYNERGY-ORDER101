@@ -81,7 +81,8 @@
     </div>
 
     <!-- 품목 추가 모달 (OrderItemModal - 전체 품목 조회) -->
-    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems"/>  </div>
+    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems" />
+  </div>
 </template>
 
 <script setup>
@@ -98,9 +99,6 @@ const authStore = useAuthStore()
 const showItemModal = ref(false)
 const rows = ref([])
 const productIdSet = ref(new Set())
-const storeInventoryCache = ref(null)
-const inventoryLoading = ref(false)
-let inventoryFetchPromise = null
 
 // --- 계산된 속성 (Computed) ---
 const totalQty = computed(() =>
@@ -118,77 +116,23 @@ const canSubmitOrder = computed(() => rows.value.length > 0)
 /**
  * OrderItemModal에서 선택된 품목들을 받아 발주 목록에 추가합니다.
  */
-async function onAddItems(products) {
+function onAddItems(products) {
   if (!Array.isArray(products)) {
     return
   }
+  products.forEach(p => {
+    if (productIdSet.value.has(p.productId)) return
 
-  const storeId = authStore.userInfo.storeId
-  if (!storeId) {
-    alert('매장 정보가 없습니다.')
-    return
-  }
-
-  // 가맹점 재고 조회
-  const storeInventoryMap = await fetchInventoryOnce(storeId)
-
-  // 새로운 품목만 필터링
-  const newProducts = products.filter(p => !productIdSet.value.has(p.productId))
-  
-  if (newProducts.length === 0) {
-    return
-  }
-
-  // 한 번에 추가
-  const newRows = newProducts.map(p => {
     productIdSet.value.add(p.productId)
-    const stockValue = storeInventoryMap[p.productId] ?? 0
-    return {
+    rows.value.push({
       productId: p.productId,
       sku: p.sku,
       name: p.name,
       price: p.price || 0,
-      stock: stockValue,
+      stock: p.stock ?? 0,
       qty: 1
-    }
+    })
   })
-
-  rows.value.push(...newRows)
-}
-
-// 재고를 한 번만 조회해서 캐시하고, 중복 호출을 방지
-async function fetchInventoryOnce(storeId) {
-  if (storeInventoryCache.value) {
-    return storeInventoryCache.value
-  }
-  if (inventoryFetchPromise) {
-    return inventoryFetchPromise
-  }
-
-  inventoryLoading.value = true
-  inventoryFetchPromise = (async () => {
-    const map = {}
-    try {
-      const response = await apiClient.get(`/api/v1/stores/${storeId}/inventory`, {
-        params: { page: 1, numOfRows: 1000 }
-      })
-      const inventoryList = response.data.items || response.data.content || response.data || []
-      
-      inventoryList.forEach(item => {
-        const stock = item.onHandQty || 0
-        map[item.productId] = stock
-      })
-      storeInventoryCache.value = map
-      return map
-    } catch (error) {
-      return map
-    } finally {
-      inventoryLoading.value = false
-      inventoryFetchPromise = null
-    }
-  })()
-
-  return inventoryFetchPromise
 }
 
 /**
@@ -203,11 +147,6 @@ function removeRow(idx) {
  * 품목 추가 모달을 엽니다.
  */
 function openItemModal() {
-  // 모달 열 때 재고를 미리 적재하여 이후 추가 시 대기 시간 감소
-  const storeId = authStore.userInfo.storeId
-  if (storeId) {
-    fetchInventoryOnce(storeId)
-  }
   showItemModal.value = true
 }
 
