@@ -59,7 +59,6 @@ export const useNotificationStore = defineStore('notification', {
         this.connectSSE(token)
       } catch (error) {
         // API 호출 실패 시 (JWT 에러 포함) SSE 연결하지 않음
-        console.warn('[Notification] Token validation failed, skipping SSE connection')
         this.reset()
       }
     },
@@ -105,7 +104,6 @@ export const useNotificationStore = defineStore('notification', {
       this.es = es
 
       es.addEventListener('open', () => {
-        console.info('[SSE] opened')
         this.connected = true
 
         // 연결 성공하면 backoff/타이머 초기화
@@ -129,8 +127,6 @@ export const useNotificationStore = defineStore('notification', {
       })
 
       const handleError = (event) => {
-        console.warn('[SSE] error, will reconnect', event)
-
         // 이미 reconnect 타이머가 잡혀 있으면 더 이상 안 잡음
         if (this.reconnectTimer) {
           return
@@ -138,8 +134,6 @@ export const useNotificationStore = defineStore('notification', {
 
         // JWT 문제로 완전히 거절(CLOSED)된 경우만 로그아웃 처리
         if (es.readyState === EventSource.CLOSED) {
-          console.warn('[SSE] closed by server, maybe token invalid')
-
           this.cleanupSSE()
 
           const authStore = useAuthStore()
