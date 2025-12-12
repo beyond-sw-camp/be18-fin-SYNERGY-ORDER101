@@ -81,8 +81,7 @@
     </div>
 
     <!-- 품목 추가 모달 (OrderItemModal - 전체 품목 조회) -->
-    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems" />
-  </div>
+    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems" :selectedProductIds="Array.from(productIdSet)" />  </div>
 </template>
 
 <script setup>
