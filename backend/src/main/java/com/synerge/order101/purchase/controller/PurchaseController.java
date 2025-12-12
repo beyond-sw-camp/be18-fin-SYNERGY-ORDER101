@@ -133,4 +133,19 @@ public class PurchaseController {
 
         return ResponseEntity.ok(new BaseResponseDto<>(HttpStatus.OK, response));
     }
+
+    /**
+     * [테스트용] 자동 발주 강제 실행 API
+     * 스케줄러 대기 없이 즉시 자동 발주 로직을 트리거합니다.
+     */
+    @PostMapping("/auto/create")
+    public ResponseEntity<String> triggerAutoPurchaseForTest() {
+        try {
+            purchaseService.createAutoPurchase();
+            return ResponseEntity.ok("자동 발주 생성 로직이 성공적으로 실행되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("자동 발주 실행 중 오류 발생: " + e.getMessage());
+        }
+    }
 }
