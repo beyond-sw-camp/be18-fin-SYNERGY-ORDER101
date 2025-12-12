@@ -135,7 +135,6 @@ const loading = ref(false)
 const page = ref(0)
 const size = ref(20)
 const totalPages = ref(1)
-const totalElements = ref(0)
 
 const filters = ref({
   q: '',
@@ -170,13 +169,8 @@ async function fetchDeliveryList() {
       status: item.shipmentStatus,
       requestedAt: item.orderDatetime,
     }))
-    console.log(p.content[0])
-
-    const storeNamesFromResponse = p.content.map(item => item.storeName)
-    allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
 
     totalPages.value = p.totalPages
-    totalElements.value = p.totalElements
   } catch (e) {
     console.error('배송 목록 조회 실패', e)
     rows.value = []
@@ -227,7 +221,9 @@ function goNext() {
   if (page.value + 1 < totalPages.value) changePage(page.value + 2)
 }
 
-
+/* ===============================
+ * 필터
+ * =============================== */
 function applyFilter() {
   page.value = 0
   fetchDeliveryList()
@@ -239,7 +235,6 @@ function resetFilter() {
   fetchDeliveryList()
 }
 
-/* store / status 즉시 반영 */
 watch(
   () => [filters.value.store, filters.value.status],
   applyFilter
@@ -275,6 +270,9 @@ function formatDateTime(dt) {
 
 onMounted(fetchDeliveryList)
 </script>
+
+
+
 
 
 
