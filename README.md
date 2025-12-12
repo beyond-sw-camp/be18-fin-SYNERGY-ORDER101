@@ -283,6 +283,33 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 
 
+<img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20CloudFront-8C4FFF?style=for-the-badge&logo=amazoncloudfront&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20ECS-FF9900?style=for-the-badge&logo=amazonecs&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20ECR-FF9900?style=for-the-badge&logo=amazonecr&logoColor=white">
+<img src="https://img.shields.io/badge/AWS%20Fargate-FF9900?style=for-the-badge&logo=awsfargate&logoColor=white">
+<img src="https://img.shields.io/badge/AWS%20CodeDeploy-527FFF?style=for-the-badge&logo=awsdeploy&logoColor=white">
+<img src="https://img.shields.io/badge/AWS%20CodePipeline-527FFF?style=for-the-badge&logo=awscodepipeline&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20CloudWatch-FF4F8B?style=for-the-badge&logo=amazoncloudwatch&logoColor=white">
+<img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white">
+<img src="https://img.shields.io/badge/ChatGPT-00A67E?style=for-the-badge&logo=openai&logoColor=white">
+<img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white">
+<img src="https://img.shields.io/badge/RAG-0A66C2?style=for-the-badge&logo=readthedocs&logoColor=white">
+<img src="https://img.shields.io/badge/Vector%20DB-4B32C3?style=for-the-badge&logo=databricks&logoColor=white">
+<img src="https://img.shields.io/badge/Sentence%20Transformers-FF6F00?style=for-the-badge&logo=python&logoColor=white">
+<img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
+<img src="https://img.shields.io/badge/Uvicorn-4051B5?style=for-the-badge&logo=python&logoColor=white">
+<img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white">
+<img src="https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white">
+<img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
+<img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white">
+<img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white">
+<img src="https://img.shields.io/badge/Argo%20CD-FE6A16?style=for-the-badge&logo=argo&logoColor=white">
+
+
 <br/>
 
 ## 5. 시스템 아키텍처
@@ -421,7 +448,7 @@ ALB/CloudFront 타임아웃 조정으로 장시간 SSE 연결 안정화
 ## 15. 회고록
 
 |   조원 이름	| 회고  	 |
-|---	|-------|
+|-----	|-------|
 | 조상원 | 웹을 기획부터 실제 배포까지 전체 과정을 이끌며 전체 프로세스를 체화할 수 있는 좋은 기회였다. 특히 Spring 벡엔드와 Vue.js 프론트엔드에서 그치는게 아닌 AI를 집중적으로 다룰 수 있어 시야를 넓힐 수 있었던 프로젝트였다. 이후 AWS를 사용해 실제 배포를 해보며 우리의 도메인에 접속할 수 있는게 새로운 느낌이었다. 단순 기능 구현이 아닌 하나하나 직접 고민해보며 적용해본 경험들이 이후의 개발에 있어서 큰 도움이 될 수 있을거 같다. |
 | 박진우 | aws cicd를 해보는 좋은 기회가 됐다. 에러가 많이 났는데 향후 다른 프로젝트를 진행할때 기준점을 제시할 수 있는 경험이엿다. 근거를 제시하는 연습을 충분히 할 수 있는 성과 있었다.  |
 | 윤석현 | 이번 프로젝트는 처음으로 B2B 시스템을 설계부터 개발까지 해보는 경험이었다. 처음에는 막막했지만 요구사항을 분석하고 설계하는 과정에서 많은 것을 배울 수 있었다. 로그인 프로세스와 권한 관리를 구현하면서 보안에 대한 중요성을 다시 한 번 깨달았다. 이번 프로젝트를 통해 얻은 경험을 바탕으로 앞으로 더 나은 시스템을 개발할 수 있을 것 같다. |
