@@ -121,7 +121,7 @@ function handleSearch(filterData) {
     startDate: filterData.startDate,
     endDate: filterData.endDate,
     keyword: filterData.keyword,
-    statuses: filterData.scope !== 'ALL' ? filterData.scope : null // scope를 status로 사용
+    statuses: filterData.scope && filterData.scope !== 'ALL' ? [filterData.scope] : null // 배열로 변환
   }
   page.value = 1  // 첫 페이지로 리셋
   searchStoreOrders()

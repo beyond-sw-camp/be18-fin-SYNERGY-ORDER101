@@ -14,9 +14,12 @@ export async function getSupplierList(page, pageSize, keyword) {
   // API 엔드포인트는 /api/v1/suppliers 또는 유사한 경로라고 가정합니다.
   const url = '/api/v1/suppliers'
 
+  // 1-based 페이지를 0-based로 변환
+  const apiPage = page - 1
+
   // 쿼리 파라미터 객체 구성
   const params = {
-    page,
+    page: apiPage,
     size: pageSize,
     keyword: keyword || '',
   }

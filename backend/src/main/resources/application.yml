@@ -12,7 +12,10 @@ spring:
     open-in-view: false
     show-sql: false # 배포에서는 SQL 출력을 비활성화
     properties:
-      hibernate.format_sql: false # 배포에서는 포맷된 SQL도 비활성화
+      hibernate:
+        format_sql: false # 배포에서는 포맷된 SQL도 비활성화
+        jdbc:
+          time_zone: Asia/Seoul
   cache:
     type: redis
   data:

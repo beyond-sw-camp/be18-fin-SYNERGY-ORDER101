@@ -26,7 +26,7 @@
         </select>
 
         <div class="filter-item">
-          <input placeholder="상품 검색" v-model="filters.keyword" /> 
+          <input placeholder="상품명 검색" v-model="filters.keyword" /> 
         </div>
 
         <div class="filter-actions">
