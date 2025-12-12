@@ -202,7 +202,7 @@ function markModified(row) {
   const orig = autoOrderStore.originalItems.find(o => o.productId === row.productId)
   if (!orig) return
 
-  row.isModified = row.orderQty !== orig.orderQty  // 비교하여 변경 판단
+  row.isModified = row.orderQty !== orig.orderQty
 
   const target = autoOrderStore.editedItems.find(e => e.productId === row.productId)
   if (target) target.orderQty = row.orderQty
@@ -244,18 +244,14 @@ async function updateStatus(status) {
 
 const total = computed(() => subtotal.value)
 
-function handleProcessSuccess() {
-  router.back()
-}
-
 onMounted(() => {
   fetchPurchaseDetail()
 })
 
 // 담당자 변경
 const displayUserName = computed(() => {
-  if (po.status === 'DRAFT_AUTO') return 'AUTO'   // 초안 상태일 때
-  return po.userName || '-'                       // 제출 이후
+  if (po.status === 'DRAFT_AUTO') return 'AUTO'
+  return po.userName || '-'
 })
 
 </script>
@@ -398,12 +394,6 @@ const displayUserName = computed(() => {
 .approval-actions-wrapper {
   display: flex;
   justify-content: flex-end;
-}
-
-/* 수정된 행 강조 */
-.modified {
-  /* background: #c7b8ff !important;  */
-  font-style: italic;
 }
 .qty-input {
   width: 80px;

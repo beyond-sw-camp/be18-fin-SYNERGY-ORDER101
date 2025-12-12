@@ -77,15 +77,20 @@
       </div>
 
       <div class="pagination">
-        <div class="pages">
-          <button
-            v-for="p in autoOrderStore.totalPages"
-            :key="p"
-            :class="{ active: p === page }"
-            @click="goPage(p)">
+        <button class="page-btn" @click="changePage(page - 1)" :disabled="page <= 1">
+          ‹ Previous
+        </button>
+
+        <div class="page-numbers">
+          <button v-for="p in visiblePages" :key="p" class="page"
+            :class="['page-button', { active: page === p }]" @click="changePage(p)">
             {{ p }}
           </button>
         </div>
+
+        <button class="page-btn" @click="changePage(page + 1)" :disabled="page >= totalPages">
+          Next ›
+        </button>
       </div>
     </section>
   </div>
@@ -106,7 +111,8 @@ import "flatpickr/dist/flatpickr.css"
 const router = useRouter()
 const autoOrderStore = useAutoOrderStore()
 
-const page = ref(1)
+const page = computed(() => autoOrderStore.page)
+const totalPages = computed(() => autoOrderStore.totalPages)
 const isSearchMode = ref(false)
 
 const supplierModalOpen = ref(false)
@@ -161,20 +167,6 @@ async function search() {
   })
 }
 
-async function goPage(p) {
-  page.value = p
-
-  if (!isSearchMode.value) {
-    await autoOrderStore.fetchAutoOrders({ page: p })
-    return
-  }
-
-  await autoOrderStore.fetchAutoOrders({
-    ...searchParams.value,
-    page: p
-  })
-}
-
 async function resetFilters() {
   selectedSupplier.value = null
   selectedSupplierName.value = ''
@@ -208,6 +200,61 @@ function statusLabel(status) {
     default: return status
   }
 }
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2 // 현재 페이지 양옆으로 보여줄 페이지 수
+  const pages = []
+
+  if (total <= 5) {
+    // 전체 페이지가 5개 이하면 모두 표시
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // 5개보다 많으면 현재 페이지 기준으로 표시
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    // 시작이 1이면 끝을 늘림
+    if (start === 1) {
+      end = Math.min(5, total)
+    }
+    // 끝이 마지막이면 시작을 줄임
+    if (end === total) {
+      start = Math.max(1, total - 4)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
+
+const changePage = async (p) => {
+  if (p < 1 || p > totalPages.value) return;
+
+  if (isSearchMode.value) {
+    // 검색 모드: 이전 검색 조건을 유지한 채 페이징
+    await autoOrderStore.searchAutoOrders({
+      supplierId: searchParams.value.supplierId,
+      startDate: searchParams.value.startDate,
+      endDate: searchParams.value.endDate,
+      page: p,
+      numOfRows: autoOrderStore.numOfRows
+    });
+  } else {
+    // 전체 조회 모드
+    await autoOrderStore.fetchAutoOrders({
+      page: p,
+      numOfRows: autoOrderStore.numOfRows
+    });
+  }
+};
+
 </script>
 
 <style scoped>
@@ -398,5 +445,26 @@ function statusLabel(status) {
 }
 .date-input:focus {
   border-color: #6366f1;
+}
+.page {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff;
+}
+.page.active {
+  border-color: #2563eb;
+  color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
+}
+.page.current {
+  background: #f3f4f6;
+}
+.page-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
 }
 </style>
