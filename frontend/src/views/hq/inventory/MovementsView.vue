@@ -178,9 +178,20 @@ onMounted(() => {
 
 function switchTab(tab) {
   activeTab.value = tab
+  
+  // 탭 전환 시 필터 초기화
+  selectedSupplier.value = null
+  selectedSupplierName.value = ''
+  selectedStore.value = null
+  selectedStoreName.value = ''
+  dateRange.value = null
+  searchParams.value = { supplierId: null, storeId: null, startDate: null, endDate: null }
+  isSearchMode.value = false
 
-  if (tab === 'OUTBOUND' && outboundStore.items.length === 0) {
-    outboundStore.fetchOutbound({ page: 1})
+  if (tab === 'INBOUND') {
+    inboundStore.fetchInbound({ page: 1 })
+  } else {
+    outboundStore.fetchOutbound({ page: 1 })
   }
 }
 

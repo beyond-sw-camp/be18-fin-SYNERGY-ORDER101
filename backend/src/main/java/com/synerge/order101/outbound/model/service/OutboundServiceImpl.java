@@ -48,7 +48,7 @@ public class OutboundServiceImpl implements OutboundService {
                     o.getOutboundId(),
                     o.getOutboundNo(),
                     o.getOutboundDatetime(),
-                    o.getStore().getStoreName(),
+                    o.getStore() != null ? o.getStore().getStoreName() : "삭제된 매장",
                     itemCount,
                     totalQty
             );
@@ -128,7 +128,7 @@ public class OutboundServiceImpl implements OutboundService {
                     .outboundId(ob.getOutboundId())
                     .outboundNo(ob.getOutboundNo())
                     .outboundDatetime(ob.getOutboundDatetime())
-                    .storeName(ob.getStore().getStoreName())
+                    .storeName(ob.getStore() != null ? ob.getStore().getStoreName() : "삭제된 매장")
                     .itemCount(itemCount)
                     .totalShippedQty(totalQty)
                     .build();
