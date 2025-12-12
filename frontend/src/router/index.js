@@ -201,7 +201,7 @@ const hqRoutes = [
     path: '/hq/franchise/delivery',
     name: 'hq-franchise-delivery',
     component: FranchiseDeliveryView,
-    meta: { title: '배송 관리' },
+    meta: { title: '배송 목록 조회' },
   },
   {
     path: '/hq/smart-orders',
