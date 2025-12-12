@@ -41,18 +41,20 @@
       <table class="stock-table">
         <thead>
           <tr>
-            <th>상품 코드</th>
+            <th @click="toggleSort('productCode')" class="sortable">
+              상품 코드
+              <span class="sort-icon">{{ sortIcon('productCode') }}</span>
+            </th>
             <th>카테고리</th>
             <th>상품명</th>
-            <th @click="toggleSort" class="sortable">
+            <th @click="toggleSort('onHandQty')" class="sortable">
               현 재고량
-              <span class="sort-icon">
-                <span v-if="sortBy === 'onHandQtyDesc'">▼</span>
-                <span v-else-if="sortBy === 'onHandQtyAsc'">▲</span>
-                <span v-else>⇅</span>
-              </span>
+              <span class="sort-icon">{{ sortIcon('onHandQty') }}</span>
             </th>
-            <th>안전재고량</th>
+            <th @click="toggleSort('safetyQty')" class="sortable">
+              안전재고량
+              <span class="sort-icon">{{ sortIcon('safetyQty') }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -104,7 +106,10 @@ const smallCategoryId = ref('')
 const page = computed(() => inventoryStore.page)
 const totalPages = computed(() => inventoryStore.totalPages)
 
-const sortBy = ref('') 
+const sort = ref({
+  field: '',
+  direction: ''
+})
 
 const filters = ref({
   keyword: '',
@@ -154,13 +159,18 @@ onMounted(async () => {
 })
 
 const fetchInventory = async (page = 1) => {
+  const sortBy =
+    sort.value.field && sort.value.direction
+      ? `${sort.value.field}${sort.value.direction === 'asc' ? 'Asc' : 'Desc'}`
+      : null
+
   await inventoryStore.fetchInventory({
     page,
     largeId: largeCategoryId.value || null,
     mediumId: mediumCategoryId.value || null,
     smallId: smallCategoryId.value || null,
     keyword: filters.value.keyword || null,
-    sortBy: sortBy.value,
+    sortBy
   })
 }
 
@@ -199,24 +209,28 @@ const resetFilters = () => {
   mediumCategories.value = []
   smallCategories.value = []
   filters.value.keyword = ''
-  sortBy.value = ''
+  sort.value = { field: '', direction: '' }
   fetchInventory(1)
 }
 
-// 정렬함수
-const toggleSort = () => {
-  if (sortBy.value === null) {
-    sortBy.value = 'onHandQtyDesc'
-  } else if (sortBy.value === 'onHandQtyDesc') {
-    sortBy.value = 'onHandQtyAsc'
+const toggleSort = (field) => {
+  if (sort.value.field !== field) {
+    sort.value.field = field
+    sort.value.direction = 'desc'
+  } else if (sort.value.direction === 'desc') {
+    sort.value.direction = 'asc'
   } else {
-    sortBy.value = null
+    sort.value.field = ''
+    sort.value.direction = ''
   }
 
   fetchInventory(1)
 }
 
-
+const sortIcon = (field) => {
+  if (sort.value.field !== field) return '⇅'
+  return sort.value.direction === 'asc' ? '▲' : '▼'
+}
 </script>
 
 <style scoped>
