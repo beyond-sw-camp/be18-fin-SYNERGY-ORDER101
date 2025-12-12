@@ -13,7 +13,7 @@
           </div>
 
           <div class="form-row">
-            <label>발주 주차</label>
+            <label>생성일</label>
             <input class="input" :value="detail.targetWeek" readonly />
           </div>
 

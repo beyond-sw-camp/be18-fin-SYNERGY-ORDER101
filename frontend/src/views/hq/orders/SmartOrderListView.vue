@@ -35,15 +35,15 @@
       </div>
     </section>
 
-    <!-- 상단 요약 카드 -->
+    <!-- 요약 카드 -->
     <section class="summary-row">
       <div class="summary-card">
         <p class="summary-label">AI 추천 총 발주량</p>
-        <p class="summary-value">{{ totalRecommendedQty.toLocaleString() }} 건</p>
+        <p class="summary-value">{{ totalRecommendedQty.toLocaleString() }}</p>
       </div>
       <div class="summary-card">
         <p class="summary-label">예측 총 발주량</p>
-        <p class="summary-value">{{ totalForecastQty.toLocaleString() }} 건</p>
+        <p class="summary-value">{{ totalForecastQty.toLocaleString() }}</p>
       </div>
       <div class="summary-card">
         <p class="summary-label">초안</p>
@@ -55,12 +55,15 @@
       </div>
     </section>
 
-    <!-- 리스트 테이블 -->
+    <!-- 리스트 -->
     <section class="card">
       <h3 class="card-title">스마트 발주 목록</h3>
 
+      <!-- 테이블 영역 -->
       <div class="table-wrap">
-        <div v-if="loading" class="loading-box">데이터를 가져오는 중입니다...</div>
+        <div v-if="loading" class="loading-box">
+          데이터를 가져오는 중입니다...
+        </div>
 
         <table v-else class="smart-table">
           <thead>
@@ -72,12 +75,12 @@
               <th class="numeric">총 추천 발주량</th>
               <th class="numeric">총 발주 금액</th>
               <th class="center">상태</th>
-              <th class="center">주차</th>
+              <th class="center">생성 주차</th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="row in groupedRows"
+              v-for="row in pagedRows"
               :key="row.key"
               class="clickable-row"
               @click="openDetail(row)"
@@ -95,15 +98,54 @@
               </td>
               <td class="center">{{ row.targetWeek }}</td>
             </tr>
-            <tr v-if="!loading && groupedRows.length === 0">
-              <td colspan="8" class="no-data">스마트 발주가 없습니다.</td>
+
+            <tr v-if="!loading && pagedRows.length === 0">
+              <td colspan="8" class="no-data">
+                스마트 발주가 없습니다.
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <div v-if="totalPages > 1" class="pagination">
+        <button class="page-nav" @click="goPage(1)" :disabled="page === 1">
+          &laquo;
+        </button>
+        <button class="page-nav" @click="goPage(page - 1)" :disabled="page === 1">
+          &lsaquo;
+        </button>
+
+        <div class="pages">
+          <button
+            v-for="p in visiblePages"
+            :key="p"
+            :class="{ active: p === page }"
+            @click="goPage(p)"
+          >
+            {{ p }}
+          </button>
+        </div>
+
+        <button
+          class="page-nav"
+          @click="goPage(page + 1)"
+          :disabled="page === totalPages"
+        >
+          &rsaquo;
+        </button>
+        <button
+          class="page-nav"
+          @click="goPage(totalPages)"
+          :disabled="page === totalPages"
+        >
+          &raquo;
+        </button>
+      </div>
     </section>
   </div>
 </template>
+
 
 <script setup>
 import apiClient from '@/components/api'
@@ -112,49 +154,76 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+/* 필터 */
 const startDate = ref('')
 const endDate = ref('')
 const selectedStatus = ref('')
 
+/* 데이터 */
 const rawRows = ref([])
 const groupedRows = ref([])
 
+/* 페이지네이션 */
+const page = ref(1)
+const perPage = ref(5)
+
+/* 상태 */
 const loading = ref(false)
 
+/* 요약 */
 const totalRecommendedAmount = computed(() =>
   groupedRows.value.reduce((sum, r) => sum + (r.totalAmount || 0), 0),
 )
-
 const totalForecastQty = computed(() =>
   groupedRows.value.reduce((sum, r) => sum + r.totalForecastQty, 0),
 )
 const totalRecommendedQty = computed(() =>
   groupedRows.value.reduce((sum, r) => sum + r.totalRecommendedQty, 0),
 )
-const draftCount = computed(() => groupedRows.value.filter((r) => r.status === 'DRAFT_AUTO').length)
-const submittedCount = computed(
-  () => groupedRows.value.filter((r) => r.status === 'SUBMITTED').length,
+const draftCount = computed(
+  () => groupedRows.value.filter((r) => r.status === 'DRAFT_AUTO').length,
 )
+
+/* 페이지 계산 */
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(groupedRows.value.length / perPage.value)),
+)
+
+const pagedRows = computed(() => {
+  const start = (page.value - 1) * perPage.value
+  return groupedRows.value.slice(start, start + perPage.value)
+})
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = page.value
+  const delta = 2
+  const pages = []
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    if (start === 1) end = 5
+    if (end === total) start = total - 4
+
+    for (let i = start; i <= end; i++) pages.push(i)
+  }
+  return pages
+})
 
 onMounted(() => {
   const today = new Date()
-
-  // (1) 시작일 = 지난 11개월 전의 1일
   const start = new Date(today)
   start.setMonth(start.getMonth() - 11)
   start.setDate(1)
   startDate.value = start.toISOString().slice(0, 10)
 
-  // (2) 다음주 월요일 계산
-  const nextWeek = new Date(today)
-  const day = nextWeek.getDay() // 0=일,1=월,...6=토
-  const diffToNextMonday = (8 - day) % 7 || 7
-  nextWeek.setDate(nextWeek.getDate() + diffToNextMonday)
-
-  // (3) 종료일 = (다음주 월요일 + 1개월)의 마지막 날
-  const end = new Date(nextWeek)
+  const end = new Date(today)
   end.setMonth(end.getMonth() + 1)
-  end.setDate(0) // 그 달의 마지막 날짜
+  end.setDate(0)
   endDate.value = end.toISOString().slice(0, 10)
 
   fetchSmartOrders()
@@ -164,44 +233,31 @@ async function fetchSmartOrders() {
   try {
     const params = {}
 
-    if (selectedStatus.value) {
-      params.status = selectedStatus.value
-    }
-
+    if (selectedStatus.value) params.status = selectedStatus.value
     if (startDate.value && endDate.value) {
-      if (startDate.value > endDate.value) {
-        alert('시작일이 종료일보다 늦을 수 없습니다.')
-        return
-      }
       params.from = startDate.value
       params.to = endDate.value
     }
 
     loading.value = true
     const res = await apiClient.get('/api/v1/smart-orders', { params })
-
     rawRows.value = res.data || []
+
     groupBySupplierAndWeek()
+    page.value = 1
   } catch (e) {
-    console.error('스마트 발주 조회 실패:', e)
-    alert('스마트 발주 목록을 불러오는 중 오류가 발생했습니다.')
+    console.error(e)
+    alert('스마트 발주 조회 실패')
   } finally {
     loading.value = false
   }
-}
-
-function formatCurrency(value) {
-  const num = Number(value || 0)
-  return num.toLocaleString('ko-KR') + '원'
 }
 
 function groupBySupplierAndWeek() {
   const map = new Map()
 
   for (const row of rawRows.value) {
-    const status = row.smartOrderStatus
     const key = `${row.supplierId}_${row.targetWeek}`
-
     if (!map.has(key)) {
       map.set(key, {
         key,
@@ -213,41 +269,41 @@ function groupBySupplierAndWeek() {
         totalForecastQty: 0,
         totalRecommendedQty: 0,
         totalAmount: 0,
-        status: status,
+        status: row.smartOrderStatus,
       })
     }
 
     const g = map.get(key)
-
-    g.itemCount += 1
+    g.itemCount++
     g.totalForecastQty += row.forecastQty
     g.totalRecommendedQty += row.recommendedOrderQty
     g.totalAmount += Number(row.unitPrice) * Number(row.recommendedOrderQty)
-
-    if (status === 'SUBMITTED') {
-      g.status = 'SUBMITTED'
-    } else if (status === 'CONFIRMED' && g.status !== 'SUBMITTED') {
-      g.status = 'CONFIRMED'
-    }
   }
 
   groupedRows.value = [...map.values()]
 }
 
+function goPage(p) {
+  if (p < 1 || p > totalPages.value) return
+  page.value = p
+}
+
 function openDetail(row) {
   router.push({
     name: 'hq-smart-order-detail',
-    params: {
-      supplierId: row.supplierId,
-      targetWeek: row.targetWeek,
-    },
+    params: { supplierId: row.supplierId, targetWeek: row.targetWeek },
   })
+}
+
+function formatCurrency(v) {
+  return Number(v || 0).toLocaleString('ko-KR') + '원'
 }
 
 function statusLabel(s) {
   if (s === 'CONFIRMED') return '승인'
   if (s === 'SUBMITTED') return '제출'
   if (s === 'DRAFT_AUTO') return '초안'
+  if (s === 'REJECTED') return '반려'
   return s || '-'
 }
 
@@ -255,7 +311,8 @@ function statusClass(s) {
   if (s === 'CONFIRMED') return 's-confirmed'
   if (s === 'SUBMITTED') return 's-submitted'
   if (s === 'DRAFT_AUTO') return 's-draft'
-  return 's-unknown'
+  if (s === 'REJECTED') return 's-rejected'
+  return ''
 }
 </script>
 
@@ -266,6 +323,34 @@ function statusClass(s) {
 
 .page-header {
   margin-bottom: 16px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.page-nav,
+.pages button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+  cursor: pointer;
+
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+}
+.page-nav:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+.pages button.active {
+  background: #111827;
+  color: white;
 }
 
 .filter-row {
@@ -299,6 +384,10 @@ function statusClass(s) {
   padding: 8px 14px;
   cursor: pointer;
 }
+.s-rejected {
+  background: #ef4444;
+}
+
 
 .summary-row {
   display: flex;

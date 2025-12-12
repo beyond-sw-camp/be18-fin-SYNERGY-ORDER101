@@ -46,6 +46,7 @@ const StoreOrderListView = () => import('../views/store/purchase/StoreOrderListV
 const StoreOrderDetailView = () => import('../views/store/purchase/StoreOrderDetailView.vue')
 const StoreOrderDashboardView = () => import('../views/hq/dashboard/StoreOrderDashboardView.vue')
 const SystemHomeView = () => import('../views/system/SystemHomeView.vue')
+const FranchiseDeliveryDetailView = () => import('../views/hq/franchise/FranchiseDeliveryDetailView.vue')
 
 const hqRoutes = [
   {
@@ -209,6 +210,13 @@ const hqRoutes = [
     name: 'hq-franchise-delivery',
     component: FranchiseDeliveryView,
     meta: { title: '배송 목록 조회' },
+  },
+  {
+    path: '/hq/franchise/delivery/:id',
+    name: 'hq-franchise-delivery-detail',
+    component: FranchiseDeliveryDetailView,
+    meta: { title: '배송 상세 조회' },
+    props: true,
   },
   {
     path: '/hq/smart-orders',
