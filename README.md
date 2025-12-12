@@ -335,13 +335,14 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 6. 데이터베이스 설계 (ERD)
 
-[ERD CLOUD](https://www.erdcloud.com/d/Lkxma6zWujnHvtvY3)
+[ERD CLOUD](https://www.erdcloud.com/d/BNoDxLbwss3ZbKg8x)
   
 <details>
+
   <summary><b>ERD</b></summary>
   <div markdown="1">
     <ul>
-      <img width="5500" height="2412" alt="오더101 (1)" src="https://github.com/user-attachments/assets/83de89df-73fd-4137-85de-5110a53449ec" />
+      <img width="5470" height="2332" alt="오더101 (2)" src="https://github.com/user-attachments/assets/2d019e1e-78d5-4827-858c-c0c8c0ad4a77" />
     </ul>
   </div>
 </details>
