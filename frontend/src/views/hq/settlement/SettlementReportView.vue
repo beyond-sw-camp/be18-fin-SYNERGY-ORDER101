@@ -104,7 +104,6 @@
                                 <th>{{ currentFilterData?.scope === 'AR' ? '가맹점명' : '공급사명' }}</th>
                                 <th class="numeric-header">정산 수량</th>
                                 <th class="numeric-header">정산 금액</th>
-                                <th class="center-header">상태</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -115,14 +114,9 @@
                                 </td>
                                 <td class="numeric">{{ formatNumber(row.count) }}개</td>
                                 <td class="numeric">₩{{ formatNumber(row.netAmount) }}</td>
-                                <td class="center">
-                                    <span class="status-badge" :class="getStatusClass(row.status)">
-                                        {{ row.status }}
-                                    </span>
-                                </td>
                             </tr>
                             <tr v-if="tableData.length === 0">
-                                <td colspan="4" class="empty-cell">
+                                <td colspan="3" class="empty-cell">
                                     조회된 데이터가 없습니다.
                                 </td>
                             </tr>
