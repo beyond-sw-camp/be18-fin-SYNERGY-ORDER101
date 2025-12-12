@@ -159,6 +159,10 @@ async function fetchDeliveryList() {
     const storeNamesFromResponse = p.content.map(item => item.storeName)
     allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
 
+    // 모든 응답 데이터에서 가맹점명 수집 (다른 페이지의 데이터도 포함)
+    const storeNamesFromResponse = p.content.map(item => item.storeName)
+    allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
+
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
   } catch (e) {
