@@ -81,7 +81,7 @@
     </div>
 
     <!-- 품목 추가 모달 (OrderItemModal - 전체 품목 조회) -->
-    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems" :selectedProductIds="Array.from(productIdSet)" />
+    <OrderItemModal v-if="showItemModal" @close="showItemModal = false" @add="onAddItems" />
   </div>
 </template>
 
@@ -192,7 +192,7 @@ async function onSubmitOrder() {
 
     if (res.status === 201 || res.status === 200) {
       const orderId = res.data?.storeOrderId || res.data?.id || ''
-      alert(`발주 요청이 완료되었습니다.`)
+      alert(`발주 요청이 완료되었습니다.`);
       resetForm()
     }
   } catch (e) {
