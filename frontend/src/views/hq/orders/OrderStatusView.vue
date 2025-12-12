@@ -226,22 +226,6 @@ async function search() {
       totalPagesFromBackend.value = Math.ceil(mappedRows.length / perPage.value)
     }
 
-    // 프론트엔드 날짜 필터링
-    if (filters.value.startDate || filters.value.endDate) {
-      mappedRows = mappedRows.filter(row => {
-        if (!row.requestedAt) return false
-        
-        const requestDate = new Date(row.requestedAt)
-        const startDate = filters.value.startDate ? new Date(filters.value.startDate + 'T00:00:00') : null
-        const endDate = filters.value.endDate ? new Date(filters.value.endDate + 'T23:59:59') : null
-        
-        if (startDate && requestDate < startDate) return false
-        if (endDate && requestDate > endDate) return false
-        
-        return true
-      })
-    }
-
     rows.value = mappedRows;
 
   } catch (err) {
