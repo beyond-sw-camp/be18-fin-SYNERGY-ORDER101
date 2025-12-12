@@ -147,8 +147,8 @@ public class NotificationService {
 
         String title = "가맹점 주문 승인 요청!";
         String body = String.format(
-                "승인 요청이 필요한 %s 가맹점 주문이 있습니다. (%s)\n- 주문ID: %d\n- 가맹점ID: %d",
-                storeName, storeName, orderId, storeId
+                "승인 요청이 필요한 %s 가맹점 주문이 있습니다.\n",
+                storeName
         );
 
         for (User hq : hqList) {
@@ -184,11 +184,9 @@ public class NotificationService {
 
         String title = "주문 승인 결과";
         String body = String.format(
-                "%s 주문건이 %s되었습니다.\n- 주문ID: %d\n- 주문번호: %s\n- 주문상태: %s",
+                "%s 주문건이 %s되었습니다.\n- 주문상태: %s",
                 orderNo,
                 approved ? "승인" : "반려",
-                orderId,
-                orderNo,
                 statusName
         );
 
@@ -221,11 +219,8 @@ public class NotificationService {
 
         String title = "자동 생성된 자동발주";
         String body = String.format(
-                "%s 공급사에 대한 자동발주가 생성되었습니다.\n" +
-                        "- 발주번호: %s\n" +
-                        "- 발주유형: %s\n" +
-                        "- 공급사번호: %s",
-                supplierName, purchaseNo, orderType, supplierCode
+                "%s 공급사에 대한 자동발주가 생성되었습니다.\n",
+                supplierName
         );
 
         for (User hq : hqList) {
@@ -251,9 +246,8 @@ public class NotificationService {
     public void notifySmartOrderCreatedToHq(List<User> hqList, Supplier supplier, List<SmartOrder> smartOrderList) {
         String title = "자동 생성된 스마트 발주";
         String body = String.format(
-                "%s 공급사에 대한 스마트발주가 생성되었습니다.\n- 스마트발주 건수: %d\n",
-                supplier.getSupplierName(),
-                smartOrderList.size()
+                "%s 공급사에 대한 스마트발주가 생성되었습니다.\n-",
+                supplier.getSupplierName()
         );
 
         for (User hq : hqList) {
