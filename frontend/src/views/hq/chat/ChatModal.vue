@@ -35,26 +35,35 @@ const isConnected = ref(false)
 let stompClient = null
 const messageEndRef = ref(null)
 
+// ----------------- 유틸: 메시지 매핑 -----------------
+
+function mapChatItem(item) {
+  return {
+    senderName: item.senderName,
+    message: item.message,
+    // 서버에서 createdAt / sendAt 내려주면 그걸 쓰고,
+    // 없으면 지금 시간이라도 넣어서 항상 시간 표시되도록
+    createdAt: item.createdAt || item.sendAt || new Date().toISOString(),
+  }
+}
+
 // ----------------- 유틸: 시간 포맷 -----------------
 
-function formatDateTime(dateLike) {
-  if (!dateLike) return ''
-  const d = typeof dateLike === 'string' ? new Date(dateLike) : dateLike
-  if (Number.isNaN(d.getTime())) return ''
-
-  // 2025-12-11 15:32 이런 형식
-  // const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mi = String(d.getMinutes()).padStart(2, '0')
-  return `${mm}-${dd} ${hh}:${mi}`
+function formatTime(isoString) {
+  if (!isoString) return ''
+  const d = new Date(isoString)
+  const h = d.getHours()
+  const m = d.getMinutes().toString().padStart(2, '0')
+  const ampm = h < 12 ? '오전' : '오후'
+  const hh = h % 12 === 0 ? 12 : h % 12
+  return `${ampm} ${hh}:${m}`
 }
 
 // ----------------- 웹소켓 연결 -----------------
 
 function connectWebSocket() {
   if (!chatRoomId.value || !token.value) {
+    console.warn('[STOMP] roomId/token 없음, 연결 생략')
     return
   }
 
@@ -71,7 +80,7 @@ function connectWebSocket() {
       // console.log('[STOMP debug]', str)
     },
     onConnect() {
-
+      console.log('[STOMP] connected, room =', chatRoomId.value)
       isConnected.value = true
       connecting.value = false
 
@@ -79,12 +88,10 @@ function connectWebSocket() {
         `/sub/chat/${chatRoomId.value}`,
         (frame) => {
           const payload = JSON.parse(frame.body)
-          messages.value.push({
-            senderName: payload.senderName,
-            message: payload.message,
-            // 서버에서 보낸 시간이 있으면 사용, 없으면 현재 시간
-            createdAt: payload.createdAt ?? payload.sentAt ?? payload.time ?? null,
-          })
+          console.log('[STOMP] message in room', chatRoomId.value, payload)
+
+          // 🔹 실시간 메시지도 mapChatItem 거쳐서 createdAt 포함
+          messages.value.push(mapChatItem(payload))
           scrollToBottom()
         },
         {
@@ -101,6 +108,7 @@ function connectWebSocket() {
   })
 
   stompClient.onWebSocketClose = (evt) => {
+    console.warn('[STOMP] websocket closed', evt)
     isConnected.value = false
   }
 
@@ -118,6 +126,7 @@ function disconnectWebSocket() {
 
 // ----------------- 초기 로딩 -----------------
 
+// ----------------- 초기 로딩 -----------------
 async function initChat() {
   loading.value = true
   errorMsg.value = ''
@@ -138,17 +147,14 @@ async function initChat() {
 
     const history = await getChatHistory(roomId)
 
-    messages.value = history.map((m) => ({
-      senderName: m.senderName,
-      message: m.message,
-      createdAt: m.createdAt ?? m.sentAt ?? m.time ?? null,
-    }))
+    // BaseResponseDto 대응
+    const items = Array.isArray(history.items) ? history.items : history
+    messages.value = items.map(mapChatItem)
 
-    await nextTick()
-    scrollToBottom()
-
+    // 읽음 처리
     await markChatRead(roomId)
 
+    // 웹소켓 연결
     connectWebSocket()
   } catch (e) {
     console.error('[CHAT] initChat error', e)
@@ -160,6 +166,11 @@ async function initChat() {
   } finally {
     loading.value = false
   }
+
+  // 🔽 여기서야 비로소 loading이 false가 되어서
+  // chat-messages / messageEndRef가 DOM에 렌더된 상태!
+  await nextTick()
+  scrollToBottom()
 }
 
 // ----------------- 메시지 전송 -----------------
@@ -177,6 +188,8 @@ function sendMessage() {
   const payload = {
     senderName: myName.value,
     message: text,
+    // 서버에서 안 세팅해주면 여기서라도 미리 보내도 됨 (선택)
+    // createdAt: new Date().toISOString(),
   }
 
   stompClient.publish({
@@ -239,6 +252,7 @@ onBeforeUnmount(() => {
               :key="idx"
               :class="['chat-message', msg.senderName === myName ? 'me' : 'other']"
             >
+              <!-- 보낸 사람 -->
               <div class="chat-meta">
                 <span class="chat-sender">
                   {{ msg.senderName === myName ? '나' : msg.senderName }}
@@ -251,7 +265,7 @@ onBeforeUnmount(() => {
                   {{ msg.message }}
                 </div>
                 <span class="chat-time">
-                  {{ formatDateTime(msg.createdAt) }}
+                  {{ formatTime(msg.createdAt) }}
                 </span>
               </div>
             </div>
@@ -372,6 +386,9 @@ onBeforeUnmount(() => {
   font-size: 11px;
   color: #6b7280;
   margin-bottom: 2px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 /* 말풍선 + 시간 한 줄 */
@@ -386,7 +403,7 @@ onBeforeUnmount(() => {
   flex-direction: row-reverse; /* 내 말풍선은 오른쪽, 시간은 왼쪽 */
 }
 
-/* 말풍선 자체는 내용 길이에 맞게 */
+/* 말풍선: 길이에 맞게 + 최대 폭 제한 */
 .chat-bubble {
   padding: 8px 10px;
   border-radius: 14px;
@@ -396,7 +413,7 @@ onBeforeUnmount(() => {
   color: #111827;
   word-break: break-word;
   display: inline-block;
-  max-width: 260px; /* 너무 길어지지 않게 */
+  max-width: 260px;
 }
 
 .chat-message.me .chat-bubble {
@@ -426,11 +443,33 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   border: 1px solid #d1d5db;
   outline: none;
+  font-family:
+    'Pretendard',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
 .chat-input:focus {
   border-color: #4f46e5;
   box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+}
+
+/* placeholder 전용 스타일 */
+.chat-input::placeholder {
+  font-family:
+    'Pretendard',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+  letter-spacing: 0.01em;
 }
 
 /* 예쁜 전송 버튼 */
@@ -468,37 +507,5 @@ onBeforeUnmount(() => {
   opacity: 0.6;
   cursor: default;
   box-shadow: none;
-}
-
-.chat-input {
-  flex: 1;
-  resize: none;
-  font-size: 13px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  outline: none;
-  font-family:
-    'Pretendard',
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif; /* ← 전체 인풋 폰트 */
-}
-
-/* placeholder 전용 스타일 */
-.chat-input::placeholder {
-  font-family:
-    'Pretendard',
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  color: #9ca3af; /* 살짝 연한 회색 */
-  letter-spacing: 0.01em;
 }
 </style>

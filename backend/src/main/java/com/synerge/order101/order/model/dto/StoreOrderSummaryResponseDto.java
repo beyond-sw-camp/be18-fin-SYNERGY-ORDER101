@@ -39,7 +39,7 @@ public class StoreOrderSummaryResponseDto {
         return StoreOrderSummaryResponseDto.builder()
                 .storeOrderId(storeOrder.getStoreOrderId())
                 .orderNo(storeOrder.getOrderNo())
-                .storeName(storeOrder.getStore().getStoreName())
+                .storeName(storeOrder.getStore() != null ? storeOrder.getStore().getStoreName() : "삭제된 매장")
                 .totalAmount(storeOrder.getStoreOrderDetails().stream()
                         .map(detail -> Optional.ofNullable(detail.getAmount()).orElse(BigDecimal.ZERO))
                         .reduce(BigDecimal.ZERO, BigDecimal::add))

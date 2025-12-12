@@ -29,16 +29,16 @@ const totalCount = ref(0)
 
 // 타입 옵션 - currentType에 따라 동적으로 결정
 const typeOptions = computed(() => {
-    if (props.currentType === 'ALL') {
-        return [
-            { label: '가맹점', value: 'FRANCHISE' },
-            { label: '공급업체', value: 'SUPPLIER' }
-        ]
-    } else if (props.currentType === 'FRANCHISE') {
-        return [{ label: '가맹점', value: 'FRANCHISE' }]
-    } else {
-        return [{ label: '공급업체', value: 'SUPPLIER' }]
-    }
+  if (props.currentType === 'ALL') {
+    return [
+      { label: '가맹점', value: 'FRANCHISE' },
+      { label: '공급업체', value: 'SUPPLIER' },
+    ]
+  } else if (props.currentType === 'FRANCHISE') {
+    return [{ label: '가맹점', value: 'FRANCHISE' }]
+  } else {
+    return [{ label: '공급업체', value: 'SUPPLIER' }]
+  }
 })
 
 // 탭 표시 여부
@@ -242,7 +242,7 @@ watch(
             type="text"
             :placeholder="searchPlaceholder"
             class="search-input"
-            @keyup.enter="handleSearch"
+            @keydown.enter.prevent.stop="handleSearch"
           />
           <button class="btn-search" @click="handleSearch">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -276,7 +276,10 @@ watch(
             v-for="vendor in filteredVendors"
             :key="vendor.value"
             class="vendor-item"
-            :class="{ active: selectedVendor?.value === vendor.value, inactive: vendor.type === 'FRANCHISE' && !vendor.isActive }"
+            :class="{
+              active: selectedVendor?.value === vendor.value,
+              inactive: vendor.type === 'FRANCHISE' && !vendor.isActive,
+            }"
             @click="(vendor.type === 'SUPPLIER' || vendor.isActive) && selectVendor(vendor)"
           >
             <div class="vendor-info">
@@ -298,7 +301,11 @@ watch(
               >
                 <path d="M5 13l4 4L19 7" stroke="#6b72f9" stroke-width="2" stroke-linecap="round" />
               </svg>
-              <span v-if="vendor.type === 'FRANCHISE' && !vendor.isActive" style="color: #ef4444; font-size: 12px">비활성</span>
+              <span
+                v-if="vendor.type === 'FRANCHISE' && !vendor.isActive"
+                style="color: #ef4444; font-size: 12px"
+                >비활성</span
+              >
             </div>
           </div>
         </div>

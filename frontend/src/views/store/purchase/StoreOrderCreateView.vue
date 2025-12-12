@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import OrderItemModal from '@/components/modal/OrderItemModal.vue'
 import apiClient from '@/components/api'
 import { useAuthStore } from '@/stores/authStore'
@@ -99,6 +99,7 @@ const authStore = useAuthStore()
 const showItemModal = ref(false)
 const rows = ref([])
 const productIdSet = ref(new Set())
+const inventoryMap = ref({}) // 재고 데이터 캐시
 
 // --- 계산된 속성 (Computed) ---
 const totalQty = computed(() =>
@@ -114,12 +115,37 @@ const canSubmitOrder = computed(() => rows.value.length > 0)
 // --- 이벤트 핸들러 ---
 
 /**
+ * 가맹점 재고 조회 (최초 1회만)
+ */
+async function loadInventory() {
+  const storeId = authStore.userInfo?.storeId
+  if (!storeId) return
+
+  try {
+    const response = await apiClient.get(`/api/v1/stores/${storeId}/inventory`, {
+      params: {
+        page: 1,
+        numOfRows: 1000
+      }
+    })
+    
+    const inventoryItems = response.data?.items || []
+    inventoryItems.forEach(item => {
+      inventoryMap.value[item.productId] = item.onHandQty ?? 0
+    })
+  } catch (error) {
+    console.error('재고 조회 실패:', error)
+  }
+}
+
+/**
  * OrderItemModal에서 선택된 품목들을 받아 발주 목록에 추가합니다.
  */
 function onAddItems(products) {
   if (!Array.isArray(products)) {
     return
   }
+
   products.forEach(p => {
     if (productIdSet.value.has(p.productId)) return
 
@@ -129,7 +155,7 @@ function onAddItems(products) {
       sku: p.sku,
       name: p.name,
       price: p.price || 0,
-      stock: p.stock ?? 0,
+      stock: inventoryMap.value[p.productId] ?? 0,
       qty: 1
     })
   })
@@ -149,6 +175,11 @@ function removeRow(idx) {
 function openItemModal() {
   showItemModal.value = true
 }
+
+// 컴포넌트 마운트 시 재고 로드
+onMounted(() => {
+  loadInventory()
+})
 
 /**
  * 폼 초기화

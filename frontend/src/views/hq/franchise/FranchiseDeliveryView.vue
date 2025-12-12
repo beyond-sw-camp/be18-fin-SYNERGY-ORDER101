@@ -170,6 +170,10 @@ async function fetchDeliveryList() {
       status: item.shipmentStatus,
       requestedAt: item.orderDatetime,
     }))
+    console.log(p.content[0])
+
+    const storeNamesFromResponse = p.content.map(item => item.storeName)
+    allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
 
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
