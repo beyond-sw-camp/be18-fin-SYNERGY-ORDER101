@@ -102,6 +102,7 @@ public class ChatService {
             ChatDto chatDto = ChatDto.builder()
                     .message(m.getContent())
                     .senderName(m.getUser().getName())
+                    .createdAt(m.getCreatedAt())
                     .build();
             dtos.add(chatDto);
         }
