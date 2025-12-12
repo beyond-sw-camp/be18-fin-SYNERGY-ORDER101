@@ -14,10 +14,13 @@ export async function getSupplierList(page, pageSize, keyword) {
   // API 엔드포인트는 /api/v1/suppliers 또는 유사한 경로라고 가정합니다.
   const url = '/api/v1/suppliers'
 
+  // 1-based 페이지를 0-based로 변환
+  const apiPage = page - 1
+
   // 쿼리 파라미터 객체 구성
   const params = {
-    page,
-    size: pageSize,
+    page: page, // 백엔드는 1-based page를 받음
+    numOfRows: pageSize, // 백엔드 파라미터명과 일치
     keyword: keyword || '',
   }
 
@@ -32,7 +35,7 @@ export async function getSupplierList(page, pageSize, keyword) {
     return {
       suppliers: mappedSuppliers,
       totalCount: data.totalCount || 0,
-      currentPage: data.page ?? page, // 서버가 내려준 page 사용
+      currentPage: data.page || page, // 서버가 1-based page를 그대로 반환
     }
   } catch (error) {
     console.error('[API Error] 공급업체 목록 조회 실패:', error.message, error.response)

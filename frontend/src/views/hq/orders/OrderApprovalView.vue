@@ -5,7 +5,8 @@
       <PurchaseApprovalActions 
         v-if="showButtons"
         :poId="po.purchaseId"
-        sourceType="REGULAR"
+        :sourceType="po.sourceType"
+        :smartOrderIds="po.smartOrderIds"
         entityName="발주"
         approveLabel="승인"
         rejectLabel="반려"
@@ -39,7 +40,9 @@ const po = reactive({
   userName: '',
   requestedAt: '',
   status: '',
-  items: []
+  items: [],
+  smartOrderIds: [],
+  sourceType: 'REGULAR'
 })
 
 const orderData = computed(() => ({
@@ -59,6 +62,11 @@ const fetchPurchaseDetail = async () => {
       })
 
       const data = res.data || {}
+      console.log('스마트 발주 상세 API 응답:', data)
+
+      // smartOrderIds 추출: data.items 배열에서 각 item의 id 또는 smartOrderId 필드
+      const extractedIds = (data.items || []).map(item => item.smartOrderId || item.id).filter(id => id)
+      console.log('추출된 smartOrderIds:', extractedIds)
 
       Object.assign(po, {
         purchaseId: poId,
@@ -67,6 +75,8 @@ const fetchPurchaseDetail = async () => {
         userName: data.requesterName || data.requester || '시스템',
         requestedAt: data.targetWeek || data.snapshotAt || '',
         status: data.smartOrderStatus || data.status || 'DRAFT_AUTO',
+        smartOrderIds: extractedIds,
+        sourceType: 'SMART'
       })
 
       po.items = (data.items || []).map(item => ({

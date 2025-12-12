@@ -152,7 +152,7 @@ function handleSearch(filterData) {
     endDate: filterData.endDate,
     keyword: filterData.keyword
   }
-  page.value = 1
+  page.value = 1 // 필터 변경 시 첫 페이지로 이동
   search()
 }
 
@@ -207,7 +207,7 @@ async function search() {
       }
     });
 
-    // 프론트엔드 타입 필터링
+    // 프론트엔드 타입 필터링 (백엔드가 타입 필터를 지원하지 않는 경우에만)
     if (filters.value.orderType) {
       mappedRows = mappedRows.filter(row => {
         if (filters.value.orderType === 'AUTO') {
@@ -220,6 +220,10 @@ async function search() {
         }
         return true
       })
+      
+      // 프론트엔드에서 필터링했으므로 페이지네이션 재계산
+      totalElements.value = mappedRows.length
+      totalPagesFromBackend.value = Math.ceil(mappedRows.length / perPage.value)
     }
 
     // 프론트엔드 날짜 필터링
