@@ -197,6 +197,16 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 2. WBS
 [WBS](https://docs.google.com/spreadsheets/d/1isf6GO9iqXJyhFxtxYRvIOtjqf20IP69H_oeq2SgyC8/edit?gid=509945759#gid=509945759)
+<details>
+  <summary><b>WBS</b></summary>
+  <div markdown="2">
+    <ul>
+    <img width="1463" height="1217" alt="image" src="https://github.com/user-attachments/assets/01468760-3a6d-445b-87d1-e661171d42eb" />
+    <img width="1463" height="953" alt="image" src="https://github.com/user-attachments/assets/39164193-4435-4fd7-bceb-c03f2def50d8" />
+    </ul>
+  </div>
+</details>
+
 
 
 ## 3. 요구사항 명세서
