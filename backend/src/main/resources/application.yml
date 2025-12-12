@@ -6,20 +6,13 @@ spring:
     url: jdbc:mariadb://${DB_HOST:${DB_HOST:localhost}}:${DB_PORT:${DB_PORT:3306}}/${DB_NAME:${DB_NAME:order101}}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-  web:
-    resources:
-      add-mapping: false
-  mvc:
-    async:
-      request-timeout: 300000  # 5분 (SSE 타임아웃)
-    throw-exception-if-no-handler-found: false  # 정적 리소스 404 로그 억제
   jpa:
     hibernate:
       ddl-auto: none
     open-in-view: false
-    show-sql: false
+    show-sql: false # 배포에서는 SQL 출력을 비활성화
     properties:
-      hibernate.format_sql: false
+      hibernate.format_sql: false # 배포에서는 포맷된 SQL도 비활성화
   cache:
     type: redis
   data:
@@ -31,12 +24,6 @@ spring:
 
 server:
   port: 8080
-  tomcat:
-    connection-timeout: 30000  # 30초
-    max-connections: 10000
-    threads:
-      max: 200
-      min-spare: 10
 
 jwt:
   secret: ${JWT_SECRET}
@@ -59,8 +46,17 @@ cloud:
 
 logging:
   level:
-    root: WARN
-    com.synerge: INFO
-    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
-    org.springframework.web.servlet.resource.ResourceHttpRequestHandler: ERROR  # 정적 리소스 404 로그 억제
-    org.springframework.web.servlet.handler.AbstractHandlerExceptionResolver: ERROR
+    root: ERROR                   # 전체 애플리케이션 기본 로그 레벨 (치명적/오류만)
+    com.synerge: ERROR            # 애플리케이션 패키지도 ERROR로 제한
+    org.springframework.security: ERROR
+    org.springframework.web.reactive.function.client: ERROR
+    org.hibernate.resource.transaction: ERROR
+    org.springframework.jdbc: ERROR
+    org.hibernate: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.hibernate.orm.query: ERROR
+
+# 운영 환경에서는 debug/sql 로깅을 켜지 마세요.
+# 필요 시 application-prod.yml을 만들어 운영 프로파일로 관리하거나 Spring Boot Actuator를 통해
+# 런타임에 로그 레벨을 동적으로 조정하세요.
