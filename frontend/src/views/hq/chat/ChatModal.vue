@@ -55,7 +55,6 @@ function formatDateTime(dateLike) {
 
 function connectWebSocket() {
   if (!chatRoomId.value || !token.value) {
-    console.warn('[STOMP] roomId/token 없음, 연결 생략')
     return
   }
 
@@ -72,7 +71,6 @@ function connectWebSocket() {
       // console.log('[STOMP debug]', str)
     },
     onConnect() {
-      console.log('[STOMP] connected, subscribe room =', chatRoomId.value)
 
       isConnected.value = true
       connecting.value = false
@@ -81,7 +79,6 @@ function connectWebSocket() {
         `/sub/chat/${chatRoomId.value}`,
         (frame) => {
           const payload = JSON.parse(frame.body)
-          console.log('[STOMP] message in room', chatRoomId.value, payload)
           messages.value.push({
             senderName: payload.senderName,
             message: payload.message,
@@ -104,7 +101,6 @@ function connectWebSocket() {
   })
 
   stompClient.onWebSocketClose = (evt) => {
-    console.warn('[STOMP] websocket closed', evt)
     isConnected.value = false
   }
 
@@ -182,8 +178,6 @@ function sendMessage() {
     senderName: myName.value,
     message: text,
   }
-
-  console.log('[STOMP] publish to room', chatRoomId.value, payload)
 
   stompClient.publish({
     destination: `/pub/chat/${chatRoomId.value}`,
