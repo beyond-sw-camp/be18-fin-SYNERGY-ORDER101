@@ -73,7 +73,9 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
                 .where(
                         statusIn(statusStrings),
                         searchTextContains(searchText),
-                        vendorIdEq(vendorId)
+                        vendorIdEq(vendorId),
+                        createdAtAfterOrEq(cond.getFromDate()),
+                        createdAtBeforeOrEq(cond.getToDate())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -87,7 +89,9 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
                 .where(
                         statusIn(statusStrings),
                         searchTextContains(searchText),
-                        vendorIdEq(vendorId)
+                        vendorIdEq(vendorId),
+                        createdAtAfterOrEq(cond.getFromDate()),
+                        createdAtBeforeOrEq(cond.getToDate())
                 )
                 .fetchOne();
 
@@ -122,6 +126,16 @@ public class PurchaseRepositoryImpl implements PurchaseRepositoryCustom {
     private BooleanExpression vendorIdEq(Long vendorId) {
         if (vendorId == null) return null;
         return purchase.supplier.supplierId.eq(vendorId);
+    }
+
+    private BooleanExpression createdAtAfterOrEq(java.time.LocalDate fromDate) {
+        if (fromDate == null) return null;
+        return purchase.createdAt.goe(fromDate.atStartOfDay());
+    }
+
+    private BooleanExpression createdAtBeforeOrEq(java.time.LocalDate toDate) {
+        if (toDate == null) return null;
+        return purchase.createdAt.loe(toDate.atTime(23, 59, 59));
     }
 
 }
