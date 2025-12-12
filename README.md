@@ -291,10 +291,11 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
   <summary><b>시스템 아키텍처</b></summary>
   <div markdown="1">
     <ul>
-      <img width="9992" height="8259" alt="order101_시스템아키텍처" src="https://github.com/user-attachments/assets/f223dd4f-9b3c-4822-9bb8-6fe8b7f158fd" />
+      <img width="9992" height="8259" alt="order101_sy" src="https://github.com/user-attachments/assets/92275fa6-2d8d-42b2-8b1b-01d6e687ca4f" />
     </ul>
   </div>
 </details>
+
 
 
 
