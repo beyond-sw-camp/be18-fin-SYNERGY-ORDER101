@@ -86,13 +86,13 @@ const onDocumentClick = (e) => {
 
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
-  
+
   //  새로고침/창닫기 시 SSE 연결 정리
   const handleBeforeUnload = () => {
     notiStore.disconnectSSE()
   }
   window.addEventListener('beforeunload', handleBeforeUnload)
-  
+
   notiStore.init()
 })
 
@@ -420,6 +420,19 @@ const closeChatModal = () => {
   font-weight: 600;
   cursor: pointer;
   border: none;
+}
+
+.avatar {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo',
+    'Malgun Gothic', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 0;
+  text-align: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .notification-img {
