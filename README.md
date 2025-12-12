@@ -50,13 +50,15 @@
 
 ## <a id="0-발표-슬라이드"></a> 0. 발표 슬라이드
 
-[발표 슬라이드]()
+[발표 슬라이드](https://www.canva.com/design/DAG6-Nh9Ixs/bA0Cm1fcNDg14sJtg0QeTw/edit)
 <br>
 
 ## <a id="1-프로젝트-개요"></a> 1. 프로젝트 개요  
 ### 1.1 프로젝트 소개
-[프로젝트 기획서](https://docs.google.com/document/d/1WtzSRvkpIZyfA1Ly5Uefu3BVrmNXd_YseDzOPMAbrlo/edit?tab=t.0#heading=h.d5g3yog13kgn)  
+<img width="1280" height="543" alt="11111111-Photoroom" src="https://github.com/user-attachments/assets/d0b852ba-c234-4c71-9101-0bfe0dbdcd4a" />
 **ORDER101**은 AI 기반 의사결정 자동화로 공급사–본사–점포의 발주·재고·주문·물류(SCM)를 지능화하여 재고 손실 최소화와 운영 효율 극대화하는 주문 관리 시스템입니다.  
+
+[프로젝트 기획서](https://docs.google.com/document/d/1WtzSRvkpIZyfA1Ly5Uefu3BVrmNXd_YseDzOPMAbrlo/edit?tab=t.0#heading=h.d5g3yog13kgn)  
 
 <br></br>
 ### 1.2 프로젝트 배경
@@ -95,6 +97,12 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 수요 예측 데이터에 근거하여 최적 발주량을 자동 계산 및 제안.
 일주일에 한번 AI가 발주의 초안을 근거와 함께 작성 및 제안.
 신뢰성을 제공하는 동시에 편의성을 제공.
+
+#### 채팅
+가맹점이 발주 수정 및 삭제를 원하는 경우 직접 본사에 문의하는 프로세스를 더욱 편리하게 제공.  
+가맹점과 담당 본사 직원간의 채팅 기능 제공.  
+서비스 내에서 더욱 편리한 양방향 소통 제공.  
+
 
 <br></br>
 ### 1.4 주요 기능
@@ -197,6 +205,16 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 2. WBS
 [WBS](https://docs.google.com/spreadsheets/d/1isf6GO9iqXJyhFxtxYRvIOtjqf20IP69H_oeq2SgyC8/edit?gid=509945759#gid=509945759)
+<details>
+  <summary><b>WBS</b></summary>
+  <div markdown="2">
+    <ul>
+    <img width="1463" height="1217" alt="image" src="https://github.com/user-attachments/assets/01468760-3a6d-445b-87d1-e661171d42eb" />
+    <img width="1463" height="953" alt="image" src="https://github.com/user-attachments/assets/39164193-4435-4fd7-bceb-c03f2def50d8" />
+    </ul>
+  </div>
+</details>
+
 
 
 ## 3. 요구사항 명세서
@@ -219,7 +237,18 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 
 #### 3.2 전문
-[요구사항 명세서](https://docs.google.com/spreadsheets/d/1vx25t4TzY9Tyu7JUvGRLR6c3iasbg0lG-xEiHt3Kacs/edit?gid=0#gid=0)
+[요구사항 명세서](https://docs.google.com/spreadsheets/d/1vx25t4TzY9Tyu7JUvGRLR6c3iasbg0lG-xEiHt3Kacs/edit?gid=0#gid=0)  
+<details>
+  <summary><b>요구사항 명세서</b></summary>
+  <div markdown="2">
+    <ul>
+    <img width="1517" height="926" alt="image" src="https://github.com/user-attachments/assets/bf0ae578-1814-4c97-8193-751e7e0f8e64" />
+    <img width="1516" height="1097" alt="image" src="https://github.com/user-attachments/assets/e1cd39e0-af66-403a-a15e-59fc271860ec" />
+    <img width="1519" height="427" alt="image" src="https://github.com/user-attachments/assets/f957407e-5afd-439f-aae3-db753a8dd736" />
+    </ul>
+  </div>
+</details>
+
 
 </div>
 </details>
@@ -240,10 +269,13 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white">
 <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
 <img src="https://img.shields.io/badge/Poetry-60A5FA?style=for-the-badge&logo=poetry&logoColor=white">
+<img src="https://img.shields.io/badge/Uvicorn-4051B5?style=for-the-badge&logo=python&logoColor=white">
 
 ### AI
 <img src="https://img.shields.io/badge/LightGBM-024F27?style=for-the-badge&logo=lightgbm&logoColor=white"> <img src="https://img.shields.io/badge/pandas-150458?style=for-the-badge&logo=pandas&logoColor=white"> <img src="https://img.shields.io/badge/numpy-013243?style=for-the-badge&logo=numpy&logoColor=white"> <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white"> <img src="https://img.shields.io/badge/matplotlib-11557C?style=for-the-badge&logo=plotly&logoColor=white"> <img src="https://img.shields.io/badge/joblib-0088CC?style=for-the-badge&logo=python&logoColor=white"> 
-
+<img src="https://img.shields.io/badge/CatBoost-FF6F00?style=for-the-badge&logo=catboost&logoColor=white">
+<img src="https://img.shields.io/badge/multilingual--e5--base-4B32C3?style=for-the-badge&logo=huggingface&logoColor=white">
+<img src="https://img.shields.io/badge/ChatGPT-00A67E?style=for-the-badge&logo=openai&logoColor=white">
 
 ### FRONTEND
   
@@ -278,10 +310,11 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ### DEVOPS
 
-<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white">
-<img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white">
-<img src="https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white">
-<img src="https://img.shields.io/badge/Argo%20CD-FE6A16?style=for-the-badge&logo=argo&logoColor=white">
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white"> <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white"> <img src="https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white"> <img src="https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white"> <img src="https://img.shields.io/badge/Amazon%20CloudFront-8C4FFF?style=for-the-badge&logo=amazoncloudfront&logoColor=white"> <img src="https://img.shields.io/badge/AWS%20CodeDeploy-527FFF?style=for-the-badge&logo=awsdeploy&logoColor=white"> <img src="https://img.shields.io/badge/AWS%20CodePipeline-527FFF?style=for-the-badge&logo=awscodepipeline&logoColor=white">
+
+
+
+
 
 
 <br/>
@@ -291,11 +324,11 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
   <summary><b>시스템 아키텍처</b></summary>
   <div markdown="1">
     <ul>
-      <img width="1177" height="1359" alt="image" src="https://github.com/user-attachments/assets/0e84db9c-21db-4a25-b530-e414f8e76226" />
-      <img width="1170" height="702" alt="image" src="https://github.com/user-attachments/assets/7555252a-87c2-4bbb-9c90-d80e8d15c830" />
+      <img width="9992" height="8259" alt="order101_sy" src="https://github.com/user-attachments/assets/92275fa6-2d8d-42b2-8b1b-01d6e687ca4f" />
     </ul>
   </div>
 </details>
+
 
 
 
@@ -304,13 +337,14 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 ## 6. 데이터베이스 설계 (ERD)
 
-[ERD CLOUD](https://www.erdcloud.com/d/Lkxma6zWujnHvtvY3)
+[ERD CLOUD](https://www.erdcloud.com/d/BNoDxLbwss3ZbKg8x)
   
 <details>
+
   <summary><b>ERD</b></summary>
   <div markdown="1">
     <ul>
-      <img width="5500" height="2412" alt="오더101 (1)" src="https://github.com/user-attachments/assets/83de89df-73fd-4137-85de-5110a53449ec" />
+      <img width="5470" height="2332" alt="오더101 (2)" src="https://github.com/user-attachments/assets/2d019e1e-78d5-4827-858c-c0c8c0ad4a77" />
     </ul>
   </div>
 </details>
@@ -375,10 +409,65 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 
 ## 13. 트러블 슈팅
+<details>
+  <summary><b> <h3>1. 조회 성능 개선  </b></summary>
+  <div markdown="1">
+    <ul>
+      <li>
+1.1. 문제 상황     <br>
+“수요 예측 보고서“ 호출 시 지연 발생    <br>
+반복 조회 시에도 항상 DB에서 전체 데이터를 Selcet      <br> 
+대시보드 호출이 화면 전환 때마다 느림    <br>   </li>
+  <li>
+1.2 원인       <br>
+해당 서비스 매서드들은 매번 DB에 접근하여 대량의 데이터를 그룹핑 및 집계/정렬하는 연산을 수행       <br>
+캐시가 적용되지 않아 매 호출마다 동일 연산 발생 → 응답 시간이 누적   <br>    </li>
+  <li>
+1.3. 해결     <br>
+Spring Cache 도입    <br>  </li>
+  <li>
+1.4. 추가 조치     <br>
+캐싱 시 Lazy Loading 직렬화 오류 해결       <br>
+Redis 저장 시 JPA Lazy Proxy가 직렬화 오류를 발생시키므로 서비스 단계에서 필요한 필드를 미리 초기화     <br> </li>
+    </ul>
+  </div>
+</details>
+<details>
+  <summary><b> <h3>2.  알림 과다 요청   </b></summary>
+  <div markdown="1">
+    <ul>
+      <li>   
+              2.1. 문제 상황 & 원인  <br> 
+에러 발생 시 무제한 3초 재연결 시도  <br> 
+동일 사용자에 대해 SSE 연결과 emitter가 누적  <br> 
+error 이벤트 중복 처리로 재연결 타이머가 여러 개 생성  <br> 
+ → /notifications SSE 요청 폭주 → CloudFront LimitExceeded 503 → 프론트 전체 장애    <br> </li>
+         <li>
+2.2. 해결  <br> 
+사용자당 서버 emitter 1개, 클라이언트 SSE 연결 1개만 유지  <br> 
+재연결 타이머 단일화 + 지수 백오프로 트래픽 스파이크 방지  <br> 
+토큰 오류와 일반 네트워크 오류를 분리 처리  <br> 
+ALB/CloudFront 타임아웃 조정으로 장시간 SSE 연결 안정화     <br> </li>
+    </ul>
+  </div>
+</details>
 
 
 
-## 14. 향후 개선 계획
+## 14. 향후 개선 계획  
+### 1. 조회 성능 개선  
+전체 목록 조회시 느려지는 현상 개선  
+더욱 방대한 데이터 핸들링  
+
+### 2. 성능 고도화
+랭체인을 접목해 내부 DB를 학습한 기업 전용 챗봇으로 고도화  
+동시성 제어 등 성능 고도화  
+
+### 3. 프로세스 전체 구현  
+주요 기능에 집중하고자 간소화했던 기능(ex.배송처리 등)들까지 완벽하게 구현  
+
+
+
 
 
 
@@ -387,9 +476,9 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 ## 15. 회고록
 
 |   조원 이름	| 회고  	 |
-|---	|-------|
-| 조상원 | |
-| 박진우 | |
-| 윤석현 | |
-| 이진구 | |
-| 최유경 | |
+|-----	|-------|
+| 조상원 | 웹을 기획부터 실제 배포까지 전체 과정을 이끌며 전체 프로세스를 체화할 수 있는 좋은 기회였다. 특히 Spring 벡엔드와 Vue.js 프론트엔드에서 그치는게 아닌 AI를 집중적으로 다룰 수 있어 시야를 넓힐 수 있었던 프로젝트였다. 이후 AWS를 사용해 실제 배포를 해보며 우리의 도메인에 접속할 수 있는게 새로운 느낌이었다. 단순 기능 구현이 아닌 하나하나 직접 고민해보며 적용해본 경험들이 이후의 개발에 있어서 큰 도움이 될 수 있을거 같다. |
+| 박진우 | aws cicd를 해보는 좋은 기회가 됐다. 에러가 많이 났는데 향후 다른 프로젝트를 진행할때 기준점을 제시할 수 있는 경험이엿다. 근거를 제시하는 연습을 충분히 할 수 있는 성과 있었다.  |
+| 윤석현 | 이번 프로젝트는 처음으로 B2B 시스템을 설계부터 개발까지 해보는 경험이었다. 처음에는 막막했지만 요구사항을 분석하고 설계하는 과정에서 많은 것을 배울 수 있었다. 로그인 프로세스와 권한 관리를 구현하면서 보안에 대한 중요성을 다시 한 번 깨달았다. 이번 프로젝트를 통해 얻은 경험을 바탕으로 앞으로 더 나은 시스템을 개발할 수 있을 것 같다. |
+| 이진구 | RestFul API, SSE, WebSocket등을 사용하면서 다방면으로 기술 스택을 넓힌 것 같으며, 로컬이 아닌 실제로 AWS를 사용하여 사용자들이 사용할 수 있는 서비스를 배포하면서 실무와 비슷한 경험을 한 것 같아 성장한 것 같은 느낌이 든다. 또한 B2B에 대해 도메인을 어느 정도 알게 되어 만족스러운 느낌이 들었다. |
+| 최유경 | 기능 구현에서 끝나는것이 아니라 배포까지 하는 프로젝트는 처음이라 좋은 경험이었다. 기획부터 배포까지 전체 프로세스를 해보며 기획 단계가 중요하다는 것을 다시 한 번 깨달을 수 있었다.  |

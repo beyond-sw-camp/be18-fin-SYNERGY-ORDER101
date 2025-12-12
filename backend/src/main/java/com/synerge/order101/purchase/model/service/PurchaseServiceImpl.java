@@ -232,7 +232,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         Map<Long, List<CalculatedAutoItem>> groupedBySupplier =
                 autoItems.stream().collect(Collectors.groupingBy(CalculatedAutoItem::getSupplierId));
 
-        Long systemUserId = 1L;
+        Long systemUserId = userRepository.findByName("SYSTEM").get().getUserId();
         Long warehouseId = 1L;
 
         for (Map.Entry<Long, List<CalculatedAutoItem>> entry : groupedBySupplier.entrySet()) {
@@ -263,7 +263,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Transactional(readOnly = true)
     public Page<AutoPurchaseListResponseDto> getAutoPurchases (Integer page, Integer size){
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AutoPurchaseListResponseDto> pageResult;
 
         return purchaseRepository.getAutoPurchases(pageable);
@@ -419,7 +419,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         LocalDateTime start = (request.getStartDate() != null) ? LocalDate.parse(request.getStartDate()).atStartOfDay() : null;
         LocalDateTime end = (request.getEndDate() != null) ? LocalDate.parse(request.getEndDate()).atTime(23, 59, 59) : null;
 
-        Pageable pageable = PageRequest.of(request.getPage() - 1, request.getNumOfRows());
+        Pageable pageable = PageRequest.of(request.getPage() - 1, request.getNumOfRows(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
         return purchaseRepository.searchAutoPurchases(
                 request.getSupplierId(),
