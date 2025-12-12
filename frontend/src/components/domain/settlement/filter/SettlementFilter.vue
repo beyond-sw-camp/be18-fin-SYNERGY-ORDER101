@@ -9,7 +9,7 @@
             <FilterDateRange label="날짜 범위" v-model:startDate="filters.startDate" v-model:endDate="filters.endDate" />
 
             <div class="search-group">
-                <FilterSearchInput label="검색" placeholder="검색어 입력..." v-model="filters.keyword" />
+                <FilterSearchInput v-if="showKeywordSearch" label="검색" placeholder="검색어 입력..." v-model="filters.keyword" />
                 <div class="button-actions">
                     <button class="btn-search" @click="applyFilters">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -43,10 +43,17 @@ import FilterSearchInput from '../../../base/FilterSearchInput.vue';
 import { getPastDateString, getTodayString } from '@/components/global/Date';
 import VendorSearchModal from '@/components/modal/VenderSearchModal.vue';
 
+const props = defineProps({
+    showKeywordSearch: {
+        type: Boolean,
+        default: true
+    }
+});
+
 const initialFilters = {
-    scope: 'AP',
+    scope: 'AR',
     vendorId: 'ALL',
-    vendorType: 'SUPPLIER', // 기본값을 AP로 변경하여 공급사 기준으로 초기화
+    vendorType: 'FRANCHISE', // 기본값을 AR로 변경하여 가맹점 기준으로 초기화
     vendorName: '전체',
     startDate: getPastDateString(30),
     endDate: getTodayString(),
@@ -107,8 +114,21 @@ function applyFilters() {
 }
 
 function resetFilters() {
-    filters.value = { ...initialFilters };
+    // 필터를 초기값으로 완전히 재설정
+    filters.value = {
+        scope: 'AR',
+        vendorId: 'ALL',
+        vendorType: 'FRANCHISE',
+        vendorName: '전체',
+        startDate: getPastDateString(30),
+        endDate: getTodayString(),
+        keyword: ''
+    };
+    
+    // vendorOptions 초기화
     vendorOptions.value = [{ text: '전체', value: 'ALL' }];
+    
+    // 초기화 후 자동 검색
     applyFilters();
 }
 

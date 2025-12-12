@@ -28,6 +28,7 @@ public class SettlementServiceImpl implements SettlementService{
     private final SettlementRepository settlementRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<SettlementSummaryDto> getSettlements(TradeSearchCondition cond, Pageable pageable) {
 
         Page<Settlement> page = settlementRepository.search(cond, pageable);

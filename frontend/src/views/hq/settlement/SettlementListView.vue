@@ -280,9 +280,9 @@ onMounted(async () => {
   // 컴포넌트가 완전히 마운트된 후 데이터 로드
   await nextTick();
   
-  // 페이지 진입 시 AP(미지급금) 기본값으로 데이터 로드
+  // 페이지 진입 시 AR(미수금) 기본값으로 데이터 로드
   const defaultFilters = {
-    scope: 'AP',
+    scope: 'AR',
     vendorId: 'ALL',
     startDate: getPastDateString(30),
     endDate: getTodayString(),

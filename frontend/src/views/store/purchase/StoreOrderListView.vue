@@ -190,13 +190,9 @@ async function search() {
     if (filters.value.startDate) params.fromDate = filters.value.startDate
     if (filters.value.endDate) params.toDate = filters.value.endDate
 
-    console.log('StoreOrder 조회 파라미터:', params)
-
     // GET /api/v1/store-orders (StoreOrderController.findStoreOrders)
     const response = await apiClient.get('/api/v1/store-orders', { params })
     const data = response.data
-
-    console.log('StoreOrder 조회 응답:', data)
 
     totalElements.value = data.totalElements || 0
     totalPagesFromBackend.value = data.totalPages || 1

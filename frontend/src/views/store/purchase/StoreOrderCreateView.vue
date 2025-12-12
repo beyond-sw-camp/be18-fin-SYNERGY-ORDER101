@@ -99,6 +99,9 @@ const authStore = useAuthStore()
 const showItemModal = ref(false)
 const rows = ref([])
 const productIdSet = ref(new Set())
+const storeInventoryCache = ref(null)
+const inventoryLoading = ref(false)
+let inventoryFetchPromise = null
 
 // --- 계산된 속성 (Computed) ---
 const totalQty = computed(() =>
@@ -128,24 +131,7 @@ async function onAddItems(products) {
   }
 
   // 가맹점 재고 조회
-  let storeInventoryMap = {}
-  try {
-    const response = await apiClient.get(`/api/v1/stores/${storeId}/inventory`, {
-      params: { page: 1, numOfRows: 1000 }
-    })
-    
-    console.log('재고 조회 응답:', response.data)
-    const inventoryList = response.data.items || []
-    console.log('재고 목록:', inventoryList)
-    
-    // productId를 키로 하는 재고 맵 생성
-    inventoryList.forEach(item => {
-      storeInventoryMap[item.productId] = item.stockQuantity || 0
-    })
-    console.log('재고 맵:', storeInventoryMap)
-  } catch (error) {
-    console.error('가맹점 재고 조회 실패:', error)
-  }
+  const storeInventoryMap = await fetchInventoryOnce(storeId)
 
   // 새로운 품목만 필터링
   const newProducts = products.filter(p => !productIdSet.value.has(p.productId))
@@ -157,18 +143,53 @@ async function onAddItems(products) {
   // 한 번에 추가
   const newRows = newProducts.map(p => {
     productIdSet.value.add(p.productId)
+    const stockValue = storeInventoryMap[p.productId] ?? 0
     return {
       productId: p.productId,
       sku: p.sku,
       name: p.name,
       price: p.price || 0,
-      stock: storeInventoryMap[p.productId] ?? 0,
+      stock: stockValue,
       qty: 1
     }
   })
 
   rows.value.push(...newRows)
-  console.log('추가된 행:', newRows)
+}
+
+// 재고를 한 번만 조회해서 캐시하고, 중복 호출을 방지
+async function fetchInventoryOnce(storeId) {
+  if (storeInventoryCache.value) {
+    return storeInventoryCache.value
+  }
+  if (inventoryFetchPromise) {
+    return inventoryFetchPromise
+  }
+
+  inventoryLoading.value = true
+  inventoryFetchPromise = (async () => {
+    const map = {}
+    try {
+      const response = await apiClient.get(`/api/v1/stores/${storeId}/inventory`, {
+        params: { page: 1, numOfRows: 1000 }
+      })
+      const inventoryList = response.data.items || response.data.content || response.data || []
+      
+      inventoryList.forEach(item => {
+        const stock = item.onHandQty || 0
+        map[item.productId] = stock
+      })
+      storeInventoryCache.value = map
+      return map
+    } catch (error) {
+      return map
+    } finally {
+      inventoryLoading.value = false
+      inventoryFetchPromise = null
+    }
+  })()
+
+  return inventoryFetchPromise
 }
 
 /**
@@ -183,6 +204,11 @@ function removeRow(idx) {
  * 품목 추가 모달을 엽니다.
  */
 function openItemModal() {
+  // 모달 열 때 재고를 미리 적재하여 이후 추가 시 대기 시간 감소
+  const storeId = authStore.userInfo.storeId
+  if (storeId) {
+    fetchInventoryOnce(storeId)
+  }
   showItemModal.value = true
 }
 

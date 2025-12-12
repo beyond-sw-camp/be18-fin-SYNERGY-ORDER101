@@ -5,6 +5,11 @@
             <p class="page-subtitle">가맹점 및 공급사의 정산 데이터를 분석하고 시각화합니다</p>
         </div>
 
+        <!-- 필터 섹션 -->
+        <section class="filter-section" style="display: block !important; visibility: visible !important;">
+            <SettlementFilter @search="handleSearch" :showKeywordSearch="false" />
+        </section>
+
         <!-- 로딩 상태 -->
         <div v-if="loading" class="loading-container">
             <div class="spinner"></div>
@@ -12,7 +17,7 @@
         </div>
 
         <!-- 데이터 표시 -->
-        <template v-else-if="summaryData">
+        <template v-else-if="summaryData && !loading">
             <!-- 주요 통계 카드 -->
             <section class="summary-cards">
                 <div class="stat-card">
@@ -99,6 +104,7 @@
                                 <th>{{ currentFilterData?.scope === 'AR' ? '가맹점명' : '공급사명' }}</th>
                                 <th class="numeric-header">정산 수량</th>
                                 <th class="numeric-header">정산 금액</th>
+                                <th class="center-header">상태</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -109,9 +115,14 @@
                                 </td>
                                 <td class="numeric">{{ formatNumber(row.count) }}개</td>
                                 <td class="numeric">₩{{ formatNumber(row.netAmount) }}</td>
+                                <td class="center">
+                                    <span class="status-badge" :class="getStatusClass(row.status)">
+                                        {{ row.status }}
+                                    </span>
+                                </td>
                             </tr>
                             <tr v-if="tableData.length === 0">
-                                <td colspan="3" class="empty-cell">
+                                <td colspan="4" class="empty-cell">
                                     조회된 데이터가 없습니다.
                                 </td>
                             </tr>
@@ -134,13 +145,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 import SettlementFilter from '@/components/domain/settlement/filter/SettlementFilter.vue';
 import MonthlyBarChart from '@/components/domain/settlement/charts/MonthlyBarChart.vue';
 import RatioDonutChart from '@/components/domain/settlement/charts/RatioDonutChart.vue';
 import { getSettlementReport } from '@/components/api/settlement/SettlementService';
 import { SettlementDataProcessor } from '@/components/global/SettlementDataProcessor.js';
-import { getPastDateString, getTodayString } from '@/components/global/Date';
+import { getPastDateString } from '@/components/global/Date';
 
 const loading = ref(false);
 const currentFilterData = ref(null);
@@ -245,16 +256,15 @@ function getStatusClass(status) {
     return statusMap[status] || 'status-default';
 }
 
-onMounted(async () => {
-    // 컴포넌트가 완전히 마운트된 후 데이터 로드
-    await nextTick();
-    
-    // 페이지 진입 시 AP(미지급금) 기본값으로 데이터 로드
+/**
+ * 페이지 진입 시 AR 기본값으로 자동 검색
+ */
+onMounted(() => {
     const defaultFilters = {
-        scope: 'AP',
+        scope: 'AR',
         vendorId: 'ALL',
         startDate: getPastDateString(30),
-        endDate: getTodayString(),
+        endDate: new Date().toISOString().slice(0, 10),
         keyword: ''
     };
     handleSearch(defaultFilters);
@@ -279,7 +289,6 @@ onMounted(async () => {
     color: #0f172a;
     margin: 0 0 8px 0;
     letter-spacing: -0.5px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .page-subtitle {
@@ -376,14 +385,12 @@ onMounted(async () => {
     font-size: 13px;
     color: #6b7280;
     font-weight: 500;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .stat-value {
     font-size: 24px;
     font-weight: 700;
     color: #1f2937;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* 차트 섹션 */
@@ -418,7 +425,6 @@ onMounted(async () => {
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 4px 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .card-subtitle {

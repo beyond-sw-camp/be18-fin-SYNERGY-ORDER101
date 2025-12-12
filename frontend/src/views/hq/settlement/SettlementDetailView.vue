@@ -88,15 +88,6 @@
             <span class="item-label">완료일시</span>
             <span class="item-value">{{ settlement.settledAt || '-' }}</span>
           </div>
-          <div class="detail-item">
-            <span class="item-label">정산 기간</span>
-            <span class="item-value">
-              <template v-if="settlement.periodStart && settlement.periodEnd">
-                {{ settlement.periodStart }} ~ {{ settlement.periodEnd }}
-              </template>
-              <template v-else>-</template>
-            </span>
-          </div>
         </div>
       </div>
 
