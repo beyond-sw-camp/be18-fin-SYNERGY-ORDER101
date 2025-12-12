@@ -96,6 +96,12 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 일주일에 한번 AI가 발주의 초안을 근거와 함께 작성 및 제안.
 신뢰성을 제공하는 동시에 편의성을 제공.
 
+#### 채팅
+가맹점이 발주 수정 및 삭제를 원하는 경우 직접 본사에 문의하는 프로세스를 더욱 편리하게 제공.  
+가맹점과 담당 본사 직원간의 채팅 기능 제공.  
+서비스 내에서 더욱 편리한 양방향 소통 제공.  
+
+
 <br></br>
 ### 1.4 주요 기능
 
@@ -229,7 +235,18 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 
 #### 3.2 전문
-[요구사항 명세서](https://docs.google.com/spreadsheets/d/1vx25t4TzY9Tyu7JUvGRLR6c3iasbg0lG-xEiHt3Kacs/edit?gid=0#gid=0)
+[요구사항 명세서](https://docs.google.com/spreadsheets/d/1vx25t4TzY9Tyu7JUvGRLR6c3iasbg0lG-xEiHt3Kacs/edit?gid=0#gid=0)  
+<details>
+  <summary><b>요구사항 명세서</b></summary>
+  <div markdown="2">
+    <ul>
+    <img width="1517" height="926" alt="image" src="https://github.com/user-attachments/assets/bf0ae578-1814-4c97-8193-751e7e0f8e64" />
+    <img width="1516" height="1097" alt="image" src="https://github.com/user-attachments/assets/e1cd39e0-af66-403a-a15e-59fc271860ec" />
+    <img width="1519" height="427" alt="image" src="https://github.com/user-attachments/assets/f957407e-5afd-439f-aae3-db753a8dd736" />
+    </ul>
+  </div>
+</details>
+
 
 </div>
 </details>
