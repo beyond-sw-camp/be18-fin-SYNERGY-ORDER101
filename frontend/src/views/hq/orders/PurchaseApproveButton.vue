@@ -74,7 +74,7 @@ const handleAction = async (status) => {
         // 스마트 발주인 경우
         if (props.sourceType === 'SMART' && props.smartOrderIds && props.smartOrderIds.length > 0) {
             await updateSmartOrderStatus(props.smartOrderIds, status)
-            alert(`${props.smartOrderIds.length}개의 스마트 발주가 정상적으로 ${label} 되었습니다.`)
+            alert(`스마트 발주가 정상적으로 ${label} 되었습니다.`)
         }
         // 일반 발주인 경우
         else if (props.updateStatusApi) {
