@@ -47,7 +47,14 @@
 
           <tbody>
             <tr v-for="r in rows" :key="r.id">
-              <td class="po">{{ r.id }}</td>
+              <td class="po">
+                <router-link
+                  :to="`/hq/franchise/delivery/${r.id}`"
+                  class="order-link"
+                >
+                  {{ r.orderNo }}
+                </router-link>
+              </td>
               <td>{{ r.store }}</td>
               <td>{{ r.warehouse }}</td>
               <td class="numeric">{{ r.qty }}</td>
@@ -123,9 +130,7 @@ const filters = ref({
   status: 'all',
 })
 
-/* ======================
-   API 호출
-====================== */
+
 async function fetchDeliveryList() {
   loading.value = true
   try {
@@ -141,13 +146,15 @@ async function fetchDeliveryList() {
 
     const p = res.data
     rows.value = p.content.map(item => ({
-      id: item.orderNo,
+      id: item.storeOrderId,
+      orderNo: item.orderNo,
       store: item.storeName,
       warehouse: item.warehouseName || '-',
       qty: item.totalQty,
       status: item.shipmentStatus,
       requestedAt: item.orderDatetime,
     }))
+    console.log(p.content[0])
 
     const storeNamesFromResponse = p.content.map(item => item.storeName)
     allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
@@ -162,9 +169,7 @@ async function fetchDeliveryList() {
   }
 }
 
-/* ======================
-   페이지 이동
-====================== */
+
 async function changePage(clientPage) {
   if (clientPage < 1 || clientPage > totalPages.value) return
   page.value = clientPage - 1
@@ -196,9 +201,7 @@ const pageNumbers = computed(() => {
   return pages
 })
 
-/* ======================
-   필터 적용
-====================== */
+
 function applyFilter() {
   page.value = 0
   fetchDeliveryList()
@@ -210,9 +213,7 @@ function resetFilter() {
   fetchDeliveryList()
 }
 
-/* ======================
-   🔥 자동 필터 적용 로직
-====================== */
+
 
 // store / status 변경 시 즉시 적용
 watch(
@@ -234,9 +235,7 @@ watch(
   }
 )
 
-/* ======================
-   기타
-====================== */
+
 const storeOptions = computed(() => allStoreNames.value)
 
 function statusClass(s) {
@@ -438,4 +437,16 @@ onMounted(() => {
   color: #fff;
   border-color: #6b46ff;
 }
+
+.order-link {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.order-link:hover {
+  text-decoration: underline;
+}
+
 </style>
