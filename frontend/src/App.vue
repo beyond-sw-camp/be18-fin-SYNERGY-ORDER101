@@ -78,7 +78,7 @@ const adminSidebar = [
       { title: '가맹점 등록', path: '/hq/franchise/registration' },
       { title: '가맹점 주문 승인', path: '/hq/franchise/approval' },
       { title: '가맹점 주문 조회', path: '/hq/franchise/orders' },
-      { title: '배송 관리', path: '/hq/franchise/delivery' },
+      { title: '배송 목록 조회', path: '/hq/franchise/delivery' },
     ],
   },
   {

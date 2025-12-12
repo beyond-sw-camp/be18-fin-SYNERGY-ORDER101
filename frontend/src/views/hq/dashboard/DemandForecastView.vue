@@ -47,7 +47,7 @@
           </thead>
 
           <tbody>
-            <tr v-for="row in detailRows" :key="row.sku">
+            <tr v-for="row in pagedRows" :key="row.sku">
               <td>{{ row.sku }}</td>
               <td>{{ row.name }}</td>
               <td>{{ row.forecast }}</td>
@@ -66,6 +66,42 @@
           </tbody>
         </table>
       </div>
+      <div class="pagination">
+        <button class="page-nav"
+                @click="goSkuPage(1)"
+                :disabled="skuPage === 1">
+          &laquo;
+        </button>
+
+        <button class="page-nav"
+                @click="goSkuPage(skuPage - 1)"
+                :disabled="skuPage === 1">
+          &lsaquo;
+        </button>
+
+        <div class="pages">
+          <button
+            v-for="p in visibleSkuPages"
+            :key="p"
+            :class="{ active: p === skuPage }"
+            @click="goSkuPage(p)">
+            {{ p }}
+          </button>
+        </div>
+
+        <button class="page-nav"
+                @click="goSkuPage(skuPage + 1)"
+                :disabled="skuPage === skuTotalPages">
+          &rsaquo;
+        </button>
+
+        <button class="page-nav"
+                @click="goSkuPage(skuTotalPages)"
+                :disabled="skuPage === skuTotalPages">
+          &raquo;
+        </button>
+      </div>
+
     </section>
 
     <!-- SKU 상세 차트 모달 -->
@@ -123,6 +159,59 @@ const timeseries = ref([])
 const categoryMetrics = ref([])
 const detailRows = ref([])
 
+import { computed } from 'vue'
+
+// SKU 페이지네이션 상태
+const skuPage = ref(1)
+const skuPerPage = 5
+
+const skuTotalPages = computed(() =>
+  Math.max(1, Math.ceil(detailRows.value.length / skuPerPage))
+)
+
+const visibleSkuPages = computed(() => {
+  const total = skuTotalPages.value
+  const current = skuPage.value
+  const delta = 2 // 현재 페이지 기준 좌우 2개
+
+  const pages = []
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    let start = Math.max(1, current - delta)
+    let end = Math.min(total, current + delta)
+
+    if (start === 1) {
+      end = 5
+    }
+
+    if (end === total) {
+      start = total - 4
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+  }
+
+  return pages
+})
+
+// 현재 페이지에 보여줄 5개
+const pagedRows = computed(() => {
+  const start = (skuPage.value - 1) * skuPerPage
+  return detailRows.value.slice(start, start + skuPerPage)
+})
+
+function goSkuPage(p) {
+  if (p < 1 || p > skuTotalPages.value) return
+  skuPage.value = p
+}
+
+
 const modal = ref({
   show: false,
   product: null,
@@ -159,6 +248,7 @@ async function fetchReport() {
     categoryMetrics.value = res.data.categoryMetrics
     detailRows.value = res.data.details
 
+    skuPage.value = 1
     renderCharts()
   } catch (err) {
     console.error(err)
@@ -398,5 +488,79 @@ onBeforeUnmount(() => {
 .detail-button:active {
   transform: scale(0.96);
 }
+
+/* pagination wrapper */
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* page number group */
+.pages {
+  display: flex;
+  gap: 8px;
+}
+
+/* page number button */
+.pages button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+
+  transition: all 0.2s;
+}
+
+/* hover */
+.pages button:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+/* active page */
+.pages button.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* prev / next button */
+.page-nav {
+  min-width: 36px;
+  height: 36px;
+  padding: 6px 10px;
+
+  border-radius: 6px;
+  border: 1px solid #e6e6e9;
+  background: white;
+
+  cursor: pointer;
+  font-size: 16px;
+  color: #475569;
+
+  transition: all 0.2s;
+}
+
+.page-nav:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.page-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 
 </style>

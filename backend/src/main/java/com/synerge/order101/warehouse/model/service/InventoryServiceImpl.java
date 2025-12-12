@@ -46,17 +46,24 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public Page<InventoryResponseDto> getInventoryList(int page, int numOfRows, Long largeCategoryId, Long mediumCategoryId, Long smallCategoryId, String keyword, String sortBy) {
 
-        Pageable pageable = PageRequest.of(page - 1, numOfRows);
+        Sort sort = Sort.unsorted();
 
-        if (sortBy == null) {
-            pageable = PageRequest.of(page - 1, numOfRows);
-        } else if (sortBy.equals("onHandQtyAsc")) {
-            pageable = PageRequest.of(page - 1, numOfRows, Sort.by(Sort.Direction.ASC, "onHandQuantity"));
-        } else if (sortBy.equals("onHandQtyDesc")) {
-            pageable = PageRequest.of(page - 1, numOfRows, Sort.by(Sort.Direction.DESC, "onHandQuantity"));
-        } else {
-            pageable = PageRequest.of(page - 1, numOfRows);
+        if (sortBy != null && !sortBy.isBlank()) {
+            sort = switch (sortBy) {
+                case "productCodeAsc" -> Sort.by("product.productCode").ascending();
+                case "productCodeDesc" -> Sort.by("product.productCode").descending();
+
+                case "onHandQtyAsc" -> Sort.by("onHandQuantity").ascending();
+                case "onHandQtyDesc" -> Sort.by("onHandQuantity").descending();
+
+                case "safetyQtyAsc" -> Sort.by("safetyQuantity").ascending();
+                case "safetyQtyDesc" -> Sort.by("safetyQuantity").descending();
+
+                default -> Sort.unsorted();
+            };
         }
+
+        Pageable pageable = PageRequest.of(page - 1, numOfRows, sort);
 
         return warehouseInventoryRepository.searchInventory(largeCategoryId, mediumCategoryId, smallCategoryId, keyword, pageable);
     }
