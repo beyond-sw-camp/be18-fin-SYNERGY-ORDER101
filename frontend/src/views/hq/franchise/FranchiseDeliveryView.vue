@@ -92,7 +92,7 @@
 
 <script setup>
 import apiClient from '@/components/api'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 const DELIVERY_STATUS = {
   WAITING: 'WAITING',
@@ -108,14 +108,14 @@ const statusOptions = [
 
 const rows = ref([])
 const loading = ref(false)
-const allStoreNames = ref([]) // 모든 가맹점명 저장 (필터 드롭다운용)
+const allStoreNames = ref([])
 
 const page = ref(0)
 const size = ref(20)
 const totalPages = ref(1)
 const totalElements = ref(0)
 
-const MAX_VISIBLE_PAGES = 5 // 보여줄 페이지 버튼 개수
+const MAX_VISIBLE_PAGES = 5
 
 const filters = ref({
   q: '',
@@ -123,6 +123,9 @@ const filters = ref({
   status: 'all',
 })
 
+/* ======================
+   API 호출
+====================== */
 async function fetchDeliveryList() {
   loading.value = true
   try {
@@ -131,13 +134,13 @@ async function fetchDeliveryList() {
         page: page.value,
         size: size.value,
         orderNo: filters.value.q || null,
-        storeName: filters.value.store === 'all' ? null : filters.value.store,  // storeName으로 필터링
+        storeName: filters.value.store === 'all' ? null : filters.value.store,
         status: filters.value.status === 'all' ? null : filters.value.status,
       },
     })
 
     const p = res.data
-    rows.value = p.content.map((item) => ({
+    rows.value = p.content.map(item => ({
       id: item.orderNo,
       store: item.storeName,
       warehouse: item.warehouseName || '-',
@@ -146,7 +149,6 @@ async function fetchDeliveryList() {
       requestedAt: item.orderDatetime,
     }))
 
-    // 모든 응답 데이터에서 가맹점명 수집 (다른 페이지의 데이터도 포함)
     const storeNamesFromResponse = p.content.map(item => item.storeName)
     allStoreNames.value = [...new Set([...allStoreNames.value, ...storeNamesFromResponse])]
 
@@ -160,6 +162,9 @@ async function fetchDeliveryList() {
   }
 }
 
+/* ======================
+   페이지 이동
+====================== */
 async function changePage(clientPage) {
   if (clientPage < 1 || clientPage > totalPages.value) return
   page.value = clientPage - 1
@@ -167,15 +172,11 @@ async function changePage(clientPage) {
 }
 
 function goPrev() {
-  if (page.value > 0) {
-    changePage(page.value)
-  }
+  if (page.value > 0) changePage(page.value)
 }
 
 function goNext() {
-  if (page.value + 1 < totalPages.value) {
-    changePage(page.value + 2)
-  }
+  if (page.value + 1 < totalPages.value) changePage(page.value + 2)
 }
 
 const pageNumbers = computed(() => {
@@ -191,12 +192,13 @@ const pageNumbers = computed(() => {
     start = Math.max(1, end - MAX_VISIBLE_PAGES + 1)
   }
 
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
+  for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
 
+/* ======================
+   필터 적용
+====================== */
 function applyFilter() {
   page.value = 0
   fetchDeliveryList()
@@ -208,9 +210,34 @@ function resetFilter() {
   fetchDeliveryList()
 }
 
-const storeOptions = computed(() => {
-  return allStoreNames.value
-})
+/* ======================
+   🔥 자동 필터 적용 로직
+====================== */
+
+// store / status 변경 시 즉시 적용
+watch(
+  () => [filters.value.store, filters.value.status],
+  () => {
+    applyFilter()
+  }
+)
+
+// 주문 ID 검색 → 디바운스 적용
+let searchDebounce = null
+watch(
+  () => filters.value.q,
+  () => {
+    clearTimeout(searchDebounce)
+    searchDebounce = setTimeout(() => {
+      applyFilter()
+    }, 400)
+  }
+)
+
+/* ======================
+   기타
+====================== */
+const storeOptions = computed(() => allStoreNames.value)
 
 function statusClass(s) {
   if (s === DELIVERY_STATUS.DELIVERED) return 's-delivered'
@@ -219,7 +246,7 @@ function statusClass(s) {
 }
 
 function statusLabel(s) {
-  const opt = statusOptions.find((o) => o.key === s)
+  const opt = statusOptions.find(o => o.key === s)
   return opt ? opt.label : s
 }
 
@@ -231,6 +258,7 @@ onMounted(() => {
   fetchDeliveryList()
 })
 </script>
+
 
 <style scoped>
 .page-shell {
