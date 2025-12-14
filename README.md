@@ -222,8 +222,21 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
   </ul>
 </details>
-
-
+<details>
+  <summary><b>8. 스마트 발주</b></summary>
+  <ul>
+    <li>스마트 발주 초안 생성/수정/제출</li>
+      <img 
+        src="https://github.com/user-attachments/assets/465ca2ac-d449-4c8d-9ca5-0408f9d962fa"
+        width="700"
+      />
+    <li>스마트 발주 승인/반려</li>
+      <img 
+        src="https://github.com/user-attachments/assets/81971e32-0d3e-46f5-a505-25fe02a446ef"
+        width="700"
+      />
+  </ul>
+</details>
 
 
 
@@ -236,15 +249,6 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
  
 
-<details>
-  <summary><b>8. 스마트 발주</b></summary>
-  <div markdown="1">
-    <ul>
-      <li> AI 수요예측 기반 자동 제안</li>
-      <li> 현재고 및 안전재고를 반영한 발주</li>
-    </ul>
-  </div>
-</details>
 <details>
   <summary><b>8. 자동 발주</b></summary>
   <div markdown="1">
