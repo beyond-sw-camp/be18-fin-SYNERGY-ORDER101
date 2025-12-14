@@ -167,25 +167,34 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
   </ul>
 </details>
-
-
-
-
-
-
-
-
-
-
-
+<details>
   <summary><b>4. 상품 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>상품 카탈로그</li>
-      <li>상품 등록/수정/상세</li>
-    </ul>
-  </div>
+  <ul>
+    <li>상품 목록 / 상세</li>
+      <img 
+        src="https://github.com/user-attachments/assets/8cf9e2be-a72c-4412-becb-bfc57b33e1b0"
+        width="700"
+      />
+    <li>상품 등록</li>
+      <img 
+        src="https://github.com/user-attachments/assets/aa9ae142-53cb-4169-a6f4-cff0c3d1eea0"
+        width="700"
+      />
+  </ul>
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
+ 
 <details>
   <summary><b>5. 공급사 관리</b></summary>
   <div markdown="1">
