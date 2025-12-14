@@ -257,36 +257,17 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
   <ul>
     <li>본사/가맹점 채팅</li>
       <img 
-        src=""
+        src="https://github.com/user-attachments/assets/1a84f07f-48fd-469b-8db3-ce64c426226e"
         width="700"
       />
     <li>본사 챗봇</li>
       <img 
-        src=""
+        src="https://github.com/user-attachments/assets/93d49199-f51b-4a66-abba-26675771c43e"
         width="700"
       />
   </ul>
 </details>
 
-
-
-
-
-
-
-
-
- 
-
-<details>
-  <summary><b>8. 자동 발주</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>안전 재고 규칙 기반 자동 발주 제안</li>
-      <li>현재 재고 및 안전재고, 리드 타임 반영한 발주주</li>
-    </ul>
-  </div>
-</details>
 
 
 
