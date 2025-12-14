@@ -106,95 +106,166 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 <br></br>
 ### 1.4 주요 기능
-
 <details>
-  <summary><b>1. 주문 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>주문 생성/승인/내역 조회</li>
-      <li>주문 상세 페이지</li>
-    </ul>
-  </div>
+  <summary><b>1. 가맹점 주문 관리</b></summary>
+  <ul>
+    <li>주문 생성 / 승인 / 내역 조회</li>
+      <img 
+        src="https://github.com/user-attachments/assets/ee2d1c00-34da-4453-a9aa-e0aa24434b5f"
+        width="700"
+      />
+      <img 
+        src="https://github.com/user-attachments/assets/ecd07829-de6d-4c2f-86f0-e7be5fc56f6c"
+        width="700"
+      />
+      <img 
+        src="https://github.com/user-attachments/assets/a57eda77-23f7-473a-89ae-2dd457e8f957"
+        width="700"
+      />
+    <li>배송 상세 조회</li>
+      <img 
+        src="https://github.com/user-attachments/assets/6872e7e9-e181-4737-857c-ed3c92866e6b"
+        width="700"
+      />
+    <li>주문 대시보드</li>
+      <img 
+        src="https://github.com/user-attachments/assets/e59ac82b-ea97-49c8-8fab-63a9a5b37a27"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
-  <summary><b>2. 발주 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>발주 생성</li>
-      <li>발주 승인 및 관리</li>
-    </ul>
-  </div>
+  <summary><b>2. 본사 발주 관리</b></summary>
+  <ul>
+    <li>일반 발주 생성</li>
+      <img 
+        src="https://github.com/user-attachments/assets/93f928c0-d857-4015-a675-c4caf9d116c7"
+        width="700"
+      />
+    <li>발주 승인 / 내역 조회</li>
+      <img 
+        src="https://github.com/user-attachments/assets/66a564a9-d169-425e-8b8a-98a0dbcb9363"
+        width="700"
+      />
+      <img 
+        src="https://github.com/user-attachments/assets/331dc52b-09ac-46a2-b948-c8e944a8772a"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
-  <summary><b>3. 창고 재고 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>재고 현황</li>
-    </ul>
-  </div>
+  <summary><b>3. 창고 관리</b></summary>
+  <ul>
+    <li>본사/가맹점 창고 재고</li>
+      <img 
+        src="https://github.com/user-attachments/assets/f8574a09-87fd-401e-8e59-8857314bebbe"
+        width="700"
+      />
+      <img 
+          src="https://github.com/user-attachments/assets/61ac7649-9172-4741-9a48-9429956bcf78"
+          width="700"
+        />
+    <li>본사 창고 입고/출고</li>
+      <img 
+        src="https://github.com/user-attachments/assets/b31772eb-cde8-4309-8cf5-7fd0c0201ff4"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
   <summary><b>4. 상품 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>상품 카탈로그</li>
-      <li>상품 등록/수정/상세</li>
-    </ul>
-  </div>
+  <ul>
+    <li>상품 목록 / 상세</li>
+      <img 
+        src="https://github.com/user-attachments/assets/8cf9e2be-a72c-4412-becb-bfc57b33e1b0"
+        width="700"
+      />
+    <li>상품 등록</li>
+      <img 
+        src="https://github.com/user-attachments/assets/7425276b-b5ea-49bc-9805-8cb03e7217c5"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
   <summary><b>5. 공급사 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>공급사 조회</li>
-      <li>공급사 상세</li>
-    </ul>
-  </div>
+  <ul>
+    <li>공급사 조회/상세</li>
+      <img 
+        src="https://github.com/user-attachments/assets/d303600b-e55b-4d28-a6e8-796fe274bd5c"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
   <summary><b>6. 정산 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>정산 관리 리스트</li>
-      <li>정산 리포트</li>
-    </ul>
-  </div>
+  <ul>
+    <li>정산 목록</li>
+      <img 
+        src="https://github.com/user-attachments/assets/8a83cb16-6ec8-4054-a1bb-4358cce16fa5"
+        width="700"
+      />
+    <li>정산 리포트</li>
+      <img 
+        src="https://github.com/user-attachments/assets/2ec9cea5-a967-460a-b1e2-4d96abfd1014"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
-  <summary><b>7. 수요예측</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>AI 예측 모듈</li>
-      <li> 외부요인 적용</li>
-    </ul>
-  </div>
+  <summary><b>7. 수요 예측</b></summary>
+  <ul>
+    <li>수요 예측</li>
+      <img 
+        src="https://github.com/user-attachments/assets/0bf23a70-fd21-4719-866e-35e068bf512d"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
   <summary><b>8. 스마트 발주</b></summary>
-  <div markdown="1">
-    <ul>
-      <li> AI 수요예측 기반 자동 제안</li>
-      <li> 현재고 및 안전재고를 반영한 발주</li>
-    </ul>
-  </div>
+  <ul>
+    <li>스마트 발주 초안 생성/수정/제출</li>
+      <img 
+        src="https://github.com/user-attachments/assets/465ca2ac-d449-4c8d-9ca5-0408f9d962fa"
+        width="700"
+      />
+    <li>스마트 발주 승인/반려</li>
+      <img 
+        src="https://github.com/user-attachments/assets/81971e32-0d3e-46f5-a505-25fe02a446ef"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
-  <summary><b>8. 자동 발주</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>안전 재고 규칙 기반 자동 발주 제안</li>
-      <li>현재 재고 및 안전재고, 리드 타임 반영한 발주주</li>
-    </ul>
-  </div>
+  <summary><b>9. 자동 발주</b></summary>
+  <ul>
+    <li>자동 발주 초안 생성/수정/제출</li>
+      <img 
+        src="https://github.com/user-attachments/assets/dc1a60e2-252c-4c96-89d8-d4663d37e0e8"
+        width="700"
+      />
+    <li>자동 발주 승인/반려</li>
+      <img 
+        src="https://github.com/user-attachments/assets/3a0e49fc-2bdd-4f2c-b067-d9c3334a5830"
+        width="700"
+      />
+  </ul>
 </details>
 <details>
-  <summary><b>9. 대시보드 및 리포트</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>주문/발주 및 배송 대시보드</li>
-      <li>정산 리포트</li>
-    </ul>
-  </div>
+  <summary><b>10. 채팅 & 챗봇</b></summary>
+  <ul>
+    <li>본사/가맹점 채팅</li>
+      <img 
+        src="https://github.com/user-attachments/assets/1a84f07f-48fd-469b-8db3-ce64c426226e"
+        width="700"
+      />
+    <li>본사 챗봇</li>
+      <img 
+        src="https://github.com/user-attachments/assets/93d49199-f51b-4a66-abba-26675771c43e"
+        width="700"
+      />
+  </ul>
 </details>
 
 
