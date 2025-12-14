@@ -247,7 +247,7 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
     <li>자동 발주 승인/반려</li>
       <img 
-        src=""
+        src="https://github.com/user-attachments/assets/3a0e49fc-2bdd-4f2c-b067-d9c3334a5830"
         width="700"
       />
   </ul>
@@ -267,8 +267,6 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
   </ul>
 </details>
-
-
 
 
 
