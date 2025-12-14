@@ -130,14 +130,32 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
   </ul>
 </details>
 <details>
-  <summary><b>1. 주문 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>주문 생성/승인/내역 조회</li>
-      <li>주문 상세 페이지</li>
-    </ul>
-  </div>
+  <summary><b>2. 본사 발주 관리</b></summary>
+  <ul>
+    <li>일반 발주 생성</li>
+      <img 
+        src="https://github.com/user-attachments/assets/93f928c0-d857-4015-a675-c4caf9d116c7"
+        width="700"
+      />
+    <li>발주 승인 / 내역 조회</li>
+      <img 
+        src="https://github.com/user-attachments/assets/66a564a9-d169-425e-8b8a-98a0dbcb9363"
+        width="700"
+      />
+      <img 
+        src="https://github.com/user-attachments/assets/331dc52b-09ac-46a2-b948-c8e944a8772a"
+        width="700"
+      />
+  </ul>
 </details>
+
+
+
+
+
+
+
+
 <details>
   <summary><b>2. 발주 관리</b></summary>
   <div markdown="1">
