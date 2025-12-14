@@ -1,4 +1,4 @@
-<p align="center">
+![Animation1](https://github.com/user-attachments/assets/007b7216-0988-465b-a357-6e5d8382930a)<p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Noto+Sans+KR&weight=900&size=48&duration=2300&pause=900&color=BF00FF&background=00000000&center=true&vCenter=true&width=1000&lines=ORDER101;TEAM+SYNERGY" alt="ORDER101 Typing">
 </p>
 
@@ -127,6 +127,11 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
         src="https://github.com/user-attachments/assets/6872e7e9-e181-4737-857c-ed3c92866e6b"
         width="700"
       />
+    <li>주문 대시보드</li>
+      <img 
+        src="https://github.com/user-attachments/assets/e59ac82b-ea97-49c8-8fab-63a9a5b37a27"
+        width="700"
+      />
   </ul>
 </details>
 <details>
@@ -192,6 +197,33 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
   </ul>
 </details>
+<details>
+  <summary><b>6. 정산 관리</b></summary>
+  <ul>
+    <li>정산 목록</li>
+      <img 
+        src="https://github.com/user-attachments/assets/8a83cb16-6ec8-4054-a1bb-4358cce16fa5"
+        width="700"
+      />
+    <li>정산 리포트</li>
+      <img 
+        src="https://github.com/user-attachments/assets/2ec9cea5-a967-460a-b1e2-4d96abfd1014"
+        width="700"
+      />
+  </ul>
+</details>
+<details>
+  <summary><b>7. 수요 예측</b></summary>
+  <ul>
+    <li>수요 예측</li>
+      <img 
+        src="https://github.com/user-attachments/assets/0bf23a70-fd21-4719-866e-35e068bf512d"
+        width="700"
+      />
+  </ul>
+</details>
+
+
 
 
 
@@ -204,24 +236,6 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
  
 
-<details>
-  <summary><b>6. 정산 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>정산 관리 리스트</li>
-      <li>정산 리포트</li>
-    </ul>
-  </div>
-</details>
-<details>
-  <summary><b>7. 수요예측</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>AI 예측 모듈</li>
-      <li> 외부요인 적용</li>
-    </ul>
-  </div>
-</details>
 <details>
   <summary><b>8. 스마트 발주</b></summary>
   <div markdown="1">
@@ -240,15 +254,7 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
     </ul>
   </div>
 </details>
-<details>
-  <summary><b>9. 대시보드 및 리포트</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>주문/발주 및 배송 대시보드</li>
-      <li>정산 리포트</li>
-    </ul>
-  </div>
-</details>
+
 
 
 
