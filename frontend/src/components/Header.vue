@@ -43,6 +43,32 @@ const avatarStyle = computed(() => {
   }
 })
 
+// 로그인한 사용자의 전체 이름
+const myUserName = computed(() => authStore.userInfo?.name || '')
+
+// 채팅 짝 매핑 (양방향)
+const chatPairMap = {
+  // 기존 실계정
+  윤석현: '조상원',
+  조상원: '윤석현',
+
+  // 테스트 계정들
+  이진일: '이진삼',
+  이진삼: '이진일',
+
+  이진이: '이진사',
+  이진사: '이진이',
+
+  이진구: '이진오',
+  이진오: '이진구',
+}
+
+// 내 이름으로 상대방 찾아오기
+function resolveChatPartner() {
+  const me = myUserName.value
+  return chatPairMap[me] || ''
+}
+
 const showNotiMenu = ref(false)
 const notiBtnRef = ref(null)
 const notiMenuRef = ref(null)
@@ -135,13 +161,27 @@ const assignedStoreOwnerName = computed(() => authStore.userInfo?.storeOwnerName
 // 가맹점주: 본사 문의하기
 // 가맹점주 → HQ(조상원)에게 1:1 채팅
 const openChatToHq = () => {
-  chatTargetNickname.value = '조상원' // DB의 name 컬럼 그대로!
+  const partner = resolveChatPartner()
+
+  if (!partner) {
+    alert('매핑된 본사 담당자가 없습니다. 관리자에게 문의해주세요.')
+    return
+  }
+
+  chatTargetNickname.value = partner
   showChatModal.value = true
 }
 
 // HQ → 점주(윤석현)에게 1:1 채팅
 const openChatToStoreOwner = () => {
-  chatTargetNickname.value = '윤석현' // DB의 name 컬럼 그대로!
+  const partner = resolveChatPartner()
+
+  if (!partner) {
+    alert('매핑된 점주가 없습니다. 관리자에게 문의해주세요.')
+    return
+  }
+
+  chatTargetNickname.value = partner
   showChatModal.value = true
 }
 

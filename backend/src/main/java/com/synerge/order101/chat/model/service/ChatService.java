@@ -170,7 +170,13 @@ public class ChatService {
     private boolean isValidPair(User me, User other) {
         boolean case1 = "조상원".equals(me.getName()) && "윤석현".equals(other.getName());
         boolean case2 = "윤석현".equals(me.getName()) && "조상원".equals(other.getName());
-        return case1 || case2;
+        boolean case3 = "이진일".equals(me.getName()) && "이진삼".equals(other.getName());
+        boolean case4 = "이진삼".equals(me.getName()) && "이진일".equals(other.getName());
+        boolean case5 = "이진이".equals(me.getName()) && "이진사".equals(other.getName());
+        boolean case6 = "이진사".equals(me.getName()) && "이진이".equals(other.getName());
+        boolean case7 = "이진구".equals(me.getName()) && "이진오".equals(other.getName());
+        boolean case8 = "이진오".equals(me.getName()) && "이진구".equals(other.getName());
+        return case1 || case2 || case3 || case4 || case5 || case6 || case7 || case8;
     }
 
 
