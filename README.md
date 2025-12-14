@@ -148,32 +148,36 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
   </ul>
 </details>
-
-
-
-
-
-
-
-
 <details>
-  <summary><b>2. 발주 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>발주 생성</li>
-      <li>발주 승인 및 관리</li>
-    </ul>
-  </div>
+  <summary><b>3. 창고 관리</b></summary>
+  <ul>
+    <li>본사/가맹점 창고 재고</li>
+      <img 
+        src="https://github.com/user-attachments/assets/f8574a09-87fd-401e-8e59-8857314bebbe"
+        width="700"
+      />
+      <img 
+          src="https://github.com/user-attachments/assets/61ac7649-9172-4741-9a48-9429956bcf78"
+          width="700"
+        />
+    <li>본사 창고 입고/출고</li>
+      <img 
+        src="https://github.com/user-attachments/assets/b31772eb-cde8-4309-8cf5-7fd0c0201ff4"
+        width="700"
+      />
+  </ul>
 </details>
-<details>
-  <summary><b>3. 창고 재고 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>재고 현황</li>
-    </ul>
-  </div>
-</details>
-<details>
+
+
+
+
+
+
+
+
+
+
+
   <summary><b>4. 상품 관리</b></summary>
   <div markdown="1">
     <ul>
