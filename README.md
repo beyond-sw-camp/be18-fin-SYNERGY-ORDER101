@@ -106,7 +106,29 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 <br></br>
 ### 1.4 주요 기능
-
+<details>
+  <summary><b>1. 가맹점 주문 관리</b></summary>
+  <ul>
+    <li>주문 생성 / 승인 / 내역 조회</li>
+      <img 
+        src="https://github.com/user-attachments/assets/ee2d1c00-34da-4453-a9aa-e0aa24434b5f"
+        width="700"
+      />
+      <img 
+        src="https://github.com/user-attachments/assets/ecd07829-de6d-4c2f-86f0-e7be5fc56f6c"
+        width="700"
+      />
+      <img 
+        src="https://github.com/user-attachments/assets/a57eda77-23f7-473a-89ae-2dd457e8f957"
+        width="700"
+      />
+    <li>배송 상세 조회</li>
+      <img 
+        src="https://github.com/user-attachments/assets/6872e7e9-e181-4737-857c-ed3c92866e6b"
+        width="700"
+      />
+  </ul>
+</details>
 <details>
   <summary><b>1. 주문 관리</b></summary>
   <div markdown="1">
