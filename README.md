@@ -177,7 +177,17 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
     <li>상품 등록</li>
       <img 
-        src="https://github.com/user-attachments/assets/aa9ae142-53cb-4169-a6f4-cff0c3d1eea0"
+        src="https://github.com/user-attachments/assets/7425276b-b5ea-49bc-9805-8cb03e7217c5"
+        width="700"
+      />
+  </ul>
+</details>
+<details>
+  <summary><b>5. 공급사 관리</b></summary>
+  <ul>
+    <li>공급사 조회/상세</li>
+      <img 
+        src="https://github.com/user-attachments/assets/d303600b-e55b-4d28-a6e8-796fe274bd5c"
         width="700"
       />
   </ul>
@@ -192,18 +202,8 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
 
 
 
-
-
  
-<details>
-  <summary><b>5. 공급사 관리</b></summary>
-  <div markdown="1">
-    <ul>
-      <li>공급사 조회</li>
-      <li>공급사 상세</li>
-    </ul>
-  </div>
-</details>
+
 <details>
   <summary><b>6. 정산 관리</b></summary>
   <div markdown="1">
