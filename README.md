@@ -1,4 +1,4 @@
-![Animation1](https://github.com/user-attachments/assets/007b7216-0988-465b-a357-6e5d8382930a)<p align="center">
+<p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Noto+Sans+KR&weight=900&size=48&duration=2300&pause=900&color=BF00FF&background=00000000&center=true&vCenter=true&width=1000&lines=ORDER101;TEAM+SYNERGY" alt="ORDER101 Typing">
 </p>
 
@@ -237,7 +237,36 @@ LightGBM 모델 기반의 시계열 분석으로 계절성, 요일 패턴, 프�
       />
   </ul>
 </details>
-
+<details>
+  <summary><b>9. 자동 발주</b></summary>
+  <ul>
+    <li>자동 발주 초안 생성/수정/제출</li>
+      <img 
+        src="https://github.com/user-attachments/assets/dc1a60e2-252c-4c96-89d8-d4663d37e0e8"
+        width="700"
+      />
+    <li>자동 발주 승인/반려</li>
+      <img 
+        src=""
+        width="700"
+      />
+  </ul>
+</details>
+<details>
+  <summary><b>10. 채팅 & 챗봇</b></summary>
+  <ul>
+    <li>본사/가맹점 채팅</li>
+      <img 
+        src=""
+        width="700"
+      />
+    <li>본사 챗봇</li>
+      <img 
+        src=""
+        width="700"
+      />
+  </ul>
+</details>
 
 
 
