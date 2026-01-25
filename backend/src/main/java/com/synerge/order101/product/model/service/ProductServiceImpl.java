@@ -269,6 +269,9 @@ public class ProductServiceImpl implements ProductService {
                 predicates.add(cb.like(cb.lower(root.get("productName")), "%" + keyword.toLowerCase() + "%"));
             }
 
+            root.fetch("productCategory", JoinType.INNER);
+            query.distinct(true);
+
             // category join
             Join<Product, ProductCategory> small = root.join("productCategory");
             Join<ProductCategory, ProductCategory> medium = small.join("parent", JoinType.LEFT);
